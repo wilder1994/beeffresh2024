@@ -10,18 +10,18 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body>
+    <body class="bg-[#f5b327]">
         <header>
             {{-- Navbar --}}
             @include('layouts.navbar')
         </header>
         <main>
-            <div class="bg-green-100 my-4 text-center">
+            <div class="bg-[#7c2d12] my-4 text-center">
                 <h1 class="text-lg font-semibold m-4 uppercase">@yield('cabecera')</h1>
             </div>
             @yield('contenido')
         </main>
-        <footer class="footer items-center p-4 bg-neutral text-neutral-content">
+        <footer class="footer items-center p-4 bg-[#7c2d12] text-neutral-content">
             @include('layouts.footer')
         </footer>
     </body>
