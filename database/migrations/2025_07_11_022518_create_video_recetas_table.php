@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('productos', function (Blueprint $table) {
+        Schema::create('video_recetas', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre');
-            $table->string('descripcion')->nullable();
-            $table->integer('precio');
-            $table->integer('stock');
-            $table->string('imagen')->nullable();
+            $table->string('titulo');
+            $table->string('tipo'); // 'youtube' o 'archivo'
+            $table->string('url')->nullable(); // enlace de YouTube
+            $table->string('archivo')->nullable(); // nombre del archivo si se sube desde el PC
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('productos');
+        Schema::dropIfExists('video_recetas');
     }
 };

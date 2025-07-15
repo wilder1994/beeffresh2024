@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Mostrar todos los productos.
      */
     public function index()
     {
@@ -17,7 +18,7 @@ class ProductoController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Mostrar el formulario para crear un nuevo producto.
      */
     public function create()
     {
@@ -25,24 +26,40 @@ class ProductoController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Almacenar un producto recién creado.
      */
     public function store(Request $request)
-    {
-        Producto::create($request->all());
-        return redirect()->route('productos.index');
+{
+    $request->validate([
+        'nombre' => 'required|string',
+        'descripcion' => 'nullable|string',
+        'precio' => 'required|numeric',
+        'stock' => 'required|integer',
+        'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    // Verificar y guardar imagen
+    if ($request->hasFile('imagen') && $request->file('imagen')->isValid()) {
+        $imagenPath = $request->file('imagen')->store('imagenes', 'public');
+        $imagenNombre = basename($imagenPath);
+    } else {
+        return back()->withErrors(['imagen' => 'Error al subir la imagen'])->withInput();
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Producto $producto)
-    {
-        //
-    }
+    Producto::create([
+        'nombre' => $request->nombre,
+        'descripcion' => $request->descripcion,
+        'precio' => $request->precio,
+        'stock' => $request->stock,
+        'imagen' => $imagenNombre,
+    ]);
+
+    return redirect()->route('productos.index')->with('success', 'Producto creado con éxito.');
+}
+
 
     /**
-     * Show the form for editing the specified resource.
+     * Mostrar el formulario para editar un producto.
      */
     public function edit(Producto $producto)
     {
@@ -50,20 +67,61 @@ class ProductoController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Actualizar un producto existente.
      */
     public function update(Request $request, Producto $producto)
     {
-        $producto->update($request->all());
-        return redirect()->route('productos.index');
+        // Validación
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'precio' => 'required|numeric',
+            'stock' => 'required|integer',
+            'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Reemplazar imagen si se sube una nueva
+        if ($request->hasFile('imagen')) {
+            // Eliminar imagen anterior si existe
+            if ($producto->imagen && Storage::disk('public')->exists('imagenes/' . $producto->imagen)) {
+                Storage::disk('public')->delete('imagenes/' . $producto->imagen);
+            }
+
+            // Guardar nueva imagen
+            $imagenPath = $request->file('imagen')->store('imagenes', 'public');
+            $producto->imagen = basename($imagenPath);
+        }
+
+        // Actualizar los demás campos
+        $producto->update([
+            'nombre' => $request->nombre,
+            'descripcion' => $request->descripcion,
+            'precio' => $request->precio,
+            'stock' => $request->stock,
+        ]);
+
+        return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminar un producto.
      */
     public function destroy(Producto $producto)
     {
+        // Eliminar imagen si existe
+        if ($producto->imagen && Storage::disk('public')->exists('imagenes/' . $producto->imagen)) {
+            Storage::disk('public')->delete('imagenes/' . $producto->imagen);
+        }
+
         $producto->delete();
-        return redirect()->route('productos.index');
+        return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente');
+    }
+
+    /**
+     * Mostrar un producto específico (no implementado).
+     */
+    public function show(Producto $producto)
+    {
+        // Puedes implementar esta vista si deseas mostrar detalles individuales.
     }
 }
