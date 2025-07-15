@@ -2,63 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\VideoReceta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class VideoRecetaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $videos = VideoReceta::all();
+        return view('videos.index', compact('videos'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('videos.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'titulo' => 'required|string|max:255',
+            'tipo' => 'required|in:youtube,archivo',
+            'url' => 'nullable|url',
+            'archivo' => 'nullable|file|mimes:mp4,webm,ogg|max:100000',
+        ]);
+
+        $data = $request->only(['titulo', 'tipo', 'url']);
+
+        if ($request->hasFile('archivo')) {
+            $ruta = $request->file('archivo')->store('videos', 'public');
+            $data['archivo'] = basename($ruta);
+        }
+
+        VideoReceta::create($data);
+
+        return redirect()->route('videos.index')->with('success', 'Video guardado correctamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function destroy(VideoReceta $video)
     {
-        //
-    }
+        if ($video->archivo) {
+            Storage::disk('public')->delete('videos/' . $video->archivo);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        $video->delete();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return redirect()->route('videos.index')->with('success', 'Video eliminado.');
     }
 }

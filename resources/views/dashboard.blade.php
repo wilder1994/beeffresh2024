@@ -19,11 +19,9 @@
                     <a href="{{ route('promociones.index') }}" class="btn btn-accent w-full text-left p-6 text-lg shadow hover:scale-105 transition">
                         🎉 Gestión de Promociones
                     </a>
-                    {{--
                     <a href="{{ route('cortes.index') }}" class="btn btn-info w-full text-left p-6 text-lg shadow hover:scale-105 transition">
                         🥩 Gestión de Cortes
                     </a>
-                    --}}
                     {{-- Puedes seguir agregando más accesos desde aquí si lo necesitas --}}
                 </div>
             </div>

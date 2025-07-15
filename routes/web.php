@@ -3,6 +3,10 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\VideoRecetaController;
+use App\Http\Controllers\RecetaController;
+use App\Http\Controllers\PromocionController;
+use App\Http\Controllers\CorteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,20 +21,20 @@ use App\Http\Controllers\ProductoController;
 
 Route::view('/', 'welcome')->name('home');
 
-Route::resource('productos', ProductoController::class)->middleware('auth');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['verified'])->name('dashboard');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::resource('videos', \App\Http\Controllers\VideoRecetaController::class)->middleware('auth');
-    Route::resource('recetas', App\Http\Controllers\RecetaController::class)->middleware('auth');
-    Route::resource('promociones', App\Http\Controllers\PromocionController::class)->middleware('auth');
 
+    Route::resource('productos', ProductoController::class);
+    Route::resource('videos', VideoRecetaController::class);
+    Route::resource('recetas', RecetaController::class);
+    Route::resource('promociones', PromocionController::class);
+    Route::resource('cortes', CorteController::class);
 });
 
 require __DIR__.'/auth.php';
