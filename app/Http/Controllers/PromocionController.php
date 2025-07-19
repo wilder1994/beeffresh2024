@@ -1,5 +1,7 @@
 <?php
 
+// app/Http/Controllers/PromocionController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Promocion;
@@ -24,21 +26,19 @@ class PromocionController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'precio' => 'required|numeric',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'enlace' => 'nullable|url',
         ]);
 
-        $imagen = null;
-
-        if ($request->hasFile('imagen')) {
-            $imagen = $request->file('imagen')->store('promociones', 'public');
-        }
+        $imagen = $request->hasFile('imagen')
+            ? $request->file('imagen')->store('promociones', 'public')
+            : null;
 
         Promocion::create([
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
-            'precio' => $request->precio,
             'imagen' => $imagen ? basename($imagen) : null,
+            'enlace' => $request->enlace,
         ]);
 
         return redirect()->route('promociones.index')->with('success', 'Promoción creada con éxito.');
@@ -54,8 +54,8 @@ class PromocionController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'precio' => 'required|numeric',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'enlace' => 'nullable|url',
         ]);
 
         if ($request->hasFile('imagen')) {
@@ -70,8 +70,8 @@ class PromocionController extends Controller
         $promocion->update([
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
-            'precio' => $request->precio,
             'imagen' => $promocion->imagen,
+            'enlace' => $request->enlace,
         ]);
 
         return redirect()->route('promociones.index')->with('success', 'Promoción actualizada con éxito.');

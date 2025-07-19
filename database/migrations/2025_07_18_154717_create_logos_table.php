@@ -9,18 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
 {
-    Schema::create('promocions', function (Blueprint $table) {
+    Schema::create('logos', function (Blueprint $table) {
         $table->id();
-        $table->string('titulo');
-        $table->text('descripcion')->nullable();
-        $table->decimal('precio', 10, 2);
-        $table->string('imagen')->nullable();
+        $table->string('tipo'); // 'principal' o 'administrador'
+        $table->string('imagen'); // nombre de la imagen
         $table->timestamps();
     });
 }
-
 
 
     /**
@@ -28,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('promociones');
+        Schema::dropIfExists('logos');
     }
 };

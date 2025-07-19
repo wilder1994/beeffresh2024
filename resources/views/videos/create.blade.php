@@ -34,7 +34,7 @@
         {{-- Subida de archivo --}}
         <div class="form-control mb-4 hidden" id="archivoInput">
             <label class="label font-bold">Archivo de video (mp4)</label>
-            <input type="file" name="archivo" accept="video/mp4" class="file-input file-input-bordered" />
+            <input type="file" name="archivo" accept="video/mp4,video/webm,video/ogg" class="file-input file-input-bordered" />
         </div>
 
         {{-- Botones --}}
@@ -55,10 +55,15 @@
         if (tipo === 'youtube') {
             urlInput.classList.remove('hidden');
             archivoInput.classList.add('hidden');
+            document.querySelector('[name="url"]').required = true;
+            document.querySelector('[name="archivo"]').required = false;
         } else {
             urlInput.classList.add('hidden');
             archivoInput.classList.remove('hidden');
+            document.querySelector('[name="url"]').required = false;
+            document.querySelector('[name="archivo"]').required = true;
         }
+
     }
 
     // Ejecutar al cargar por si acaso

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('titulo', 'Editar Video')
-@section('cabecera', 'Editar Video')
+@section('cabecera', 'Editar Video de la Página Principal')
 
 @section('contenido')
 <div class="max-w-2xl mx-auto p-6 bg-base-100 rounded-xl shadow">
@@ -34,10 +34,14 @@
 
         {{-- Subida de archivo --}}
         <div class="form-control mb-4 hidden" id="archivoInput">
-            <label class="label font-bold">Archivo de video (mp4)</label>
-            <input type="file" name="archivo" accept="video/mp4" class="file-input file-input-bordered" />
+            <label class="label font-bold">Archivo de video (mp4, webm, ogg)</label>
+            <input type="file" name="archivo" accept="video/mp4,video/webm,video/ogg" class="file-input file-input-bordered" />
             @if ($video->archivo)
                 <p class="text-sm mt-2 text-gray-500">Archivo actual: {{ $video->archivo }}</p>
+                <video controls class="mt-2 w-full">
+                    <source src="{{ asset('storage/videos/' . $video->archivo) }}" type="video/mp4">
+                    Tu navegador no soporta este video.
+                </video>
             @endif
         </div>
 
@@ -56,6 +60,7 @@
         const urlInput = document.getElementById('urlInput');
         const archivoInput = document.getElementById('archivoInput');
 
+        // Mostrar u ocultar campos
         if (tipo === 'youtube') {
             urlInput.classList.remove('hidden');
             archivoInput.classList.add('hidden');
@@ -63,6 +68,10 @@
             urlInput.classList.add('hidden');
             archivoInput.classList.remove('hidden');
         }
+
+        // Requeridos dinámicos
+        document.querySelector('[name="url"]').required = (tipo === 'youtube');
+        document.querySelector('[name="archivo"]').required = (tipo === 'archivo');
     }
 
     document.addEventListener('DOMContentLoaded', toggleInputs);
