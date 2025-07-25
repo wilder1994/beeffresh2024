@@ -11,18 +11,15 @@ use App\Models\VideoReceta;
 use App\Models\Promocion;
 use App\Models\Corte;
 use App\Http\Controllers\Admin\LogoController;
+use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\Publico\ProductoPublicoController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
 
+
+
+Route::get('/productos-publicos', [ProductoPublicoController::class, 'index'])->name('productos.publico.index');
+Route::post('/carrito/agregar', [CarritoController::class, 'agregar'])->name('carrito.agregar');
+Route::get('/carrito', [CarritoController::class, 'ver'])->name('carrito.ver');
 
 Route::get('/', function () {
     $videos = VideoReceta::latest()->take(6)->get();
@@ -37,7 +34,6 @@ Route::middleware(['auth'])->name('admin.')->prefix('admin')->group(function () 
     Route::get('/logo/edit', [LogoController::class, 'edit'])->name('logo.edit');
     Route::post('/logo/{tipo}/update', [LogoController::class, 'update'])->name('logo.update');
 });
-
 
 
 Route::middleware(['auth'])->group(function () {
