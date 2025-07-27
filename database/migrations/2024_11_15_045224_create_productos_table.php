@@ -15,12 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('descripcion')->nullable();
-            $table->integer('precio');
+            $table->decimal('precio', 10, 2); // cambia de integer a decimal
+            $table->string('unidad')->default('kilo'); // kilo o libra
+            $table->string('promocion')->nullable();   // texto promocional opcional
             $table->integer('stock');
             $table->string('imagen')->nullable();
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.

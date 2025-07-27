@@ -13,6 +13,13 @@ class CarritoController extends Controller
 
         $cantidad = max(1, (int) $request->input('cantidad', 1));
         $producto = Producto::findOrFail($id);
+        if ($producto->stock < $cantidad) {
+            return response()->json([
+                'mensaje' => 'Stock insuficiente para este producto.',
+                'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
+            ], 400);
+        }
+
 
         $carrito = session()->get('carrito', []);
 
@@ -48,19 +55,51 @@ class CarritoController extends Controller
             foreach ($productos as $producto) {
                 $item = $carritoSession[$producto->id] ?? null;
 
-            if (is_array($item) && isset($item['cantidad'])) {
-                $carrito[$producto->id] = [
-                    'nombre' => $producto->nombre,
-                    'precio' => $producto->precio,
-                    'imagen' => $producto->imagen,
-                    'cantidad' => $item['cantidad'],
-                ];
+                if (is_array($item) && isset($item['cantidad'])) {
+                    $carrito[$producto->id] = [
+                        'nombre' => $producto->nombre,
+                        'precio' => $producto->precio,
+                        'imagen' => $producto->imagen,
+                        'cantidad' => $item['cantidad'],
+                    ];
+                }
             }
-}
 
 
 
         return view('carrito.ver', compact('carrito'));
+    }
+
+        public function finalizarCompra()
+    {
+        $carrito = session()->get('carrito', []);
+
+        if (empty($carrito)) {
+            return redirect()->back()->with('error', 'El carrito está vacío.');
+        }
+
+        foreach ($carrito as $item) {
+           $producto = Producto::find($item['producto_id']);
+
+            if (!$producto) {
+                continue; // salta al siguiente
+            }
+
+            if ($producto) {
+                // Validar que hay suficiente stock
+                if ($producto->stock >= $item['cantidad']) {
+                    $producto->stock -= $item['cantidad'];
+                    $producto->save();
+                } else {
+                    return redirect()->back()->with('error', "Stock insuficiente para el producto: {$producto->nombre}");
+                }
+            }
+        }
+
+        // Vaciar carrito
+        session()->forget('carrito');
+
+        return redirect()->route('productos.index')->with('success', 'Compra realizada con éxito');
     }
 
 }

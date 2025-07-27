@@ -35,17 +35,34 @@
             </div>
 
             {{-- Precio --}}
+            {{-- Precio --}}
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-1">Precio</label>
-                <input type="number" name="precio" value="{{ old('precio') }}"
-                       class="w-full input input-bordered" required />
+                <div class="flex gap-4">
+                    <input type="number" name="precio" value="{{ old('precio') }}"
+                        class="w-full input input-bordered" step="0.01" required />
+
+                    <select name="unidad" class="input input-bordered" required>
+                        <option value="kilo" {{ old('unidad') == 'kilo' ? 'selected' : '' }}>Kilo</option>
+                        <option value="libra" {{ old('unidad') == 'libra' ? 'selected' : '' }}>Libra</option>
+                    </select>
+                </div>
             </div>
+
 
             {{-- Stock --}}
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-1">Stock</label>
                 <input type="number" name="stock" value="{{ old('stock') }}"
                        class="w-full input input-bordered" required />
+            </div>
+
+            {{-- Promoción (opcional) --}}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Promoción (opcional)</label>
+                <input type="text" name="promocion" value="{{ old('promocion') }}"
+                    class="w-full input input-bordered"
+                    placeholder="Ej: 10% de descuento, precio especial $14.000..." />
             </div>
 
             {{-- Imagen --}}

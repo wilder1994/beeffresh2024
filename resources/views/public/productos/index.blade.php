@@ -35,17 +35,38 @@
                 <div class="p-4 flex flex-col justify-between flex-1">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800">{{ $producto->nombre }}</h3>
-                        <p class="text-red-600 text-base font-medium mt-2">${{ number_format($producto->precio, 0, ',', '.') }}</p>
+
+                        {{-- Descripción --}}
+                        @if($producto->descripcion)
+                            <p class="text-sm text-gray-600 mt-1">{{ $producto->descripcion }}</p>
+                        @endif
+
+                       {{-- Precio y Promoción --}}
+                        <div class="mt-2">
+                            @if($producto->promocion)
+                                {{-- Texto de promoción plano --}}
+                                <p class="text-sm text-green-600 font-semibold">🔥 {{ $producto->promocion }}</p>
+                            @endif
+
+                            {{-- Precio siempre visible --}}
+                            <p class="text-red-600 text-base font-medium">
+                                ${{ number_format($producto->precio, 0, ',', '.') }} / {{ $producto->unidad }}
+                            </p>
+                        </div>
+
+
+
                     </div>
 
                     <button 
-                        class="agregar-carrito bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
+                        class="agregar-carrito bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition mt-3"
                         data-id="{{ $producto->id }}"
                     >
                         Agregar al carrito
                     </button>
                 </div>
             </div>
+
         @empty
             <div class="col-span-3 text-center text-gray-600">
                 No se encontraron productos.

@@ -34,9 +34,12 @@ class ProductoController extends Controller
         'nombre' => 'required|string',
         'descripcion' => 'nullable|string',
         'precio' => 'required|numeric',
+        'unidad' => 'required|in:kilo,libra',
+        'promocion' => 'nullable|string|max:255',
         'stock' => 'required|integer',
         'imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
     ]);
+
 
     // Verificar y guardar imagen
     if ($request->hasFile('imagen') && $request->file('imagen')->isValid()) {
@@ -50,9 +53,12 @@ class ProductoController extends Controller
         'nombre' => $request->nombre,
         'descripcion' => $request->descripcion,
         'precio' => $request->precio,
+        'unidad' => $request->unidad,
+        'promocion' => $request->promocion,
         'stock' => $request->stock,
         'imagen' => $imagenNombre,
     ]);
+
 
     return redirect()->route('productos.index')->with('success', 'Producto creado con éxito.');
 }
@@ -76,9 +82,12 @@ class ProductoController extends Controller
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
             'precio' => 'required|numeric',
+            'unidad' => 'required|in:kilo,libra',
+            'promocion' => 'nullable|string|max:255',
             'stock' => 'required|integer',
             'imagen' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
 
         // Reemplazar imagen si se sube una nueva
         if ($request->hasFile('imagen')) {
@@ -93,12 +102,16 @@ class ProductoController extends Controller
         }
 
         // Actualizar los demás campos
-        $producto->update([
+       $producto->update([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
             'precio' => $request->precio,
+            'unidad' => $request->unidad,
+            'promocion' => $request->promocion,
             'stock' => $request->stock,
+            'imagen' => $producto->imagen, // si se cambió, ya fue actualizado arriba
         ]);
+
 
         return redirect()->route('productos.index')->with('success', 'Producto actualizado correctamente');
     }

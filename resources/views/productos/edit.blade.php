@@ -42,6 +42,22 @@
                        class="w-full input input-bordered" required />
             </div>
 
+            {{-- Unidad --}}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Unidad de medida</label>
+                <select name="unidad" class="w-full select select-bordered" required>
+                    <option value="libra" {{ old('unidad', $producto->unidad) == 'libra' ? 'selected' : '' }}>Libra</option>
+                    <option value="kilo" {{ old('unidad', $producto->unidad) == 'kilo' ? 'selected' : '' }}>Kilo</option>
+                </select>
+            </div>
+
+            {{-- Promoción --}}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Promoción (opcional)</label>
+                <input type="text" name="promocion" value="{{ old('promocion', $producto->promocion) }}"
+                       class="w-full input input-bordered" placeholder="Ej: 2x1, 10% de descuento, etc." />
+            </div>
+
             {{-- Stock --}}
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-1">Stock</label>

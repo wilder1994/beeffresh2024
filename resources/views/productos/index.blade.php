@@ -34,10 +34,28 @@
                     </div>
                     <div class="p-4">
                         <h3 class="text-lg font-semibold">{{ $producto->nombre }}</h3>
-                        <div class="text-sm text-gray-600 mb-2">${{ number_format($producto->precio, 0, ',', '.') }}</div>
-                        <p class="text-gray-700 text-sm mb-4">
+
+                        {{-- Precio + unidad --}}
+                        <div class="text-sm text-gray-600 mb-2">
+                            ${{ number_format($producto->precio, 0, ',', '.') }} / {{ $producto->unidad }}
+                            <div class="text-sm text-gray-600 mb-2">
+                                Stock: {{ $producto->stock }} {{ $producto->unidad }}
+                            </div>
+                        </div>
+
+                        {{-- Descripción --}}
+                        <p class="text-gray-700 text-sm mb-2">
                             {{ Str::limit($producto->descripcion, 60) }}
                         </p>
+
+                        {{-- Promoción si existe --}}
+                        @if($producto->promocion)
+                            <p class="text-sm text-red-600 font-semibold mb-2">
+                                Promoción: {{ $producto->promocion }}
+                            </p>
+                        @endif
+
+                        {{-- Botones --}}
                         <div class="flex justify-between">
                             <a href="{{ route('productos.edit', $producto->id) }}"
                                class="btn btn-outline btn-xs">Editar</a>
