@@ -11,17 +11,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Se desactivan las fábricas de usuarios y productos
-        // para que los registros se creen uno por uno manualmente.
-
-        /*
-        \App\Models\User::factory(10)->create();
-        \App\Models\Producto::factory(100)->create();
-
-        \App\Models\User::factory()->create([
-            'name' => 'Administrador',
-            'email' => 'admin@email.co',
+        $this->call([
+            AdminUserSeeder::class,
         ]);
-        */
     }
 }
