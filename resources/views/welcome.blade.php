@@ -76,31 +76,11 @@
     @endif
 </section>
 
-    <footer id="nosotros" class="bg-gray-100 text-gray-700 p-8 mt-10 rounded-xl scroll-mt-24">
-        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-                <h3 class="text-xl font-bold mb-2">Sobre BEEF FRESH</h3>
-                <p class="text-sm leading-relaxed">
-                    Nos especializamos en la distribución de carnes de alta calidad, garantizando frescura y trazabilidad en cada corte. Somos una empresa comprometida con la salud, el sabor y la satisfacción de nuestros clientes.
-                </p>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold mb-2">Nuestra Promesa</h3>
-                <p class="text-sm leading-relaxed">
-                    Compra 100% en línea, entregas puntuales, asesoría personalizada y un equipo experto en carnes que asegura calidad y confianza en cada pedido.
-                </p>
-            </div>
-            <div>
-                <h3 class="text-xl font-bold mb-2">Síguenos</h3>
-                <div class="flex space-x-4 mt-2">
-                    <a href="#" class="text-blue-600 hover:text-blue-800"><i class="fab fa-facebook fa-lg"></i></a>
-                    <a href="#" class="text-pink-600 hover:text-pink-800"><i class="fab fa-instagram fa-lg"></i></a>
-                    <a href="#" class="text-blue-400 hover:text-blue-600"><i class="fab fa-twitter fa-lg"></i></a>
-                    <a href="#" class="text-red-600 hover:text-red-800"><i class="fab fa-youtube fa-lg"></i></a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <section class="mt-12 mb-4 text-center px-4">
+        <a href="{{ route('nosotros') }}" class="inline-flex items-center justify-center text-[var(--bf-brand)] font-semibold hover:underline text-base md:text-lg">
+            Conoce más sobre nosotros
+        </a>
+    </section>
 
 </div>
 @endsection

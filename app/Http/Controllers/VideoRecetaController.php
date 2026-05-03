@@ -24,8 +24,8 @@ class VideoRecetaController extends Controller
     $request->validate([
         'titulo' => 'required|string|max:255',
         'tipo' => 'required|in:youtube,archivo',
-        'url' => 'nullable|url',
-        'archivo' => 'nullable|file|mimes:mp4,webm,ogg|max:100000',
+        'url' => 'required_if:tipo,youtube|nullable|url',
+        'archivo' => 'required_if:tipo,archivo|nullable|file|mimes:mp4,webm,ogg|max:100000',
     ]);
 
     $data = [
@@ -67,7 +67,7 @@ class VideoRecetaController extends Controller
     $request->validate([
         'titulo' => 'required|string|max:255',
         'tipo' => 'required|in:youtube,archivo',
-        'url' => 'nullable|url',
+        'url' => 'required_if:tipo,youtube|nullable|url',
         'archivo' => 'nullable|file|mimes:mp4,webm,ogg|max:100000',
     ]);
 

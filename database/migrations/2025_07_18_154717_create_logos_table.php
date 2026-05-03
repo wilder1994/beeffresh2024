@@ -13,7 +13,7 @@ return new class extends Migration
 {
     Schema::create('logos', function (Blueprint $table) {
         $table->id();
-        $table->string('tipo'); // 'principal' o 'administrador'
+        $table->string('tipo'); // p. ej. 'principal' (logo comercial en sidebar/tienda)
         $table->string('imagen'); // nombre de la imagen
         $table->timestamps();
     });

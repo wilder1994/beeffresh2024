@@ -45,19 +45,6 @@
             Inicio
         </a>
 
-        <details class="group" @if(request()->routeIs('home') || request()->routeIs('productos.publico.*') || request()->routeIs('carrito.*')) open @endif>
-            <summary class="flex cursor-pointer items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-white/90 hover:bg-white/10 list-none [&::-webkit-details-marker]:hidden">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                Ver tienda (clientes)
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-auto opacity-70 group-open:rotate-180 transition shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-            </summary>
-            <div class="mt-1 ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-white/20 space-y-0.5 pb-2">
-                <a href="{{ route('home') }}" target="_blank" rel="noopener" class="block px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white/85 hover:bg-white/10">Inicio tienda</a>
-                <a href="{{ route('productos.publico.index') }}" target="_blank" rel="noopener" class="block px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white/85 hover:bg-white/10">Catálogo público</a>
-                <a href="{{ route('carrito.ver') }}" target="_blank" rel="noopener" class="block px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm text-white/85 hover:bg-white/10">Carrito</a>
-            </div>
-        </details>
-
         @if($isAdmin)
             <p class="px-2 sm:px-3 pt-3 sm:pt-4 pb-1 text-[9px] sm:text-[10px] uppercase tracking-wider text-white/45 font-semibold">Operaciones</p>
             <a href="{{ route('admin.pedidos.index') }}" @class([$navActive, request()->routeIs('admin.pedidos.*') ? $navOn : $navIdle])>
@@ -77,9 +64,17 @@
             <a href="{{ route('cortes.index') }}" @class([$navActive, request()->routeIs('cortes.*') ? $navOn : $navIdle])>Cortes</a>
         @endif
 
-        <a href="{{ route('home') }}#nosotros" class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border-l-4 border-transparent text-white/90 hover:bg-white/10 mt-2">
-            Nosotros
+        <p class="px-2 sm:px-3 pt-3 sm:pt-4 pb-1 text-[9px] sm:text-[10px] uppercase tracking-wider text-white/45 font-semibold">Nosotros</p>
+        <a href="{{ route('nosotros') }}" target="_blank" rel="noopener" class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border-l-4 border-transparent text-white/90 hover:bg-white/10">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+            Ver en tienda
         </a>
+        @if($isAdmin)
+            <a href="{{ route('admin.empresa.edit') }}" @class([$navActive, request()->routeIs('admin.empresa.*') ? $navOn : $navIdle])>
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Editar contenido
+            </a>
+        @endif
     </nav>
 
     <div class="p-2 sm:p-3 border-t border-white/10 bg-black/20 shrink-0">

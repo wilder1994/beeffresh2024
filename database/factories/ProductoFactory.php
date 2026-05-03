@@ -19,9 +19,10 @@ class ProductoFactory extends Factory
         return [
             'nombre' => fake()->word(),
             'descripcion' => fake()->text(),
-            'precio' => fake()->numberBetween(10000,500000),
-            'stock' => fake()->numberBetween(1,50),
-             'imagen' => 'default.jpg',
+            'precio' => fake()->randomFloat(2, 50, 5000),
+            'unidad' => 'kilo',
+            'stock' => fake()->numberBetween(1, 50),
+            'imagen' => 'default.jpg',
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Producto;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -119,22 +120,21 @@ class ProductoController extends Controller
     /**
      * Eliminar un producto.
      */
-    public function destroy(Producto $producto)
+    public function destroy(Producto $producto): RedirectResponse
     {
-        // Eliminar imagen si existe
-        if ($producto->imagen && Storage::disk('public')->exists('imagenes/' . $producto->imagen)) {
-            Storage::disk('public')->delete('imagenes/' . $producto->imagen);
+        if ($producto->orderItems()->exists()) {
+            return redirect()
+                ->route('productos.index')
+                ->with('error', 'No se puede eliminar este producto porque aparece en uno o más pedidos.');
+        }
+
+        if ($producto->imagen && Storage::disk('public')->exists('imagenes/'.$producto->imagen)) {
+            Storage::disk('public')->delete('imagenes/'.$producto->imagen);
         }
 
         $producto->delete();
+
         return redirect()->route('productos.index')->with('success', 'Producto eliminado correctamente');
     }
 
-    /**
-     * Mostrar un producto específico (no implementado).
-     */
-    public function show(Producto $producto)
-    {
-        // Puedes implementar esta vista si deseas mostrar detalles individuales.
-    }
 }

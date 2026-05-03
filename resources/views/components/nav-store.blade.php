@@ -11,6 +11,7 @@
 
         <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
             <a href="{{ route('home') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 {{ request()->routeIs('home') ? 'bg-white/15' : '' }}">Inicio</a>
+            <a href="{{ route('nosotros') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 {{ request()->routeIs('nosotros') ? 'bg-white/15' : '' }}">Nosotros</a>
             <a href="{{ route('productos.publico.index') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 {{ request()->routeIs('productos.publico.*') ? 'bg-white/15' : '' }}">Catálogo</a>
             <a href="{{ route('carrito.ver') }}" class="px-3 py-2 rounded-lg hover:bg-white/10">Carrito</a>
         </nav>
@@ -52,6 +53,7 @@
                 <summary class="btn btn-ghost btn-circle text-white border border-white/30">☰</summary>
                 <ul class="dropdown-content menu bg-white text-gray-900 rounded-box z-[100] w-52 p-2 shadow mt-2">
                     <li><a href="{{ route('home') }}">Inicio</a></li>
+                    <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
                     <li><a href="{{ route('productos.publico.index') }}">Catálogo</a></li>
                     <li><a href="{{ route('carrito.ver') }}">Carrito</a></li>
                 </ul>

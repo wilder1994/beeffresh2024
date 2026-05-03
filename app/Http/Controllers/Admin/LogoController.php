@@ -15,6 +15,8 @@ class LogoController extends Controller
     /** Logo de la empresa (tipo principal); uso desde sidebar con una sola subida. */
     public function update(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->isAdmin(), 403);
+
         $request->validate([
             'imagen' => ['required', 'image', 'max:2048'],
         ]);

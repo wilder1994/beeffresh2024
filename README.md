@@ -11,9 +11,13 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-02
+**Última actualización de esta documentación:** 2026-05-05
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
+
+**Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes en **`/admin/empresa`**.
+
+**Migraciones:** perfil de cliente, avatar y datos de envío en pedidos están definidos dentro de `create_users_table` y `create_orders_table` (sin migraciones `*_add_*` sueltas). Si tu BD local ya tenía el historial antiguo y tras actualizar el código ves inconsistencias, en desarrollo puedes recrear el esquema con `php artisan migrate:fresh` (y `db:seed` si usas semillas). En producción ya desplegada conviene migraciones incrementales; este repo se mantiene como esquema base único para instalaciones nuevas.
 
 El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** + drawer en móvil; invitados y clientes en ese layout conservan la **barra superior** clásica.
 

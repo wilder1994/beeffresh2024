@@ -27,7 +27,7 @@
                 <li><a href="{{ $inicioHref }}">Inicio</a></li>
                 <li><a href="{{ route('home') }}">Servicios</a></li>
                 <li><a href="{{ route('productos.publico.index') }}">Productos</a></li>
-                <li><a href="{{ route('home') }}#nosotros">Nosotros</a></li>
+                <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
             </ul>
         </div>
     </div>
@@ -36,7 +36,7 @@
         <a href="{{ $inicioHref }}" class="btn btn-ghost btn-sm text-white">Inicio</a>
         <a href="{{ route('home') }}" class="btn btn-ghost btn-sm text-white">Servicios</a>
         <a href="{{ route('productos.publico.index') }}" class="btn btn-ghost btn-sm text-white">Productos</a>
-        <a href="{{ route('home') }}#nosotros" class="btn btn-ghost btn-sm text-white">Nosotros</a>
+        <a href="{{ route('nosotros') }}" class="btn btn-ghost btn-sm text-white">Nosotros</a>
     </div>
 
     @auth

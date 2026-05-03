@@ -9,6 +9,7 @@ use App\Models\Producto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class ProductoController extends Controller
 {
@@ -60,8 +61,15 @@ class ProductoController extends Controller
         ]);
     }
 
-    public function destroy(Producto $producto): Response
+    public function destroy(Producto $producto): Response|JsonResponse
     {
+        if ($producto->orderItems()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede eliminar: el producto tiene líneas de pedido asociadas.',
+            ], SymfonyResponse::HTTP_CONFLICT);
+        }
+
         $producto->delete();
 
         return response()->noContent();

@@ -17,6 +17,12 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-900 rounded">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Si no hay productos --}}
     @if($productos->isEmpty())
         <div class="text-center text-gray-500 py-10">

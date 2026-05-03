@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CompanyProfileController;
 use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\UserController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromocionController;
 use App\Http\Controllers\Publico\ProductoPublicoController;
 use App\Http\Controllers\RecetaController;
+use App\Http\Controllers\NosotrosController;
 use App\Http\Controllers\VideoRecetaController;
 use App\Models\Corte;
 use App\Models\Promocion;
@@ -24,7 +26,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/productos-publicos', [ProductoPublicoController::class, 'index'])->name('productos.publico.index');
 Route::get('/productos-publicos/{producto}', [ProductoPublicoController::class, 'show'])->name('productos.publico.show');
-Route::post('/carrito/agregar', [CarritoController::class, 'agregar'])->name('carrito.agregar');
+Route::post('/carrito/agregar', [CarritoController::class, 'agregar'])
+    ->middleware('throttle:60,1')
+    ->name('carrito.agregar');
 Route::get('/carrito', [CarritoController::class, 'ver'])->name('carrito.ver');
 
 Route::get('/', function () {
@@ -35,6 +39,7 @@ Route::get('/', function () {
     return view('welcome', compact('videos', 'promociones', 'cortes'));
 })->name('home');
 
+Route::get('/nosotros', NosotrosController::class)->name('nosotros');
 
 Route::middleware(['auth', 'role:supplier'])->prefix('portal-proveedor')->name('supplier.')->group(function () {
     Route::get('/', [SupplierPortalController::class, 'index'])->name('home');
@@ -57,16 +62,18 @@ Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->grou
         return redirect()->route('dashboard');
     })->name('home');
     Route::post('/logo/empresa', [LogoController::class, 'update'])->name('logo.update');
+    Route::get('/empresa', [CompanyProfileController::class, 'edit'])->name('empresa.edit');
+    Route::put('/empresa', [CompanyProfileController::class, 'update'])->name('empresa.update');
     Route::get('/pedidos', [OrderController::class, 'index'])->name('pedidos.index');
     Route::resource('users', UserController::class)->except(['destroy']);
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::resource('productos', ProductoController::class);
-    Route::resource('videos', VideoRecetaController::class);
-    Route::resource('recetas', RecetaController::class);
-    Route::resource('promociones', PromocionController::class);
-    Route::resource('cortes', CorteController::class);
+    Route::resource('productos', ProductoController::class)->except(['show']);
+    Route::resource('videos', VideoRecetaController::class)->except(['show']);
+    Route::resource('recetas', RecetaController::class)->except(['show']);
+    Route::resource('promociones', PromocionController::class)->except(['show']);
+    Route::resource('cortes', CorteController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';
