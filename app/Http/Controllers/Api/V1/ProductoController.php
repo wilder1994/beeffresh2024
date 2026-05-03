@@ -1,84 +1,69 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Producto;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ProductoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): JsonResponse
     {
-        return response()->json(Producto::all(), 200); //mostrar todos los productos
+        return response()->json(Producto::all());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        //validar datos
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
-            'descripciòn' =>['nullable', 'string', 'max:255'],
-            'precio' =>['required', 'integer', 'min:10000'],
-            'stock' =>['required', 'integer', 'min:1'],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'precio' => ['required', 'numeric', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'categoria_id' => ['nullable', 'integer', 'exists:categorias,id'],
         ]);
-        // guardar datos
-        $producto = Producto::create($datos);
 
-        //respuesta al cliente
+        $producto = Producto::query()->create($datos);
+
         return response()->json([
             'success' => true,
             'message' => 'Producto creado exitosamente',
+            'data' => $producto,
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Producto $producto)
+    public function show(Producto $producto): JsonResponse
     {
-        return response()->json($producto, 200); //mostrar producto
+        return response()->json($producto);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Producto $producto)
+    public function update(Request $request, Producto $producto): JsonResponse
     {
         $datos = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
-            'descripciòn' =>['nullable', 'string', 'max:255'],
-            'precio' =>['required', 'integer', 'min:10000'],
-            'stock' =>['required', 'integer', 'min:1'],
+            'descripcion' => ['nullable', 'string', 'max:255'],
+            'precio' => ['required', 'numeric', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'categoria_id' => ['nullable', 'integer', 'exists:categorias,id'],
         ]);
-        // atualizar datos
+
         $producto->update($datos);
 
-        //respuesta al cliente
         return response()->json([
             'success' => true,
-            'message' => 'Producto atualizdao exitosamente',
-        ], 200);
+            'message' => 'Producto actualizado exitosamente',
+            'data' => $producto->fresh(),
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Producto $producto)
+    public function destroy(Producto $producto): Response
     {
-        //eliminar producto
         $producto->delete();
 
-         //respuesta al cliente
-         return response()->json([
-            'success' => true,
-            'message' => 'Producto eliminado exitosamente',
-        ], 204);
+        return response()->noContent();
     }
 }

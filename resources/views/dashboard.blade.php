@@ -10,6 +10,9 @@
                 <h2 class="text-3xl font-bold mb-6 text-center">Panel de Administración de BEEF FRESH</h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <a href="{{ route('admin.pedidos.index') }}" class="btn btn-success w-full text-left p-6 text-lg shadow hover:scale-105 transition">
+                        📦 Pedidos en línea
+                    </a>
                     <a href="{{ route('productos.index') }}" class="btn btn-primary w-full text-left p-6 text-lg shadow hover:scale-105 transition">
                         🧾 Gestión de Productos
                     </a>

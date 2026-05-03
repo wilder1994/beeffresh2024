@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Producto;
+use App\Services\CheckoutService;
+use Illuminate\Http\Request;
 
 class CarritoController extends Controller
 {
@@ -70,36 +71,26 @@ class CarritoController extends Controller
         return view('carrito.ver', compact('carrito'));
     }
 
-        public function finalizarCompra()
+    public function finalizarCompra(CheckoutService $checkoutService)
     {
+        $user = auth()->user();
         $carrito = session()->get('carrito', []);
 
-        if (empty($carrito)) {
+        if ($carrito === []) {
             return redirect()->back()->with('error', 'El carrito está vacío.');
         }
 
-        foreach ($carrito as $item) {
-           $producto = Producto::find($item['producto_id']);
-
-            if (!$producto) {
-                continue; // salta al siguiente
-            }
-
-            if ($producto) {
-                // Validar que hay suficiente stock
-                if ($producto->stock >= $item['cantidad']) {
-                    $producto->stock -= $item['cantidad'];
-                    $producto->save();
-                } else {
-                    return redirect()->back()->with('error', "Stock insuficiente para el producto: {$producto->nombre}");
-                }
-            }
+        try {
+            $order = $checkoutService->finalizeCart($user, $carrito);
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
 
-        // Vaciar carrito
         session()->forget('carrito');
 
-        return redirect()->route('productos.index')->with('success', 'Compra realizada con éxito');
+        return redirect()
+            ->route('home')
+            ->with('success', 'Pedido #'.$order->id.' registrado correctamente.');
     }
 
 }

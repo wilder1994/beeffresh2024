@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -21,6 +22,7 @@ class AdminUserSeeder extends Seeder
                 'name' => config('admin.name'),
                 'password' => config('admin.password'),
                 'email_verified_at' => now(),
+                'role' => UserRole::Admin,
             ]
         );
     }

@@ -1,5 +1,6 @@
 @php
     use App\Models\Logo;
+    $logoPrincipal = Logo::where('tipo', 'principal')->first();
     $logoAdmin = Logo::where('tipo', 'administrador')->first();
 @endphp
 
@@ -8,7 +9,7 @@
     {{-- Logo principal con fallback --}}
     <div class="avatar mr-4">
         <a href="/" class="w-10 rounded-full block overflow-hidden">
-            <img src="{{ $logo && $logo->imagen ? asset('storage/logos/' . $logo->imagen) : asset('storage/imagenes/logo.jpeg') }}" alt="Logo BEEF FRESH">
+            <img src="{{ $logoPrincipal && $logoPrincipal->imagen ? asset('storage/logos/' . $logoPrincipal->imagen) : asset('storage/imagenes/logo.jpeg') }}" alt="Logo BEEF FRESH">
         </a>
     </div>
 
@@ -23,7 +24,7 @@
             <ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-[#f8fafc] text-gray-800 rounded-box w-52">
                 <li><a href="{{ route('home') }}">Inicio</a></li>
                 <li><a href="{{ route('home') }}">Servicios</a></li>
-                <li><a href="{{ Auth::check() ? route('productos.index') : route('productos.publico.index') }}">Productos</a></li>
+                <li><a href="{{ route('productos.publico.index') }}">Productos</a></li>
                 <li><a href="{{ route('home') }}">Nosotros</a></li>
             </ul>
         </div>
@@ -33,7 +34,7 @@
     <div class="hidden md:flex flex-1 space-x-4">
         <a href="{{ route('home') }}" class="btn btn-ghost btn-sm">Inicio</a>
         <a href="{{ route('home') }}" class="btn btn-ghost btn-sm">Servicios</a>
-        <a href="{{ Auth::check() ? route('productos.index') : route('productos.publico.index') }}" class="btn btn-ghost btn-sm">Productos</a>
+        <a href="{{ route('productos.publico.index') }}" class="btn btn-ghost btn-sm">Productos</a>
         <a href="{{ route('home') }}" class="btn btn-ghost btn-sm">Nosotros</a>
     </div>
 
@@ -50,9 +51,11 @@
                     </div>
                 </div>
                 <ul class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-white text-gray-900 rounded-box w-52">
-                    <li><a href="{{ route('admin.logo.edit', 'principal') }}">Editar Logos</a></li>
-                    <li><a href="{{ route('dashboard') }}">Panel de Administración</a></li>
-                    <li><a href="{{ route('profile.edit') }}">Mi Perfil</a></li>
+                    @if(auth()->user()->isAdmin())
+                        <li><a href="{{ route('admin.logo.edit', 'principal') }}">Editar logos</a></li>
+                    @endif
+                    <li><a href="{{ route('dashboard') }}">Mi panel</a></li>
+                    <li><a href="{{ route('profile.edit') }}">Mi perfil</a></li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

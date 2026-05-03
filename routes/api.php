@@ -1,17 +1,20 @@
 <?php
 
-use Illuminate\Http\Request;
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\V1\ProductoController;
 use Illuminate\Support\Facades\Route;
 
 /*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
+| Listado y detalle públicos; creación, edición y borrado solo con token Sanctum y rol admin.
 */
 
-Route::apiResource('v1/producto', App\Http\Controllers\Api\V1\ProductoController::class);
+Route::get('v1/producto', [ProductoController::class, 'index']);
+Route::get('v1/producto/{producto}', [ProductoController::class, 'show']);
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::post('v1/producto', [ProductoController::class, 'store']);
+    Route::put('v1/producto/{producto}', [ProductoController::class, 'update']);
+    Route::patch('v1/producto/{producto}', [ProductoController::class, 'update']);
+    Route::delete('v1/producto/{producto}', [ProductoController::class, 'destroy']);
+});

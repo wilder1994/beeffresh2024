@@ -19,6 +19,11 @@
 
     {{-- Contenido principal --}}
     <main class="flex-grow">
+        @if(session('error'))
+            <div class="max-w-4xl mx-auto px-4 pt-4">
+                <div class="bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded">{{ session('error') }}</div>
+            </div>
+        @endif
         @hasSection('cabecera')
             <div class="bg-[#7c2d12] my-4 text-center">
                 <h1 class="text-lg font-semibold m-4 uppercase text-white">@yield('cabecera')</h1>
