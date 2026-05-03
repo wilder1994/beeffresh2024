@@ -1,0 +1,14 @@
+---
+description: Antes de hacer git push, actualizar README.md si el cambio afecta uso del proyecto, configuración, rutas o despliegue.
+alwaysApply: true
+---
+
+# README antes de subir cambios
+
+Antes de ejecutar **`git push`** (o de dar por cerrado un conjunto de cambios que se van a subir):
+
+1. **Revisa si README.md debe actualizarse**: instalación, variables de entorno, roles, rutas, comandos Artisan, pruebas, API, base de datos, stack o convenciones nuevas.
+2. Si aplica, **edita `README.md`** de forma breve y precisa (fecha “Última actualización de esta documentación” cuando cambien instrucciones relevantes).
+3. Incluye **`README.md`** en el mismo commit que los cambios funcionales, salvo que solo sea documentación.
+
+Si no hay nada nuevo para documentar, no fuerces cambios vacíos en el README.
