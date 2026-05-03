@@ -15,13 +15,11 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = (string) env('ADMIN_EMAIL', 'admin@beeffresh.local');
-
         User::updateOrCreate(
-            ['email' => $email],
+            ['email' => config('admin.email')],
             [
-                'name' => (string) env('ADMIN_NAME', 'Administrador Beeffresh'),
-                'password' => (string) env('ADMIN_PASSWORD', 'password'),
+                'name' => config('admin.name'),
+                'password' => config('admin.password'),
                 'email_verified_at' => now(),
             ]
         );

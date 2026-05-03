@@ -13,15 +13,15 @@ class CarritoController extends Controller
 
         $cantidad = max(1, (int) $request->input('cantidad', 1));
         $producto = Producto::findOrFail($id);
+
+        $carrito = session()->get('carrito', []);
+
         if ($producto->stock < $cantidad) {
             return response()->json([
                 'mensaje' => 'Stock insuficiente para este producto.',
                 'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
             ], 400);
         }
-
-
-        $carrito = session()->get('carrito', []);
 
         if (isset($carrito[$id])) {
             $carrito[$id]['cantidad'] += $cantidad;
