@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6 text-center space-y-2">
-        <h1 class="text-xl font-semibold text-gray-800">Crear cuenta de cliente</h1>
-        <p class="text-sm text-gray-600 leading-relaxed">
+        <h1 class="text-xl font-semibold text-[var(--bf-ink)]">Crear cuenta de cliente</h1>
+        <p class="text-sm text-[var(--bf-muted)] leading-relaxed">
             Este formulario es solo para <strong>compradores</strong>. Personal interno y proveedores reciben acceso por el administrador.
         </p>
     </div>
@@ -44,11 +44,11 @@
 
         <!-- Enlace + Botón -->
         <div class="flex items-center justify-end mt-4">
-            <a class="underline text-sm text-gray-600 hover:text-red-800 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-800" href="{{ route('login') }}">
+            <a class="underline text-sm text-[var(--bf-muted)] hover:text-[var(--bf-rust)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--bf-crimson)]/40" href="{{ route('login') }}">
                 ¿Ya tienes una cuenta?
             </a>
 
-            <x-primary-button class="ms-4 !bg-[var(--bf-red)] hover:!brightness-110 focus:!ring-[var(--bf-red)]">
+            <x-primary-button class="ms-4">
                 Registrarse
             </x-primary-button>
         </div>

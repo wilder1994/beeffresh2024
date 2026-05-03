@@ -15,6 +15,19 @@ class CheckoutController extends Controller
      */
     public function show(): View|RedirectResponse
     {
+        $user = auth()->user();
+        if (! $user->isCustomer()) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'El checkout en línea está disponible para clientes.');
+        }
+
+        if (! $user->hasCompleteDeliveryProfile()) {
+            return redirect()
+                ->route('profile.edit')
+                ->with('error', 'Antes de pagar, completa tu teléfono y dirección de entrega en Mi perfil.');
+        }
+
         $carritoSession = session()->get('carrito', []);
 
         if ($carritoSession === []) {

@@ -1,10 +1,10 @@
 {{-- Navegación tienda: orientada al cliente; enlaces al panel interno o portal proveedor solo si aplica --}}
-<header class="sticky top-0 z-50 shadow-md border-b border-[var(--bf-red)]/20 bg-[var(--bf-red)] text-white">
+<header class="sticky top-0 z-50 shadow-md border-b border-black/10 bg-[var(--bf-brand)] text-white">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <a href="{{ route('home') }}" class="flex items-center gap-3 group">
             <img src="{{ asset('logos/logo.jpeg') }}" alt="BEEF FRESH" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/30">
             <div class="leading-tight">
-                <span class="font-semibold tracking-tight text-lg" style="font-family: Georgia, 'Times New Roman', serif;">BEEF FRESH</span>
+                <span class="font-brand tracking-tight text-lg">BEEF FRESH</span>
                 <span class="block text-[11px] uppercase tracking-widest text-white/75">Carnes frescas · Tienda en línea</span>
             </div>
         </a>
@@ -18,7 +18,7 @@
         <div class="flex items-center gap-2">
             @auth
                 @if(auth()->user()->isStaff())
-                    <a href="{{ route('dashboard') }}" class="text-xs px-3 py-2 rounded-lg bg-[var(--bf-gold)] text-[var(--bf-red)] font-semibold hover:brightness-110">
+                    <a href="{{ route('dashboard') }}" class="text-xs px-3 py-2 rounded-lg bg-[var(--bf-gold)] text-[var(--bf-rust-deep)] font-semibold hover:brightness-110">
                         Gestión interna
                     </a>
                 @elseif(auth()->user()->isSupplier())
@@ -45,7 +45,7 @@
                 </div>
             @else
                 <a href="{{ route('login') }}" class="btn btn-sm bg-white/10 hover:bg-white/20 border border-white/40 text-white">Ingresar</a>
-                <a href="{{ route('register') }}" class="btn btn-sm bg-[var(--bf-gold)] text-[var(--bf-red)] border-0 hover:brightness-105">Registrarse</a>
+                <a href="{{ route('register') }}" class="btn btn-sm bg-[var(--bf-gold)] text-[var(--bf-rust-deep)] border-0 hover:brightness-105">Registrarse</a>
             @endauth
 
             <details class="dropdown dropdown-end md:hidden">

@@ -24,8 +24,26 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => 'password',
             'role' => UserRole::Customer,
+            'avatar_path' => null,
+            'phone' => fake()->numerify('8#########'),
+            'document_number' => null,
+            'company_name' => null,
+            'address_line1' => fake()->streetAddress(),
+            'address_line2' => null,
+            'city' => fake()->city(),
+            'state' => fake()->state(),
+            'postal_code' => null,
+            'country' => 'DO',
+            'delivery_instructions' => null,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Admin,
+        ]);
     }
 
     /**

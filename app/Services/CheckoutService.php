@@ -69,11 +69,27 @@ class CheckoutService
                 ];
             }
 
-            $order = Order::query()->create([
+            $shipping = $user->isCustomer()
+                ? $user->snapshotShippingFromProfile()
+                : array_fill_keys([
+                    'shipping_recipient_name',
+                    'shipping_phone',
+                    'shipping_document_number',
+                    'shipping_address_line1',
+                    'shipping_address_line2',
+                    'shipping_city',
+                    'shipping_state',
+                    'shipping_postal_code',
+                    'shipping_country',
+                    'shipping_notes',
+                ], null);
+            $shipping['shipping_recipient_name'] = $shipping['shipping_recipient_name'] ?? $user->name;
+
+            $order = Order::query()->create(array_merge([
                 'user_id' => $user->id,
                 'total' => number_format($total, 2, '.', ''),
                 'status' => OrderStatus::Pending,
-            ]);
+            ], $shipping));
 
             foreach ($lines as $line) {
                 /** @var Producto $p */

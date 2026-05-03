@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\SupplierPortalController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
@@ -52,9 +53,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->group(function () {
-    Route::get('/logo/edit', [LogoController::class, 'edit'])->name('logo.edit');
-    Route::post('/logo/{tipo}/update', [LogoController::class, 'update'])->name('logo.update');
+    Route::get('/', function () {
+        return redirect()->route('dashboard');
+    })->name('home');
+    Route::post('/logo/empresa', [LogoController::class, 'update'])->name('logo.update');
     Route::get('/pedidos', [OrderController::class, 'index'])->name('pedidos.index');
+    Route::resource('users', UserController::class)->except(['destroy']);
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {

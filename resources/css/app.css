@@ -2,11 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* BEEF FRESH · identidad tienda / carnicería */
+/**
+ * BEEF FRESH — paleta extraída del logo / tienda
+ * Marrones óxido, carmesí, sol/naranja y crema (login).
+ */
 @layer base {
     :root {
-        --bf-red: #7c2d12;
-        --bf-gold: #f5b327;
-        --bf-cream: #fff8f0;
+        --bf-brand: #7b301b;
+        --bf-rust: #5d2a18;
+        --bf-rust-deep: #4b2315;
+        --bf-red: #7b301b;
+        --bf-mahogany: #803020;
+        --bf-crimson: #b21e29;
+        --bf-orange: #f58220;
+        --bf-sun: #ffc20e;
+        --bf-gold: #f0b429;
+        --bf-cream: #fdf5e6;
+        --bf-cream-muted: #f5efe6;
+        --bf-card: #ffffff;
+        --bf-ink: #2c1810;
+        --bf-muted: #5c534c;
+    }
+
+    html {
+        @apply antialiased;
+    }
+
+    .font-brand {
+        font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+}
+
+@layer components {
+    .bf-panel-bg {
+        background: linear-gradient(
+            165deg,
+            var(--bf-cream) 0%,
+            var(--bf-cream-muted) 45%,
+            rgba(255, 194, 14, 0.12) 100%
+        );
+    }
+
+    .bf-auth-card {
+        @apply bg-white shadow-lg rounded-2xl border border-amber-100/90;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    /* Panel interno: tipografía y densidad más contenidas en viewports pequeños */
+    .staff-content {
+        @apply text-sm md:text-[15px] leading-snug md:leading-normal;
+    }
+
+    .staff-page-banner {
+        @apply text-xs sm:text-sm md:text-base font-semibold m-2 sm:m-3 md:m-4 uppercase text-white tracking-wide;
+    }
+
+    .staff-main-inner {
+        @apply px-3 sm:px-4 py-4 md:py-6 max-w-[1600px] mx-auto w-full;
+    }
+
+    .bf-footer-watermark {
+        @apply text-center text-[10px] sm:text-[11px] leading-tight font-normal tracking-wide text-stone-600/45;
     }
 }

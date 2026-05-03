@@ -38,4 +38,23 @@ enum UserRole: string
     {
         return $this === self::Supplier;
     }
+
+    /** Agrupa roles para filtros (clientes · empresa · proveedores). */
+    public function audienceId(): string
+    {
+        return match ($this) {
+            self::Customer => 'clients',
+            self::Supplier => 'suppliers',
+            default => 'company',
+        };
+    }
+
+    public function audienceLabel(): string
+    {
+        return match ($this) {
+            self::Customer => 'Clientes',
+            self::Supplier => 'Proveedores',
+            default => 'Empresa',
+        };
+    }
 }

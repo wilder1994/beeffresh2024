@@ -15,9 +15,43 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        /** @var User $user */
+        $user = $this->user();
+
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($this->user()->id)],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
+            'phone' => [
+                Rule::requiredIf(fn (): bool => $user->isCustomer()),
+                'nullable',
+                'string',
+                'max:32',
+            ],
+            'document_number' => ['nullable', 'string', 'max:64'],
+            'company_name' => ['nullable', 'string', 'max:191'],
+            'address_line1' => [
+                Rule::requiredIf(fn (): bool => $user->isCustomer()),
+                'nullable',
+                'string',
+                'max:191',
+            ],
+            'address_line2' => ['nullable', 'string', 'max:191'],
+            'city' => [
+                Rule::requiredIf(fn (): bool => $user->isCustomer()),
+                'nullable',
+                'string',
+                'max:120',
+            ],
+            'state' => [
+                Rule::requiredIf(fn (): bool => $user->isCustomer()),
+                'nullable',
+                'string',
+                'max:120',
+            ],
+            'postal_code' => ['nullable', 'string', 'max:32'],
+            'country' => ['nullable', 'string', 'size:2'],
+            'delivery_instructions' => ['nullable', 'string', 'max:2000'],
+            'avatar' => ['nullable', 'image', 'max:2048'],
         ];
     }
 }

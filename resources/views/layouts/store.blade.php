@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('titulo', 'BEEF FRESH · Tienda')</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600;family=Playfair+Display:600&display=swap" rel="stylesheet" />
+    @include('layouts.partials.fonts')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen flex flex-col bg-[var(--bf-cream)] text-gray-900 antialiased">
+<body class="min-h-screen flex flex-col bf-panel-bg text-[var(--bf-ink)] antialiased">
     @include('components.nav-store')
 
     <main class="flex-1 w-full">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Services\CheckoutService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CarritoController extends Controller
@@ -81,13 +82,23 @@ class CarritoController extends Controller
         return view('carrito.ver', compact('carrito'));
     }
 
-    public function finalizarCompra(CheckoutService $checkoutService)
+    public function finalizarCompra(CheckoutService $checkoutService): RedirectResponse
     {
         $user = auth()->user();
         $carrito = session()->get('carrito', []);
 
         if ($carrito === []) {
             return redirect()->back()->with('error', 'El carrito está vacío.');
+        }
+
+        if (! $user->isCustomer()) {
+            return redirect()->back()->with('error', 'Solo las cuentas de cliente pueden finalizar compras en línea.');
+        }
+
+        if (! $user->hasCompleteDeliveryProfile()) {
+            return redirect()
+                ->route('profile.edit')
+                ->with('error', 'Completa en tu perfil el teléfono y la dirección de entrega (ciudad y provincia) antes de pedir a domicilio.');
         }
 
         try {

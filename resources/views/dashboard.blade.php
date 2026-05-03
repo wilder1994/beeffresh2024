@@ -7,14 +7,14 @@
         $fmtMoney = static fn (float $n): string => '$'.number_format($n, 0, ',', '.');
     @endphp
 
-    <div class="py-6 max-w-7xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 px-1">
-            <div>
-                <p class="text-xs uppercase tracking-widest text-[var(--bf-red)] font-semibold">Operaciones</p>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Panel de administración</h1>
-                <p class="text-sm text-gray-600 mt-1">Vista consolidada de pedidos, ingresos y catálogo · {{ now()->translatedFormat('l j \d\e F') }}</p>
+    <div class="max-w-7xl mx-auto -mt-1">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6 px-0 sm:px-1">
+            <div class="min-w-0">
+                <p class="text-[10px] sm:text-xs uppercase tracking-widest text-[var(--bf-red)] font-semibold">Operaciones</p>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Panel de administración</h1>
+                <p class="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">Vista consolidada de pedidos, ingresos y catálogo · {{ now()->translatedFormat('l j \d\e F') }}</p>
             </div>
-            <a href="{{ route('admin.pedidos.index') }}" class="btn btn-sm md:btn-md bg-[var(--bf-red)] hover:brightness-110 text-white border-0 shrink-0">
+            <a href="{{ route('admin.pedidos.index') }}" class="btn btn-sm bg-[var(--bf-red)] hover:brightness-110 text-white border-0 shrink-0 w-full sm:w-auto">
                 Ir a pedidos
             </a>
         </div>
@@ -38,24 +38,24 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-            <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm p-4 md:p-5">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pedidos hoy</p>
-                <p class="text-2xl md:text-3xl font-bold text-gray-900 mt-1 tabular-nums">{{ $kpi['orders_today'] }}</p>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 md:mb-6">
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Pedidos hoy</p>
+                <p class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mt-0.5 sm:mt-1 tabular-nums">{{ $kpi['orders_today'] }}</p>
             </div>
-            <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm p-4 md:p-5">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Pendientes</p>
-                <p class="text-2xl md:text-3xl font-bold text-[var(--bf-red)] mt-1 tabular-nums">{{ $kpi['pending'] }}</p>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Pendientes</p>
+                <p class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--bf-red)] mt-0.5 sm:mt-1 tabular-nums">{{ $kpi['pending'] }}</p>
             </div>
-            <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm p-4 md:p-5">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ingresos hoy</p>
-                <p class="text-xl md:text-2xl font-bold text-gray-900 mt-1 tabular-nums">{{ $fmtMoney($kpi['revenue_today']) }}</p>
-                <p class="text-[11px] text-gray-500 mt-1">Solo pedidos pagados</p>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Ingresos hoy</p>
+                <p class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-0.5 sm:mt-1 tabular-nums">{{ $fmtMoney($kpi['revenue_today']) }}</p>
+                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 sm:mt-1">Solo pedidos pagados</p>
             </div>
-            <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm p-4 md:p-5">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Ingresos del mes</p>
-                <p class="text-xl md:text-2xl font-bold text-gray-900 mt-1 tabular-nums">{{ $fmtMoney($kpi['revenue_month']) }}</p>
-                <p class="text-[11px] text-gray-500 mt-1">{{ $kpi['products_catalog'] }} productos en catálogo</p>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Ingresos del mes</p>
+                <p class="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mt-0.5 sm:mt-1 tabular-nums">{{ $fmtMoney($kpi['revenue_month']) }}</p>
+                <p class="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 sm:mt-1">{{ $kpi['products_catalog'] }} productos en catálogo</p>
             </div>
         </div>
 
@@ -74,7 +74,7 @@
                         @endphp
                         <div class="flex-1 flex flex-col items-center justify-end gap-1 min-w-0 min-h-[11rem]">
                             <span class="text-xs font-semibold text-gray-700 tabular-nums leading-none">{{ $day['count'] }}</span>
-                            <div class="w-full max-w-[44px] mx-auto rounded-t-md bg-gradient-to-t from-[var(--bf-red)] to-[#c2410c]/90 shadow-sm" style="height: {{ $barPx }}px" title="{{ $day['short'] }}: {{ $day['count'] }} pedidos"></div>
+                            <div class="w-full max-w-[44px] mx-auto rounded-t-md bg-gradient-to-t from-[var(--bf-red)] to-[var(--bf-orange)] shadow-sm" style="height: {{ $barPx }}px" title="{{ $day['short'] }}: {{ $day['count'] }} pedidos"></div>
                             <span class="text-[10px] md:text-xs text-gray-500 truncate w-full text-center mt-auto pt-1">{{ $day['short'] }}</span>
                         </div>
                     @endforeach

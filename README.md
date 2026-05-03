@@ -13,6 +13,10 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Última actualización de esta documentación:** 2026-05-02
 
+**Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
+
+El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** + drawer en móvil; invitados y clientes en ese layout conservan la **barra superior** clásica.
+
 ## Requisitos
 
 - PHP ^8.1, Composer 2, Node.js y npm
@@ -52,9 +56,10 @@ npm run build
 
 Desarrollo con recarga de assets: `npm run dev`.
 
-### Logo por defecto
+### Logo de la empresa y fotos de perfil
 
-Si no hay logo en base de datos, la tienda usa `public/logos/logo.jpeg` (también referenciado en vistas).
+- **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
+- **Foto de usuario**: columna `users.avatar_path` (disco `public/avatars/…`). Cada usuario la cambia en **Mi perfil** (icono de cámara). El administrador puede asignar una foto al **crear o editar** un usuario en `/admin/users`.
 
 ## Usuario administrador (semillas)
 
@@ -79,7 +84,7 @@ Acceso: `/login`.
 | Rol | Uso |
 |-----|-----|
 | `customer` | Registro público Breeze |
-| `admin` | Panel completo, pedidos, CRUD catálogo, API mutaciones |
+| `admin` | Panel completo, usuarios, pedidos, CRUD catálogo, API mutaciones |
 | `cashier`, `order_clerk`, `delivery` | Personal interno (dashboard propio; rutas admin según middleware) |
 | `supplier` | Portal `/portal-proveedor` (vistas dedicadas) |
 
@@ -91,23 +96,37 @@ php artisan beeffresh:user --email=caja@demo.local --name="Caja" --role=cashier 
 
 Roles válidos en el comando: `admin`, `cashier`, `order_clerk`, `delivery`, `supplier`, `customer`.
 
+## Usuarios y domicilios
+
+Los perfiles se agrupan en **tres ámbitos** (filtros en `UserRole::audienceId()` / etiquetas en español): **clientes** (`customer`), **empresa** (personal interno: `admin`, `cashier`, `order_clerk`, `delivery`) y **proveedores** (`supplier`).
+
+- **Clientes:** en **Mi perfil** deben completar teléfono, dirección, ciudad y provincia para poder **finalizar un pedido** o entrar a **checkout**; datos opcionales: cédula/RNC, indicaciones al domiciliario, código postal, país (por defecto `DO`).
+- **Proveedores:** pueden indicar **razón social** en el perfil.
+- **Administración:** CRUD de usuarios en `/admin/users` (listado con filtro por tipo y búsqueda). No se expone borrado masivo; al editar roles se evita quitar el último `admin`.
+
+Al confirmar un pedido, se guarda una **copia de domicilio** en la tabla `orders` (`shipping_*`) para conservar la dirección vigente aunque el cliente cambie el perfil después.
+
+Listado de usuarios vía `App\Repositories\UserRepository` + contrato `App\Contracts\UserRepositoryContract`.
+
 ## Rutas útiles
 
 | Área | Ruta / nota |
 |------|-------------|
-| Tienda (clientes) | `/`, `/productos-publicos`, `/carrito`, `/checkout` (auth) |
+| Tienda (clientes) | `/`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
 | Dashboard | `/dashboard` (según rol: admin con KPIs, cliente tienda `layouts.store`, proveedor redirige a portal) |
+| Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (admin) | `/admin/pedidos` |
+| Usuarios (admin) | `/admin/users` |
 | Portal proveedor | `/portal-proveedor` (auth + rol supplier) |
 | Perfil Breeze | `/profile` |
 
-La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vista cliente (inicio tienda, catálogo, carrito) y enlaces de gestión para administradores.
+La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vista cliente (inicio tienda, catálogo, carrito) y enlaces de gestión para administradores (incluye **Usuarios**).
 
 ## Tienda y pedidos
 
-- Carrito en sesión; **checkout** requiere usuario autenticado.
-- Confirmación: tablas **`orders`** y **`order_items`**, descuento de stock vía `App\Services\CheckoutService`.
-- Panel admin: listado en `/admin/pedidos`; dashboard admin muestra KPIs, pedidos recientes, stock bajo y volumen de pedidos (servicio `App\Services\AdminDashboardService`).
+- Carrito en sesión; solo **cuentas cliente** pueden cerrar compra en línea; **checkout** exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
+- Confirmación: tablas **`orders`** (con snapshot `shipping_*`) y **`order_items`**, descuento de stock vía `App\Services\CheckoutService`.
+- Panel admin: listado en `/admin/pedidos` (columna resumen de entrega); dashboard admin muestra KPIs, pedidos recientes, stock bajo y volumen de pedidos (`App\Services\AdminDashboardService`).
 
 ## API (Sanctum)
 
