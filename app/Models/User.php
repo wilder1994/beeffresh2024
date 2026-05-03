@@ -63,6 +63,11 @@ class User extends Authenticatable
         return $this->role->isStaff();
     }
 
+    public function isSupplier(): bool
+    {
+        return $this->role->isSupplier();
+    }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);

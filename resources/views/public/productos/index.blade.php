@@ -1,4 +1,4 @@
-@extends('layouts.public')
+@extends('layouts.store')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -34,7 +34,9 @@
 
                 <div class="p-4 flex flex-col justify-between flex-1">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-800">{{ $producto->nombre }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-800">
+                            <a href="{{ route('productos.publico.show', $producto) }}" class="hover:text-red-600 hover:underline">{{ $producto->nombre }}</a>
+                        </h3>
 
                         {{-- Descripción --}}
                         @if($producto->descripcion)

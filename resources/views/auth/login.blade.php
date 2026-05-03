@@ -1,4 +1,11 @@
 <x-guest-layout>
+    <div class="mb-6 text-center space-y-2">
+        <h1 class="text-xl font-semibold text-gray-800">Iniciar sesión</h1>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Para <strong>clientes</strong> que compran en la tienda en línea. Si eres <strong>personal</strong> o <strong>proveedor</strong>, usa el correo y contraseña que te asignó la empresa.
+        </p>
+    </div>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
@@ -39,9 +46,14 @@
                 </a>
             @endif
 
-            <x-primary-button class="ms-3">
-                {{ __(' Iniciar sesión') }}
+            <x-primary-button class="ms-3 !bg-[var(--bf-red)] hover:!brightness-110 focus:!ring-[var(--bf-red)]">
+                {{ __('Iniciar sesión') }}
             </x-primary-button>
         </div>
     </form>
+
+    <p class="mt-6 text-center text-sm text-gray-600">
+        ¿No tienes cuenta de cliente?
+        <a href="{{ route('register') }}" class="font-medium text-[var(--bf-red)] hover:underline">Regístrate aquí</a>
+    </p>
 </x-guest-layout>

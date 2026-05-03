@@ -1,12 +1,13 @@
-@extends('layouts.app')
+@extends('layouts.store')
 
-@section('titulo', 'Mi cuenta')
-@section('cabecera', 'Hola, ' . auth()->user()->name)
+@section('titulo', 'Mi cuenta · BEEF FRESH')
 
-@section('contenido')
+@section('content')
     <div class="py-6">
         <div class="max-w-3xl mx-auto px-4">
-            <div class="bg-base-200 p-8 rounded-2xl shadow-md space-y-6">
+            <p class="text-center text-sm uppercase tracking-widest text-[var(--bf-red)] mb-2">Área cliente</p>
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Hola, {{ auth()->user()->name }}</h1>
+            <div class="bg-white border border-amber-100/80 p-8 rounded-2xl shadow-md space-y-6">
                 <p class="text-lg text-center text-gray-700">
                     Desde aquí puedes gestionar tu perfil y ver el estado de tus pedidos cuando el módulo esté disponible.
                 </p>

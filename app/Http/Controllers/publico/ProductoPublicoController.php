@@ -29,4 +29,8 @@ class ProductoPublicoController extends Controller
         return view('public.productos.index', compact('productos', 'categorias'));
     }
 
+    public function show(Producto $producto)
+    {
+        return view('public.productos.show', compact('producto'));
+    }
 }

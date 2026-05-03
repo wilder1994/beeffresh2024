@@ -1,4 +1,11 @@
 <x-guest-layout>
+    <div class="mb-6 text-center space-y-2">
+        <h1 class="text-xl font-semibold text-gray-800">Crear cuenta de cliente</h1>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Este formulario es solo para <strong>compradores</strong>. Personal interno y proveedores reciben acceso por el administrador.
+        </p>
+    </div>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
 
@@ -41,7 +48,7 @@
                 ¿Ya tienes una cuenta?
             </a>
 
-            <x-primary-button class="ms-4 bg-red-800 hover:bg-red-900">
+            <x-primary-button class="ms-4 !bg-[var(--bf-red)] hover:!brightness-110 focus:!ring-[var(--bf-red)]">
                 Registrarse
             </x-primary-button>
         </div>

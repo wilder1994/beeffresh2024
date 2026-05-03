@@ -1,8 +1,8 @@
-@extends('layouts.app')
+@extends('layouts.store')
 
-@section('titulo', 'Inicio | BEEF FRESH')
+@section('titulo', 'Inicio | BEEF FRESH · Tienda')
 
-@section('contenido')
+@section('content')
 <div class="bg-white py-10 px-6 md:px-16">
     {{-- Encabezado principal de bienvenida --}}
     <div class="text-center mb-12">
@@ -76,11 +76,7 @@
     @endif
 </section>
 
-</div>
-@endsection
-
-@section('footer')
-    <footer class="bg-gray-100 text-gray-700 p-8 mt-10">
+    <footer id="nosotros" class="bg-gray-100 text-gray-700 p-8 mt-10 rounded-xl scroll-mt-24">
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
                 <h3 class="text-xl font-bold mb-2">Sobre BEEF FRESH</h3>
@@ -105,4 +101,6 @@
             </div>
         </div>
     </footer>
+
+</div>
 @endsection

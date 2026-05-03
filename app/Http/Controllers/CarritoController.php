@@ -18,10 +18,14 @@ class CarritoController extends Controller
         $carrito = session()->get('carrito', []);
 
         if ($producto->stock < $cantidad) {
-            return response()->json([
-                'mensaje' => 'Stock insuficiente para este producto.',
-                'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
-            ], 400);
+            if ($request->isJson()) {
+                return response()->json([
+                    'mensaje' => 'Stock insuficiente para este producto.',
+                    'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
+                ], 400);
+            }
+
+            return redirect()->back()->with('error', 'Stock insuficiente para este producto.');
         }
 
         if (isset($carrito[$id])) {
@@ -32,16 +36,22 @@ class CarritoController extends Controller
                 'nombre' => $producto->nombre,
                 'precio' => $producto->precio,
                 'imagen' => $producto->imagen,
-                'cantidad' => $cantidad
+                'cantidad' => $cantidad,
             ];
         }
 
         session()->put('carrito', $carrito);
 
-        return response()->json([
-            'mensaje' => 'Producto agregado al carrito',
-            'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
-        ]);
+        $totalProductos = array_sum(array_column($carrito, 'cantidad'));
+
+        if ($request->isJson()) {
+            return response()->json([
+                'mensaje' => 'Producto agregado al carrito',
+                'totalProductos' => $totalProductos,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Producto agregado al carrito.');
     }
 
 

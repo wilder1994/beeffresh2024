@@ -11,6 +11,7 @@ enum UserRole: string
     case Cashier = 'cashier';
     case OrderClerk = 'order_clerk';
     case Delivery = 'delivery';
+    case Supplier = 'supplier';
 
     public function label(): string
     {
@@ -20,12 +21,21 @@ enum UserRole: string
             self::Cashier => 'Caja',
             self::OrderClerk => 'Registro de pedidos',
             self::Delivery => 'Domiciliario',
+            self::Supplier => 'Proveedor',
         };
     }
 
-    /** Roles internos de la carnicería (no cliente comprador). */
+    /** Personal de la empresa (gestión interna). */
     public function isStaff(): bool
     {
-        return $this !== self::Customer;
+        return match ($this) {
+            self::Admin, self::Cashier, self::OrderClerk, self::Delivery => true,
+            default => false,
+        };
+    }
+
+    public function isSupplier(): bool
+    {
+        return $this === self::Supplier;
     }
 }

@@ -32,7 +32,7 @@ class CreateBeeffreshUser extends Command
         $roleRaw = (string) ($this->option('role') ?? 'admin');
         $roleEnum = UserRole::tryFrom($roleRaw);
         if ($roleEnum === null) {
-            $this->error('Rol inválido. Use: admin, cashier, order_clerk, delivery, customer');
+            $this->error('Rol inválido. Use: admin, cashier, order_clerk, delivery, supplier, customer');
 
             return self::FAILURE;
         }

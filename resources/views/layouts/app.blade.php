@@ -11,7 +11,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#f5b327] min-h-screen flex flex-col">
-    
     {{-- Header --}}
     <header>
         @include('layouts.navbar')
