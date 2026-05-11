@@ -11,7 +11,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-05
+**Última actualización de esta documentación:** 2026-05-10
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
 
@@ -19,7 +19,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Migraciones:** perfil de cliente, avatar y datos de envío en pedidos están definidos dentro de `create_users_table` y `create_orders_table` (sin migraciones `*_add_*` sueltas). Si tu BD local ya tenía el historial antiguo y tras actualizar el código ves inconsistencias, en desarrollo puedes recrear el esquema con `php artisan migrate:fresh` (y `db:seed` si usas semillas). En producción ya desplegada conviene migraciones incrementales; este repo se mantiene como esquema base único para instalaciones nuevas.
 
-El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** + drawer en móvil; invitados y clientes en ese layout conservan la **barra superior** clásica.
+El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** (colapsable en escritorio, panel lateral en móvil con overlay); invitados y clientes en ese layout conservan la **barra superior** clásica.
 
 ## Requisitos
 
@@ -59,6 +59,15 @@ npm run build
 ```
 
 Desarrollo con recarga de assets: `npm run dev`.
+
+### Acceso en LAN por IP (Laragon / Apache)
+
+En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffresh** por dirección IP usa el **puerto 8080** (`C:/laragon/etc/apache2/sites-enabled/beeffresh2024-ip.conf`: `VirtualHost *:8080`, `ServerName` = IP LAN). El **puerto 80** en esa misma IP puede quedar reservado para otro proyecto (p. ej. DecoWandy) sin conflicto de cabecera `Host`.
+
+- URL típica desde la red: `http://192.168.18.19:8080` (ajusta la IP si DHCP cambia).
+- En `.env`, `APP_URL` debe coincidir con esa URL, p. ej. `APP_URL=http://192.168.18.19:8080`.
+- En `httpd.conf` de Apache debe existir `Listen 8080`; tras cambiar la configuración, **reinicia Apache** en Laragon.
+- Sigue siendo válido `http://beeffresh2024.test` en el puerto **80** si tienes el virtual host automático (`auto.beeffresh2024.test.conf`) y la entrada en `hosts`.
 
 ### Logo de la empresa y fotos de perfil
 
@@ -116,7 +125,8 @@ Listado de usuarios vía `App\Repositories\UserRepository` + contrato `App\Contr
 
 | Área | Ruta / nota |
 |------|-------------|
-| Tienda (clientes) | `/`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Tienda (clientes) | `/`, `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
 | Dashboard | `/dashboard` (según rol: admin con KPIs, cliente tienda `layouts.store`, proveedor redirige a portal) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (admin) | `/admin/pedidos` |
@@ -131,10 +141,11 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - Carrito en sesión; solo **cuentas cliente** pueden cerrar compra en línea; **checkout** exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (con snapshot `shipping_*`) y **`order_items`**, descuento de stock vía `App\Services\CheckoutService`.
 - Panel admin: listado en `/admin/pedidos` (columna resumen de entrega); dashboard admin muestra KPIs, pedidos recientes, stock bajo y volumen de pedidos (`App\Services\AdminDashboardService`).
+- **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 
 ## API (Sanctum)
 
-Prefijo `/api` (ver `routes/api.php`). Lecturas públicas según rutas definidas; mutaciones con `auth:sanctum` y rol **admin** donde aplique. Token de ejemplo (tinker):
+Prefijo `/api` (ver `routes/api.php`). Lecturas públicas con **throttle**; mutaciones con `auth:sanctum`, rol **admin** y throttle donde aplique. Token de ejemplo (tinker):
 
 ```php
 User::where('email', config('admin.email'))->first()->createToken('api')->plainTextToken;
