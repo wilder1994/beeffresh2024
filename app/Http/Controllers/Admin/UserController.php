@@ -23,8 +23,31 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
-        $audience = $request->query('audience');
-        $audience = is_string($audience) && $audience !== '' ? $audience : null;
+        return $this->renderUserIndex($request, null);
+    }
+
+    public function indexClients(Request $request): View
+    {
+        return $this->renderUserIndex($request, 'clients');
+    }
+
+    public function indexCompany(Request $request): View
+    {
+        return $this->renderUserIndex($request, 'company');
+    }
+
+    public function indexProveedores(Request $request): View
+    {
+        return $this->renderUserIndex($request, 'suppliers');
+    }
+
+    private function renderUserIndex(Request $request, ?string $audienceFixed): View
+    {
+        $audience = $audienceFixed;
+        if ($audience === null) {
+            $q = $request->query('audience');
+            $audience = is_string($q) && $q !== '' ? $q : null;
+        }
 
         $search = $request->query('search');
         $search = is_string($search) ? trim($search) : null;
@@ -34,9 +57,26 @@ class UserController extends Controller
 
         $list = $this->users->paginateFiltered($audience, $search, 15);
 
+        $formAction = match ($audienceFixed) {
+            'clients' => route('admin.users.clientes'),
+            'company' => route('admin.users.empresa'),
+            'suppliers' => route('admin.users.proveedores'),
+            default => route('admin.users.index'),
+        };
+
+        $pageHeading = match ($audienceFixed) {
+            'clients' => 'Usuarios · Clientes',
+            'company' => 'Usuarios · Empresa',
+            'suppliers' => 'Usuarios · Proveedores',
+            default => 'Usuarios del sistema',
+        };
+
         return view('admin.users.index', [
             'users' => $list,
             'filters' => ['audience' => $audience, 'search' => $search],
+            'audienceFixed' => $audienceFixed,
+            'formAction' => $formAction,
+            'pageHeading' => $pageHeading,
         ]);
     }
 

@@ -4,50 +4,53 @@
 @section('cabecera', 'Modificar Promoción')
 
 @section('contenido')
-<div class="max-w-xl mx-auto p-6 bg-base-100 shadow-xl rounded-xl">
-    <form action="{{ route('promociones.update', $promocion) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
-
-        <div class="form-control mb-4">
-            <label class="label font-bold">Título</label>
-            <input type="text" name="titulo" class="input input-bordered" value="{{ old('titulo', $promocion->titulo) }}" required>
-        </div>
-
-        <div class="form-control mb-4">
-            <label class="label font-bold">Descripción</label>
-            <textarea name="descripcion" class="textarea textarea-bordered" rows="4">{{ old('descripcion', $promocion->descripcion) }}</textarea>
-        </div>
-
-        <div class="form-control mb-4">
-            <label class="label font-bold">Imagen actual</label>
-            @if($promocion->imagen)
-                <img src="{{ asset('storage/promociones/' . $promocion->imagen) }}" class="w-full h-40 object-cover rounded-xl mb-2">
-            @else
-                <p class="text-sm text-gray-500">No hay imagen cargada.</p>
-            @endif
-            <input type="file" name="imagen" accept="image/*" class="file-input file-input-bordered mt-2">
-        </div>
-
-        <div class="form-control mb-4">
-            <label class="label font-bold">Enlace (opcional)</label>
-            <input type="url" name="enlace" class="input input-bordered" value="{{ old('enlace', $promocion->enlace) }}">
-        </div>
-
-        <div class="form-control mt-6">
-            <button class="btn btn-primary">Actualizar</button>
-            <a href="{{ route('promociones.index') }}" class="btn btn-outline ml-4">Cancelar</a>
-        </div>
-
+    <div class="max-w-xl mx-auto px-3 sm:px-4 py-4">
         @if ($errors->any())
-            <div class="alert alert-error mt-4">
-                <ul class="list-disc list-inside text-sm text-red-600">
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                <ul class="list-disc list-inside space-y-0.5">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
         @endif
-    </form>
-</div>
+
+        <form action="{{ route('promociones.update', $promocion) }}" method="POST" enctype="multipart/form-data" class="bf-form-panel bf-form-panel-tight space-y-3">
+            @csrf
+            @method('PUT')
+
+            <div class="space-y-3">
+                <div>
+                    <label class="bf-label" for="epromo-titulo">Título</label>
+                    <input id="epromo-titulo" type="text" name="titulo" class="bf-input" value="{{ old('titulo', $promocion->titulo) }}" required>
+                </div>
+
+                <div>
+                    <label class="bf-label" for="epromo-desc">Descripción</label>
+                    <textarea id="epromo-desc" name="descripcion" class="bf-textarea min-h-[5rem]" rows="3">{{ old('descripcion', $promocion->descripcion) }}</textarea>
+                </div>
+
+                <div>
+                    <span class="bf-label normal-case">Imagen actual</span>
+                    @if($promocion->imagen)
+                        <img src="{{ asset('storage/promociones/' . $promocion->imagen) }}" class="w-full max-h-40 object-cover rounded-lg border border-stone-200 mt-1" alt="">
+                    @else
+                        <p class="text-xs text-stone-500 mt-1">Sin imagen.</p>
+                    @endif
+                    <label class="bf-label mt-2" for="epromo-img">Nueva imagen (opcional)</label>
+                    <input id="epromo-img" type="file" name="imagen" accept="image/*" class="bf-file">
+                </div>
+
+                <div>
+                    <label class="bf-label" for="epromo-enlace">Enlace (opcional)</label>
+                    <input id="epromo-enlace" type="url" name="enlace" class="bf-input" value="{{ old('enlace', $promocion->enlace) }}">
+                </div>
+            </div>
+
+            <div class="bf-form-actions justify-between gap-2">
+                <a href="{{ route('promociones.index') }}" class="bf-btn-ghost">Cancelar</a>
+                <button type="submit" class="bf-btn-primary">Actualizar</button>
+            </div>
+        </form>
+    </div>
 @endsection

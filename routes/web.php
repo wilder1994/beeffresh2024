@@ -65,6 +65,9 @@ Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->grou
     Route::get('/empresa', [CompanyProfileController::class, 'edit'])->name('empresa.edit');
     Route::put('/empresa', [CompanyProfileController::class, 'update'])->name('empresa.update');
     Route::get('/pedidos', [OrderController::class, 'index'])->name('pedidos.index');
+    Route::get('/users/clientes', [UserController::class, 'indexClients'])->name('users.clientes');
+    Route::get('/users/empresa', [UserController::class, 'indexCompany'])->name('users.empresa');
+    Route::get('/users/proveedores', [UserController::class, 'indexProveedores'])->name('users.proveedores');
     Route::resource('users', UserController::class)->except(['destroy']);
 });
 

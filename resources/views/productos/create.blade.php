@@ -1,15 +1,13 @@
 @extends('layouts.app')
 
 @section('titulo', 'Crear producto')
+@section('cabecera', 'Crear producto')
 
 @section('contenido')
-<div class="flex justify-center items-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-2xl bg-white p-8 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Crear nuevo producto</h2>
-
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-4">
         @if ($errors->any())
-            <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
-                <ul class="list-disc list-inside">
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                <ul class="list-disc list-inside space-y-0.5">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -17,67 +15,52 @@
             </div>
         @endif
 
-        <form action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('productos.store') }}" method="POST" enctype="multipart/form-data" class="bf-form-panel bf-form-panel-tight space-y-3">
             @csrf
 
-            {{-- Nombre --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Nombre</label>
-                <input type="text" name="nombre" value="{{ old('nombre') }}"
-                       class="w-full input input-bordered" required />
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="prod-nombre">Nombre</label>
+                    <input id="prod-nombre" type="text" name="nombre" value="{{ old('nombre') }}" class="bf-input" required />
+                </div>
 
-            {{-- Descripción --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Descripción</label>
-                <input type="text" name="descripcion" value="{{ old('descripcion') }}"
-                       class="w-full input input-bordered" />
-            </div>
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="prod-desc">Descripción</label>
+                    <input id="prod-desc" type="text" name="descripcion" value="{{ old('descripcion') }}" class="bf-input" />
+                </div>
 
-            {{-- Precio --}}
-            {{-- Precio --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Precio</label>
-                <div class="flex gap-4">
-                    <input type="number" name="precio" value="{{ old('precio') }}"
-                        class="w-full input input-bordered" step="0.01" required />
-
-                    <select name="unidad" class="input input-bordered" required>
+                <div>
+                    <label class="bf-label" for="prod-precio">Precio</label>
+                    <input id="prod-precio" type="number" name="precio" value="{{ old('precio') }}" class="bf-input" step="0.01" required />
+                </div>
+                <div>
+                    <label class="bf-label" for="prod-unidad">Unidad</label>
+                    <select id="prod-unidad" name="unidad" class="bf-select" required>
                         <option value="kilo" {{ old('unidad') == 'kilo' ? 'selected' : '' }}>Kilo</option>
                         <option value="libra" {{ old('unidad') == 'libra' ? 'selected' : '' }}>Libra</option>
                     </select>
                 </div>
+
+                <div>
+                    <label class="bf-label" for="prod-stock">Stock</label>
+                    <input id="prod-stock" type="number" name="stock" value="{{ old('stock') }}" class="bf-input" required />
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="prod-promo">Promoción (opcional)</label>
+                    <input id="prod-promo" type="text" name="promocion" value="{{ old('promocion') }}" class="bf-input" placeholder="Ej: 10% descuento, 2×1…" />
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="prod-img">Imagen del producto</label>
+                    <input id="prod-img" type="file" name="imagen" accept="image/*" class="bf-file" required />
+                </div>
             </div>
 
-
-            {{-- Stock --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Stock</label>
-                <input type="number" name="stock" value="{{ old('stock') }}"
-                       class="w-full input input-bordered" required />
-            </div>
-
-            {{-- Promoción (opcional) --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Promoción (opcional)</label>
-                <input type="text" name="promocion" value="{{ old('promocion') }}"
-                    class="w-full input input-bordered"
-                    placeholder="Ej: 10% de descuento, precio especial $14.000..." />
-            </div>
-
-            {{-- Imagen --}}
-            <div class="mb-6">
-                <label class="block text-sm font-medium mb-1">Imagen del producto</label>
-                <input type="file" name="imagen" accept="image/*"
-                       class="file-input file-input-bordered w-full" required />
-            </div>
-
-            {{-- Botones --}}
-            <div class="flex justify-between">
-                <a href="{{ route('productos.index') }}" class="btn btn-outline">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Crear producto</button>
+            <div class="bf-form-actions justify-between">
+                <a href="{{ route('productos.index') }}" class="bf-btn-ghost">Cancelar</a>
+                <button type="submit" class="bf-btn-primary">Crear producto</button>
             </div>
         </form>
     </div>
-</div>
 @endsection

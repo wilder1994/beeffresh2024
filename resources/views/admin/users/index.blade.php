@@ -1,28 +1,43 @@
 @extends('layouts.app')
 
 @section('titulo', 'Usuarios')
-@section('cabecera', 'Usuarios del sistema')
+@section('cabecera', $pageHeading ?? 'Usuarios del sistema')
 
 @section('contenido')
-    <div class="py-6 max-w-7xl mx-auto px-4">
-        <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-end mb-6">
-            <form method="get" action="{{ route('admin.users.index') }}" class="flex flex-wrap gap-3 items-end">
+    <div class="py-4 max-w-7xl mx-auto px-3 sm:px-4">
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 justify-between items-start sm:items-end mb-4">
+            <form method="get" action="{{ $formAction ?? route('admin.users.index') }}" class="flex flex-wrap gap-2 sm:gap-3 items-end">
+                @if(($audienceFixed ?? null) === null)
+                    <div>
+                        <label class="bf-label-muted normal-case">Tipo</label>
+                        <select name="audience" class="bf-select min-w-[10rem]" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <option value="clients" @selected(($filters['audience'] ?? '') === 'clients')>Clientes</option>
+                            <option value="company" @selected(($filters['audience'] ?? '') === 'company')>Empresa</option>
+                            <option value="suppliers" @selected(($filters['audience'] ?? '') === 'suppliers')>Proveedores</option>
+                        </select>
+                    </div>
+                @else
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                            @if(($audienceFixed ?? null) === 'clients')
+                                Clientes
+                            @elseif(($audienceFixed ?? null) === 'company')
+                                Empresa
+                            @elseif(($audienceFixed ?? null) === 'suppliers')
+                                Proveedores
+                            @endif
+                        </span>
+                        <a href="{{ route('admin.users.index') }}" class="link link-primary text-sm">Ver todos los usuarios</a>
+                    </div>
+                @endif
                 <div>
-                    <label class="label py-0"><span class="label-text text-xs">Tipo</span></label>
-                    <select name="audience" class="select select-bordered select-sm bg-white" onchange="this.form.submit()">
-                        <option value="">Todos</option>
-                        <option value="clients" @selected(($filters['audience'] ?? '') === 'clients')>Clientes</option>
-                        <option value="company" @selected(($filters['audience'] ?? '') === 'company')>Empresa</option>
-                        <option value="suppliers" @selected(($filters['audience'] ?? '') === 'suppliers')>Proveedores</option>
-                    </select>
+                    <label class="bf-label-muted normal-case">Buscar</label>
+                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Nombre, correo, teléfono…" class="bf-input max-w-xs" />
                 </div>
-                <div>
-                    <label class="label py-0"><span class="label-text text-xs">Buscar</span></label>
-                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Nombre, correo, teléfono…" class="input input-bordered input-sm bg-white w-full max-w-xs" />
-                </div>
-                <button type="submit" class="btn btn-sm bg-[var(--bf-red)] text-white border-0">Filtrar</button>
+                <button type="submit" class="bf-btn-primary">Filtrar</button>
             </form>
-            <a href="{{ route('admin.users.create') }}" class="btn btn-sm bg-[var(--bf-red)] text-white border-0">Nuevo usuario</a>
+            <a href="{{ route('admin.users.create') }}" class="bf-btn-primary shrink-0">Nuevo usuario</a>
         </div>
 
         <div class="overflow-x-auto bg-base-100 rounded-lg shadow">

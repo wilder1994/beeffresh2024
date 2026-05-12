@@ -4,115 +4,118 @@
     $isEdit = $user !== null;
 @endphp
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div class="md:col-span-2 flex flex-wrap items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-        <div class="flex items-center gap-3">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
+    <div class="md:col-span-2 flex flex-wrap items-start gap-3 p-3 rounded-lg bg-stone-50 border border-stone-200">
+        <div class="flex items-center gap-2.5 shrink-0">
             @if($isEdit && $user)
-                <x-user-avatar :user="$user" size="h-16 w-16" class="ring-2 ring-[var(--bf-red)]/20" />
+                <x-user-avatar :user="$user" size="h-14 w-14" class="ring-2 ring-[var(--bf-red)]/20" />
             @else
-                <div class="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-xl font-semibold ring-2 ring-[var(--bf-red)]/15">?</div>
+                <div class="h-14 w-14 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 text-sm font-semibold ring-2 ring-[var(--bf-red)]/15">?</div>
             @endif
-            <div>
-                <span class="label-text font-medium block">Foto de perfil</span>
-                <span class="text-xs text-gray-500">Opcional. El usuario puede cambiarla después en Mi perfil.</span>
+            <div class="min-w-0">
+                <span class="bf-label-muted normal-case">Foto de perfil</span>
+                <span class="text-[11px] text-stone-500 leading-tight block">Opcional · cambiable en Mi perfil</span>
             </div>
         </div>
-        <div class="flex-1 min-w-[200px]">
-            <input type="file" name="avatar" accept="image/*" class="file-input file-input-bordered file-input-sm w-full bg-white max-w-md" />
-            @error('avatar')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <div class="flex-1 min-w-[min(100%,220px)]">
+            <input type="file" name="avatar" accept="image/*" class="bf-file" />
+            @error('avatar')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
+
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text font-medium">Nombre</span></label>
-        <input type="text" name="name" value="{{ old('name', $user?->name) }}" required class="input input-bordered w-full bg-white" />
-        @error('name')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-name">Nombre</label>
+        <input id="user-name" type="text" name="name" value="{{ old('name', $user?->name) }}" required class="bf-input" />
+        @error('name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
+
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text font-medium">Correo</span></label>
-        <input type="email" name="email" value="{{ old('email', $user?->email) }}" required class="input input-bordered w-full bg-white" />
-        @error('email')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-email">Correo</label>
+        <input id="user-email" type="email" name="email" value="{{ old('email', $user?->email) }}" required class="bf-input" />
+        @error('email')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
     @if(!$isEdit)
         <div>
-            <label class="label"><span class="label-text font-medium">Contraseña</span></label>
-            <input type="password" name="password" required class="input input-bordered w-full bg-white" autocomplete="new-password" />
-            @error('password')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+            <label class="bf-label" for="user-password">Contraseña</label>
+            <input id="user-password" type="password" name="password" required class="bf-input" autocomplete="new-password" />
+            @error('password')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
-            <label class="label"><span class="label-text font-medium">Confirmar contraseña</span></label>
-            <input type="password" name="password_confirmation" required class="input input-bordered w-full bg-white" autocomplete="new-password" />
+            <label class="bf-label" for="user-password-confirmation">Confirmar contraseña</label>
+            <input id="user-password-confirmation" type="password" name="password_confirmation" required class="bf-input" autocomplete="new-password" />
         </div>
     @else
         <div class="md:col-span-2">
-            <label class="label"><span class="label-text font-medium">Nueva contraseña (opcional)</span></label>
-            <input type="password" name="password" class="input input-bordered w-full bg-white" autocomplete="new-password" />
-            @error('password')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
-            <input type="password" name="password_confirmation" class="input input-bordered w-full bg-white mt-2" autocomplete="new-password" placeholder="Confirmar nueva contraseña" />
+            <label class="bf-label" for="user-password-new">Nueva contraseña (opcional)</label>
+            <input id="user-password-new" type="password" name="password" class="bf-input" autocomplete="new-password" />
+            @error('password')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+            <label class="bf-label mt-2" for="user-password-confirm-new">Confirmar nueva contraseña</label>
+            <input id="user-password-confirm-new" type="password" name="password_confirmation" class="bf-input" autocomplete="new-password" placeholder="Repetir nueva contraseña" />
         </div>
     @endif
 
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text font-medium">Rol</span></label>
-        <select name="role" class="select select-bordered w-full bg-white" required>
+        <label class="bf-label" for="user-role">Rol</label>
+        <select id="user-role" name="role" class="bf-select" required>
             @foreach($roles as $role)
                 <option value="{{ $role->value }}" @selected(old('role', $user?->role?->value) === $role->value)>{{ $role->label() }} · {{ $role->audienceLabel() }}</option>
             @endforeach
         </select>
-        @error('role')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        @error('role')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 </div>
 
-<p class="text-sm font-semibold text-gray-700 mt-6 mb-2">Contacto y domicilio</p>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<p class="bf-form-section-title mt-5">Contacto y domicilio</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
     <div>
-        <label class="label"><span class="label-text">Teléfono</span></label>
-        <input type="text" name="phone" value="{{ old('phone', $user?->phone) }}" class="input input-bordered w-full bg-white" />
-        @error('phone')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-phone">Teléfono</label>
+        <input id="user-phone" type="text" name="phone" value="{{ old('phone', $user?->phone) }}" class="bf-input" />
+        @error('phone')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label"><span class="label-text">Cédula / RNC</span></label>
-        <input type="text" name="document_number" value="{{ old('document_number', $user?->document_number) }}" class="input input-bordered w-full bg-white" />
-        @error('document_number')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-document">Cédula / RNC</label>
+        <input id="user-document" type="text" name="document_number" value="{{ old('document_number', $user?->document_number) }}" class="bf-input" />
+        @error('document_number')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text">Empresa (proveedor)</span></label>
-        <input type="text" name="company_name" value="{{ old('company_name', $user?->company_name) }}" class="input input-bordered w-full bg-white" />
-        @error('company_name')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-company-name">Empresa (proveedor)</label>
+        <input id="user-company-name" type="text" name="company_name" value="{{ old('company_name', $user?->company_name) }}" class="bf-input" />
+        @error('company_name')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text">Dirección línea 1</span></label>
-        <input type="text" name="address_line1" value="{{ old('address_line1', $user?->address_line1) }}" class="input input-bordered w-full bg-white" />
-        @error('address_line1')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-address1">Dirección línea 1</label>
+        <input id="user-address1" type="text" name="address_line1" value="{{ old('address_line1', $user?->address_line1) }}" class="bf-input" />
+        @error('address_line1')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text">Dirección línea 2</span></label>
-        <input type="text" name="address_line2" value="{{ old('address_line2', $user?->address_line2) }}" class="input input-bordered w-full bg-white" />
-        @error('address_line2')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-address2">Dirección línea 2</label>
+        <input id="user-address2" type="text" name="address_line2" value="{{ old('address_line2', $user?->address_line2) }}" class="bf-input" />
+        @error('address_line2')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label"><span class="label-text">Ciudad</span></label>
-        <input type="text" name="city" value="{{ old('city', $user?->city) }}" class="input input-bordered w-full bg-white" />
-        @error('city')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-city">Ciudad</label>
+        <input id="user-city" type="text" name="city" value="{{ old('city', $user?->city) }}" class="bf-input" />
+        @error('city')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label"><span class="label-text">Provincia</span></label>
-        <input type="text" name="state" value="{{ old('state', $user?->state) }}" class="input input-bordered w-full bg-white" />
-        @error('state')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-state">Provincia</label>
+        <input id="user-state" type="text" name="state" value="{{ old('state', $user?->state) }}" class="bf-input" />
+        @error('state')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label"><span class="label-text">Código postal</span></label>
-        <input type="text" name="postal_code" value="{{ old('postal_code', $user?->postal_code) }}" class="input input-bordered w-full bg-white" />
-        @error('postal_code')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-postal">Código postal</label>
+        <input id="user-postal" type="text" name="postal_code" value="{{ old('postal_code', $user?->postal_code) }}" class="bf-input" />
+        @error('postal_code')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="label"><span class="label-text">País (ISO-2)</span></label>
-        <input type="text" name="country" maxlength="2" value="{{ old('country', $user?->country ?? 'DO') }}" class="input input-bordered w-full bg-white" />
-        @error('country')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-country">País (ISO-2)</label>
+        <input id="user-country" type="text" name="country" maxlength="2" value="{{ old('country', $user?->country ?? 'DO') }}" class="bf-input" />
+        @error('country')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div class="md:col-span-2">
-        <label class="label"><span class="label-text">Indicaciones entrega</span></label>
-        <textarea name="delivery_instructions" rows="2" class="textarea textarea-bordered w-full bg-white">{{ old('delivery_instructions', $user?->delivery_instructions) }}</textarea>
-        @error('delivery_instructions')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+        <label class="bf-label" for="user-delivery-notes">Indicaciones entrega</label>
+        <textarea id="user-delivery-notes" name="delivery_instructions" rows="2" class="bf-textarea min-h-[3.25rem]">{{ old('delivery_instructions', $user?->delivery_instructions) }}</textarea>
+        @error('delivery_instructions')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 </div>

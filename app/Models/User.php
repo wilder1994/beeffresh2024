@@ -89,6 +89,17 @@ class User extends Authenticatable
         return $this->role->isSupplier();
     }
 
+    /** Listado admin acorde al público del usuario (clientes, empresa o proveedores). */
+    public function adminUsersListRoute(): string
+    {
+        return match ($this->role->audienceId()) {
+            'clients' => route('admin.users.clientes'),
+            'company' => route('admin.users.empresa'),
+            'suppliers' => route('admin.users.proveedores'),
+            default => route('admin.users.index'),
+        };
+    }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);

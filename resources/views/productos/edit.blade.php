@@ -1,15 +1,13 @@
 @extends('layouts.app')
 
 @section('titulo', 'Editar producto')
+@section('cabecera', 'Editar producto')
 
 @section('contenido')
-<div class="flex justify-center items-center min-h-screen bg-gray-100">
-    <div class="w-full max-w-2xl bg-white p-8 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Editar producto</h2>
-
+    <div class="max-w-3xl mx-auto px-3 sm:px-4 py-4">
         @if ($errors->any())
-            <div class="mb-4 p-4 bg-red-100 text-red-800 rounded">
-                <ul class="list-disc list-inside">
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                <ul class="list-disc list-inside space-y-0.5">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
@@ -17,79 +15,63 @@
             </div>
         @endif
 
-        <form action="{{ route('productos.update', $producto->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('productos.update', $producto->id) }}" method="POST" enctype="multipart/form-data" class="bf-form-panel bf-form-panel-tight space-y-3">
             @csrf
             @method('PUT')
 
-            {{-- Nombre --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Nombre</label>
-                <input type="text" name="nombre" value="{{ old('nombre', $producto->nombre) }}"
-                       class="w-full input input-bordered" required />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="ep-nombre">Nombre</label>
+                    <input id="ep-nombre" type="text" name="nombre" value="{{ old('nombre', $producto->nombre) }}" class="bf-input" required />
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="ep-desc">Descripción</label>
+                    <input id="ep-desc" type="text" name="descripcion" value="{{ old('descripcion', $producto->descripcion) }}" class="bf-input" />
+                </div>
+
+                <div>
+                    <label class="bf-label" for="ep-precio">Precio</label>
+                    <input id="ep-precio" type="number" name="precio" value="{{ old('precio', $producto->precio) }}" class="bf-input" required />
+                </div>
+
+                <div>
+                    <label class="bf-label" for="ep-unidad">Unidad de medida</label>
+                    <select id="ep-unidad" name="unidad" class="bf-select" required>
+                        <option value="libra" {{ old('unidad', $producto->unidad) == 'libra' ? 'selected' : '' }}>Libra</option>
+                        <option value="kilo" {{ old('unidad', $producto->unidad) == 'kilo' ? 'selected' : '' }}>Kilo</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="ep-promo">Promoción (opcional)</label>
+                    <input id="ep-promo" type="text" name="promocion" value="{{ old('promocion', $producto->promocion) }}" class="bf-input" placeholder="Ej: 2×1, 10% descuento…" />
+                </div>
+
+                <div>
+                    <label class="bf-label" for="ep-stock">Stock</label>
+                    <input id="ep-stock" type="number" name="stock" value="{{ old('stock', $producto->stock) }}" class="bf-input" required />
+                </div>
+
+                <div class="md:col-span-2">
+                    <span class="bf-label normal-case">Imagen actual</span>
+                    @if($producto->imagen)
+                        <img src="{{ asset('storage/imagenes/' . $producto->imagen) }}" alt="" class="w-28 h-28 object-cover rounded-lg border border-stone-200 mt-1" />
+                    @else
+                        <p class="text-xs text-stone-500 mt-1">Sin imagen.</p>
+                    @endif
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="bf-label" for="ep-img">Cambiar imagen (opcional)</label>
+                    <input id="ep-img" type="file" name="imagen" accept="image/*" class="bf-file" />
+                </div>
             </div>
 
-            {{-- Descripción --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Descripción</label>
-                <input type="text" name="descripcion" value="{{ old('descripcion', $producto->descripcion) }}"
-                       class="w-full input input-bordered" />
-            </div>
-
-            {{-- Precio --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Precio</label>
-                <input type="number" name="precio" value="{{ old('precio', $producto->precio) }}"
-                       class="w-full input input-bordered" required />
-            </div>
-
-            {{-- Unidad --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Unidad de medida</label>
-                <select name="unidad" class="w-full select select-bordered" required>
-                    <option value="libra" {{ old('unidad', $producto->unidad) == 'libra' ? 'selected' : '' }}>Libra</option>
-                    <option value="kilo" {{ old('unidad', $producto->unidad) == 'kilo' ? 'selected' : '' }}>Kilo</option>
-                </select>
-            </div>
-
-            {{-- Promoción --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Promoción (opcional)</label>
-                <input type="text" name="promocion" value="{{ old('promocion', $producto->promocion) }}"
-                       class="w-full input input-bordered" placeholder="Ej: 2x1, 10% de descuento, etc." />
-            </div>
-
-            {{-- Stock --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Stock</label>
-                <input type="number" name="stock" value="{{ old('stock', $producto->stock) }}"
-                       class="w-full input input-bordered" required />
-            </div>
-
-            {{-- Imagen actual --}}
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Imagen actual</label>
-                @if($producto->imagen)
-                    <img src="{{ asset('storage/imagenes/' . $producto->imagen) }}"
-                         alt="Imagen del producto"
-                         class="w-32 h-32 object-cover rounded border" />
-                @else
-                    <p class="text-gray-500">No hay imagen cargada.</p>
-                @endif
-            </div>
-
-            {{-- Nueva imagen --}}
-            <div class="mb-6">
-                <label class="block text-sm font-medium mb-1">Cambiar imagen (opcional)</label>
-                <input type="file" name="imagen" accept="image/*"
-                       class="file-input file-input-bordered w-full" />
-            </div>
-
-            {{-- Botones --}}
-            <div class="flex justify-between">
-                <a href="{{ route('productos.index') }}" class="btn btn-outline">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Actualizar producto</button>
+            <div class="bf-form-actions justify-between">
+                <a href="{{ route('productos.index') }}" class="bf-btn-ghost">Cancelar</a>
+                <button type="submit" class="bf-btn-primary">Actualizar producto</button>
             </div>
         </form>
     </div>
-</div>
 @endsection

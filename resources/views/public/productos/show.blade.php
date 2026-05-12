@@ -26,7 +26,7 @@
                 <input type="hidden" name="producto_id" value="{{ $producto->id }}">
                 <div class="flex items-center gap-4">
                     <label class="text-sm font-medium">Cantidad</label>
-                    <input type="number" name="cantidad" value="1" min="1" class="input input-bordered w-24" required>
+                    <input type="number" name="cantidad" value="1" min="1" class="bf-input w-24 max-w-[7rem]" required>
                 </div>
                 <button type="submit" class="btn bg-red-600 hover:bg-red-700 text-white border-0">Agregar al carrito</button>
             </form>

@@ -15,7 +15,7 @@
             </div>
             <div class="flex gap-2 shrink-0">
                 <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm bg-[var(--bf-red)] text-white border-0">Editar</a>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-ghost">Volver al listado</a>
+                <a href="{{ $user->adminUsersListRoute() }}" class="btn btn-sm btn-ghost">Volver al listado</a>
             </div>
         </div>
 
