@@ -11,11 +11,11 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-11
+**Última actualización de esta documentación:** 2026-05-12
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
 
-**Formularios (panel admin, catálogo, perfil):** clases utilitarias en la capa `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file`, etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). Tras cambiar CSS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
+**Formularios (panel admin, catálogo, perfil):** clases utilitarias en la capa `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file`, etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). En **`/admin/users/create`** y **`/admin/users/{user}/edit`** el partial `resources/views/admin/users/_form.blade.php` usa rejilla de **dos columnas** desde `md` y contenedor `max-w-4xl` para mejor densidad. Tras cambiar CSS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
 
 **Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes en **`/admin/empresa`**.
 
@@ -75,8 +75,8 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 
 ### Logo de la empresa y fotos de perfil
 
-- **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
-- **Foto de usuario**: columna `users.avatar_path` (disco `public/avatars/…`). Cada usuario la cambia en **Mi perfil** (icono de cámara). El administrador puede asignar una foto al **crear o editar** un usuario en `/admin/users`.
+- **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo circular en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
+- **Foto de usuario**: columna `users.avatar_path` (disco `public/avatars/…`). En **Mi perfil** el usuario elige archivo con el botón circular de cámara sobre el avatar. En **crear/editar usuario** (`/admin/users`) la UI replica el mismo patrón: **círculo centrado** (icono de perfil si no hay imagen; vista previa si ya hay `avatar_path` o tras elegir archivo), **input `file` oculto** y **botón circular pequeño de cámara** en la esquina inferior derecha (mismo estilo que el logo en `sidebar-staff`). Vista previa local con JavaScript hasta guardar el formulario.
 
 ## Usuario administrador (semillas)
 

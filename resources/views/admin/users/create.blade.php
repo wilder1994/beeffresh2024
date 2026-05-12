@@ -4,7 +4,7 @@
 @section('cabecera', 'Crear usuario')
 
 @section('contenido')
-    <div class="py-4 md:py-6 max-w-3xl mx-auto px-3 sm:px-4">
+    <div class="py-4 md:py-6 max-w-4xl mx-auto px-3 sm:px-4">
         <form method="post" action="{{ route('admin.users.store') }}" enctype="multipart/form-data" class="bf-form-panel bf-form-panel-tight space-y-4">
             @csrf
             @include('admin.users._form', ['user' => null, 'roles' => $roles])
