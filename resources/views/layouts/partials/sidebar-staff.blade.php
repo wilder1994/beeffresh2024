@@ -1,4 +1,6 @@
 @php
+    use App\Domain\Users\PermissionKey;
+    use App\Domain\Users\RoleSlug;
     use App\Models\Logo;
     use App\Models\User;
     $logoPrincipal = Logo::where('tipo', 'principal')->first();
@@ -6,14 +8,16 @@
         ? asset('storage/logos/'.$logoPrincipal->imagen)
         : asset('logos/logo.jpeg');
     $isAdmin = auth()->user()->isAdmin();
+    $canOrders = auth()->user()->can(PermissionKey::MODULE_ORDERS);
+    $canCatalog = auth()->user()->can(PermissionKey::MODULE_CATALOG);
+    $canUsers = auth()->user()->can(PermissionKey::MODULE_USERS);
+    $canSettings = auth()->user()->can(PermissionKey::MODULE_SETTINGS);
 
     $navActive = 'flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition border-l-4';
     $navIdle = 'border-transparent text-white/90 hover:bg-white/10';
     $navOn = 'border-[var(--bf-gold)] bg-white/15 text-white';
-    $operacionesHijoActivo = $isAdmin && request()->routeIs(
-        'admin.pedidos.*',
-        'productos.*',
-    );
+    $operacionesHijoActivo = ($canOrders && request()->routeIs('admin.pedidos.*'))
+        || ($canCatalog && request()->routeIs('productos.*'));
     $usuariosNavUser = request()->route('user');
     $usuariosNavUser = $usuariosNavUser instanceof User ? $usuariosNavUser : null;
     $audienceQuery = request()->query('audience');
@@ -22,24 +26,20 @@
         || request()->routeIs('admin.users.create');
     $usuariosClientesActivo = request()->routeIs('admin.users.clientes')
         || ($audienceQuery === 'clients' && request()->routeIs('admin.users.index'))
-        || ($usuariosNavUser && $usuariosNavUser->role->audienceId() === 'clients'
+        || ($usuariosNavUser && RoleSlug::audienceId($usuariosNavUser->primaryRoleSlug() ?? '') === 'clients'
             && (request()->routeIs('admin.users.show') || request()->routeIs('admin.users.edit')));
     $usuariosEmpresaActivo = request()->routeIs('admin.users.empresa')
         || ($audienceQuery === 'company' && request()->routeIs('admin.users.index'))
-        || ($usuariosNavUser && $usuariosNavUser->role->audienceId() === 'company'
+        || ($usuariosNavUser && RoleSlug::audienceId($usuariosNavUser->primaryRoleSlug() ?? '') === 'company'
             && (request()->routeIs('admin.users.show') || request()->routeIs('admin.users.edit')));
     $usuariosProveedoresActivo = request()->routeIs('admin.users.proveedores')
         || ($audienceQuery === 'suppliers' && request()->routeIs('admin.users.index'))
-        || ($usuariosNavUser && $usuariosNavUser->role->audienceId() === 'suppliers'
+        || ($usuariosNavUser && RoleSlug::audienceId($usuariosNavUser->primaryRoleSlug() ?? '') === 'suppliers'
             && (request()->routeIs('admin.users.show') || request()->routeIs('admin.users.edit')));
-    $usuariosHijoActivo = $isAdmin && request()->routeIs('admin.users.*');
-    $ajustesHijoActivo = $isAdmin && request()->routeIs(
-        'videos.*',
-        'recetas.*',
-        'promociones.*',
-        'cortes.*',
-        'admin.empresa.*',
-    );
+    $usuariosHijoActivo = $canUsers && request()->routeIs('admin.users.*');
+    $ajustesHijoActivo = ($canCatalog && (request()->routeIs('videos.*') || request()->routeIs('recetas.*') || request()->routeIs('promociones.*') || request()->routeIs('cortes.*')))
+        || ($canSettings && request()->routeIs('admin.empresa.*'))
+        || ($canUsers && request()->routeIs('admin.positions.*'));
     $sectionHeading = 'flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 pt-3 sm:pt-4 pb-1 text-[9px] sm:text-[10px] uppercase tracking-wider text-white/45 font-semibold';
 @endphp
 
@@ -77,7 +77,7 @@
             Inicio
         </a>
 
-        @if($isAdmin)
+        @if($canOrders || $canCatalog)
             <div class="space-y-0.5 pt-1" x-data="{ operacionesOpen: {{ $operacionesHijoActivo ? 'true' : 'false' }} }" role="group" aria-label="Operaciones">
                 <button
                     type="button"
@@ -95,17 +95,23 @@
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-white/45 transition-transform duration-200" x-bind:class="{ 'rotate-180': operacionesOpen }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 <div x-show="operacionesOpen" x-transition class="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-white/15 space-y-0.5 pb-0.5">
+                    @if($canOrders)
                     <a href="{{ route('admin.pedidos.index') }}" @class([$navActive, request()->routeIs('admin.pedidos.*') ? $navOn : $navIdle])>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                         Pedidos
                     </a>
+                    @endif
+                    @if($canCatalog)
                     <a href="{{ route('productos.index') }}" @class([$navActive, request()->routeIs('productos.*') ? $navOn : $navIdle])>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                         Catálogo
                     </a>
+                    @endif
                 </div>
             </div>
+        @endif
 
+        @if($canUsers)
             <div class="space-y-0.5 pt-1" x-data="{ usuariosOpen: {{ $usuariosHijoActivo ? 'true' : 'false' }} }" role="group" aria-label="Usuarios">
                 <button
                     type="button"
@@ -141,7 +147,9 @@
                     </a>
                 </div>
             </div>
+        @endif
 
+        @if($canCatalog || $canSettings || $canUsers)
             <div class="space-y-0.5 pt-1" x-data="{ ajustesOpen: {{ $ajustesHijoActivo ? 'true' : 'false' }} }" role="group" aria-label="Ajustes de tienda y contenido">
                 <button
                     type="button"
@@ -159,6 +167,7 @@
                     <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-white/45 transition-transform duration-200" x-bind:class="{ 'rotate-180': ajustesOpen }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 <div x-show="ajustesOpen" x-transition class="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-white/15 space-y-0.5 pb-0.5">
+                @if($canCatalog)
                 <a href="{{ route('videos.index') }}" @class([$navActive, request()->routeIs('videos.*') ? $navOn : $navIdle])>
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                     Videos
@@ -175,25 +184,25 @@
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                     Cortes
                 </a>
+                @endif
                 <a href="{{ route('home') }}" target="_blank" rel="noopener" class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border-l-4 border-transparent text-white/90 hover:bg-white/10">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
                     Ver en tienda
                 </a>
+                @if($canSettings)
                 <a href="{{ route('admin.empresa.edit') }}" @class([$navActive, request()->routeIs('admin.empresa.*') ? $navOn : $navIdle])>
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     Editar contenido
                 </a>
+                @endif
+                @if($canUsers)
+                <a href="{{ route('admin.positions.index') }}" @class([$navActive, request()->routeIs('admin.positions.*') ? $navOn : $navIdle])>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                    Cargos
+                </a>
+                @endif
                 </div>
             </div>
-        @else
-            <div class="{{ $sectionHeading }}" role="presentation">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 text-white/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                <span>Ajustes</span>
-            </div>
-            <a href="{{ route('home') }}" target="_blank" rel="noopener" class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border-l-4 border-transparent text-white/90 hover:bg-white/10">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
-                Ver en tienda
-            </a>
         @endif
     </nav>
 

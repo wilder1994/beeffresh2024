@@ -1,6 +1,6 @@
 # Beeffresh
 
-Plataforma web para digitalizar la gestión de una carnicería: **tienda pública** (inicio, catálogo, carrito, checkout con pedidos en base de datos), **contenidos** (videos, recetas, promociones, cortes), **panel de administración** con métricas (KPIs, alertas, stock) y **acceso por roles** ([Laravel Breeze](https://laravel.com/docs/breeze) + Sanctum).
+Plataforma web para digitalizar la gestión de una carnicería: **tienda pública** (inicio, catálogo, carrito, checkout con pedidos en base de datos), **contenidos** (videos, recetas, promociones, cortes), **panel de administración** con métricas (KPIs, alertas, stock) y **acceso por roles y permisos** ([Laravel Breeze](https://laravel.com/docs/breeze), **Livewire**, **Spatie Permission**, Sanctum para API).
 
 **Repositorio:** [github.com/wilder1994/beeffresh2024](https://github.com/wilder1994/beeffresh2024)
 
@@ -9,17 +9,18 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | PHP | ^8.1 |
 | Laravel | ^10 |
 | Frontend | Vite, Tailwind CSS, DaisyUI |
+| Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-12
+**Última actualización de esta documentación:** 2026-05-13
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
 
-**Formularios (panel admin, catálogo, perfil):** clases utilitarias en la capa `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file`, etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). En **`/admin/users/create`** y **`/admin/users/{user}/edit`** el partial `resources/views/admin/users/_form.blade.php` usa rejilla de **dos columnas** desde `md` y contenedor `max-w-4xl` para mejor densidad. Tras cambiar CSS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
+**Formularios (panel admin, catálogo, perfil):** clases utilitarias en la capa `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file`, etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). **Usuarios (admin):** alta y edición con **Livewire 3** (`App\Livewire\Admin\UserForm`, vista `resources/views/livewire/admin/user-form.blade.php`); persistencia en `App\Services\Admin\AdminUserPersistence`. **Cargos:** CRUD en `/admin/positions` (modelo `Position`; el domiciliario es un **cargo** con slug `domiciliario`, no un rol). Tras cambiar CSS o JS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
 
 **Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes en **`/admin/empresa`**.
 
-**Migraciones:** perfil de cliente, avatar y datos de envío en pedidos están definidos dentro de `create_users_table` y `create_orders_table` (sin migraciones `*_add_*` sueltas). Si tu BD local ya tenía el historial antiguo y tras actualizar el código ves inconsistencias, en desarrollo puedes recrear el esquema con `php artisan migrate:fresh` (y `db:seed` si usas semillas). En producción ya desplegada conviene migraciones incrementales; este repo se mantiene como esquema base único para instalaciones nuevas.
+**Migraciones:** `users` mantiene datos de cuenta (nombre, documento, teléfono, email, avatar `users.avatar`, estado). Perfiles en tablas `employee_profiles`, `customer_profiles`, `supplier_profiles`; roles y permisos con **Spatie** (`roles`, `permissions`, tablas pivot). Config publicada: `config/permission.php`. En desarrollo, ante un esquema desalineado: `php artisan migrate:fresh --seed`. En producción ya desplegada conviene migraciones incrementales; este repo define el esquema base para instalaciones nuevas.
 
 El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** (colapsable en escritorio, panel lateral en móvil con overlay); invitados y clientes en ese layout conservan la **barra superior** clásica. Los administradores tienen **Operaciones** (pedidos, catálogo), **Usuarios** (Todos, Clientes, Empresa, Proveedores) y **Ajustes** como acordeones (clic en el título abre o cierra). Cada bloque se despliega abierto si la ruta actual pertenece a ese grupo.
 
@@ -62,7 +63,17 @@ npm run build
 
 Desarrollo con recarga de assets: `npm run dev`.
 
-**Laragon (Windows):** si en PowerShell o Cursor `npm` no se reconoce, Node suele estar en `C:\laragon\bin\nodejs\node-v18\`. Desde la raíz del proyecto puedes usar la ruta completa, p. ej. `& 'C:\laragon\bin\nodejs\node-v18\npm.cmd' run build`, añadir esa carpeta al `PATH` del sistema, o usar la terminal de Laragon tras **Menu → Path → Add Laragon to Path**.
+**Laragon (Windows):** si en PowerShell o Cursor no se reconocen `php`, `composer` o `npm`:
+
+- **PHP:** suele estar en `C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\` (ajusta la carpeta si Laragon instaló otra versión).
+- **Composer:** `C:\laragon\bin\composer\composer.bat` (requiere que `php` esté en el `PATH` de esa sesión).
+- **Node / npm:** `C:\laragon\bin\nodejs\node-v18\` (p. ej. `& 'C:\laragon\bin\nodejs\node-v18\npm.cmd' run build`).
+
+Alternativa: **Menu → Path → Add Laragon to Path** y usar la **terminal de Laragon**, o ejecutar Composer/Artisan desde la raíz del proyecto con esas rutas en el `PATH` de la sesión.
+
+**Livewire:** en `resources/views/layouts/app.blade.php` están `@livewireStyles` (head) y `@livewireScripts` (antes de `</body>`). Tras `composer install`, conviene `php artisan optimize:clear` si algo de paquetes no se refleja.
+
+**PSR-4:** el catálogo público usa `App\Http\Controllers\Publico\ProductoPublicoController` en la carpeta **`app/Http/Controllers/Publico/`** (P mayúscula), coherente con el namespace.
 
 ### Acceso en LAN por IP (Laragon / Apache)
 
@@ -76,7 +87,7 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 ### Logo de la empresa y fotos de perfil
 
 - **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo circular en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
-- **Foto de usuario**: columna `users.avatar_path` (disco `public/avatars/…`). En **Mi perfil** el usuario elige archivo con el botón circular de cámara sobre el avatar. En **crear/editar usuario** (`/admin/users`) la UI replica el mismo patrón: **círculo centrado** (icono de perfil si no hay imagen; vista previa si ya hay `avatar_path` o tras elegir archivo), **input `file` oculto** y **botón circular pequeño de cámara** en la esquina inferior derecha (mismo estilo que el logo en `sidebar-staff`). Vista previa local con JavaScript hasta guardar el formulario.
+- **Foto de usuario**: columna `users.avatar` (disco `public/avatars/…`). En **Mi perfil** el usuario elige archivo con el botón circular de cámara sobre el avatar. En **crear/editar usuario** (`/admin/users`) el componente Livewire replica el mismo patrón de avatar.
 
 ## Usuario administrador (semillas)
 
@@ -96,34 +107,36 @@ php artisan db:seed --class=AdminUserSeeder
 
 Acceso: `/login`.
 
-## Roles (`App\Enums\UserRole`)
+## Roles y permisos (Spatie)
+
+Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`. Constantes en `App\Domain\Users\RoleSlug`. Los permisos de módulo para empleados viven en `App\Domain\Users\PermissionKey` (p. ej. `module.catalog`, `module.orders`); se sembraron con `RolePermissionSeeder`. El **administrador** pasa todas las comprobaciones `can()` vía `Gate::before` en `AuthServiceProvider`.
 
 | Rol | Uso |
 |-----|-----|
-| `customer` | Registro público Breeze |
+| `customer` | Registro público Breeze; perfil de entrega en `customer_profiles` |
 | `admin` | Panel completo, usuarios, pedidos, CRUD catálogo, API mutaciones |
-| `cashier`, `order_clerk`, `delivery` | Personal interno (dashboard propio; rutas admin según middleware) |
-| `supplier` | Portal `/portal-proveedor` (vistas dedicadas) |
+| `employee` | Personal interno; **cargo** en `employee_profiles` → `positions` (p. ej. domiciliario) |
+| `supplier` | Portal `/portal-proveedor`; datos comerciales en `supplier_profiles` |
 
-Middleware `role:*` en rutas web y API. Crear cuentas de personal:
+Middleware `role:*`, `permission:*` y `role_or_permission:*` (alias en `app/Http/Kernel.php`). Crear cuentas desde consola:
 
 ```bash
-php artisan beeffresh:user --email=caja@demo.local --name="Caja" --role=cashier --password=secreto
+php artisan beeffresh:user --email=caja@demo.local --name="Caja Demo" --role=employee --password=secreto
 ```
 
-Roles válidos en el comando: `admin`, `cashier`, `order_clerk`, `delivery`, `supplier`, `customer`.
+Roles válidos en el comando: `admin`, `employee`, `customer`, `supplier`.
 
 ## Usuarios y domicilios
 
-Los perfiles se agrupan en **tres ámbitos** (filtros en `UserRole::audienceId()` / etiquetas en español): **clientes** (`customer`), **empresa** (personal interno: `admin`, `cashier`, `order_clerk`, `delivery`) y **proveedores** (`supplier`).
+Los listados se agrupan en **tres ámbitos** (filtros y etiquetas vía `App\Domain\Users\RoleSlug::audienceId()`): **clientes** (`customer`), **empresa** (`admin`, `employee`) y **proveedores** (`supplier`).
 
-- **Clientes:** en **Mi perfil** deben completar teléfono, dirección, ciudad y provincia para poder **finalizar un pedido** o entrar a **checkout**; datos opcionales: cédula/RNC, indicaciones al domiciliario, código postal, país (por defecto `DO`).
-- **Proveedores:** pueden indicar **razón social** en el perfil.
-- **Administración:** CRUD de usuarios en `/admin/users` (vista “todos” con filtro por tipo), listados dedicados `/admin/users/clientes`, `/admin/users/empresa` y `/admin/users/proveedores` (sidebar **Usuarios**: Todos, Clientes, Empresa, Proveedores). No se expone borrado masivo; al editar roles se evita quitar el último `admin`.
+- **Clientes:** dirección y ciudad en `customer_profiles`; en **Mi perfil** deben completar teléfono, dirección, ciudad y provincia para **checkout**; el modelo `User` expone `filledDeliveryBasics()` / `hasCompleteDeliveryProfile()`.
+- **Proveedores:** razón social, NIT y contacto en `supplier_profiles` (editable también en perfil).
+- **Administración:** alta/edición con Livewire; listados `/admin/users`, `/admin/users/clientes`, `/admin/users/empresa`, `/admin/users/proveedores`. **Cargos:** `/admin/positions`. No se expone borrado masivo de usuarios; al cambiar rol se evita dejar sin ningún `admin`.
 
-Al confirmar un pedido, se guarda una **copia de domicilio** en la tabla `orders` (`shipping_*`) para conservar la dirección vigente aunque el cliente cambie el perfil después.
+Al confirmar un pedido, se guarda una **copia de domicilio** en `orders` (`shipping_*`) vía `User::snapshotShippingFromProfile()`.
 
-Listado de usuarios vía `App\Repositories\UserRepository` + contrato `App\Contracts\UserRepositoryContract`.
+Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepositoryContract`.
 
 ## Rutas útiles
 
@@ -134,7 +147,7 @@ Listado de usuarios vía `App\Repositories\UserRepository` + contrato `App\Contr
 | Dashboard | `/dashboard` (según rol: admin con KPIs, cliente tienda `layouts.store`, proveedor redirige a portal) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (admin) | `/admin/pedidos` |
-| Usuarios (admin) | `/admin/users`, `/admin/users/clientes`, `/admin/users/empresa`, `/admin/users/proveedores` |
+| Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
 | Portal proveedor | `/portal-proveedor` (auth + rol supplier) |
 | Perfil Breeze | `/profile` |
 
@@ -159,7 +172,7 @@ Cabecera: `Authorization: Bearer {token}`.
 
 ## Pruebas automatizadas
 
-Los tests de características usan `RefreshDatabase`. En **`phpunit.xml`** la base de datos de pruebas es **`beeffresh2024_test`** (no la misma que desarrollo). Al ejecutar tests, `tests/CreatesApplication.php` intenta crear esa base en MySQL si el nombre termina en `_test`.
+Los tests de características usan `RefreshDatabase`. `tests/TestCase.php` ejecuta `RolePermissionSeeder` y `PositionSeeder` en cada caso para que existan roles Spatie y cargos base antes de usar `User::factory()`. En **`phpunit.xml`** la base de datos de pruebas es **`beeffresh2024_test`** (no la misma que desarrollo). Al ejecutar tests, `tests/CreatesApplication.php` intenta crear esa base en MySQL si el nombre termina en `_test`.
 
 ```bash
 php artisan test
@@ -169,7 +182,7 @@ php artisan test
 
 ## Base de datos y migraciones
 
-Orden de migraciones coherente con FKs (p. ej. `categorias` antes de `productos`; `users` con `role` en migración inicial).
+Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles (`employee_profiles`, `customer_profiles`, `supplier_profiles`), resto del dominio (`productos`, `orders`, etc.). La columna de roles en `users` **no** se usa: roles en tablas Spatie.
 
 ### Comando destructivo (solo si lo necesitas a sabiendas)
 

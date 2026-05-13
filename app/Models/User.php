@@ -1,103 +1,80 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use App\Enums\UserRole;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Domain\Users\RoleSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use HasRoles;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    use Notifiable;
+
+    protected $guard_name = 'web';
+
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
+        'document_type',
+        'document_number',
+        'phone',
         'email',
         'password',
-        'role',
-        'phone',
-        'document_number',
-        'company_name',
-        'address_line1',
-        'address_line2',
-        'city',
-        'state',
-        'postal_code',
-        'country',
-        'delivery_instructions',
-        'avatar_path',
+        'avatar',
+        'status',
+        'last_login_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'role' => UserRole::class,
+        'last_login_at' => 'datetime',
     ];
 
     protected static function booted(): void
     {
         static::deleting(function (User $user): void {
-            if ($user->avatar_path) {
-                Storage::disk('public')->delete($user->avatar_path);
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
             }
         });
     }
 
-    public function isAdmin(): bool
+    public function getNameAttribute(): string
     {
-        return $this->role === UserRole::Admin;
+        return trim($this->first_name.' '.$this->last_name);
     }
 
-    public function isCustomer(): bool
+    public function employeeProfile(): HasOne
     {
-        return $this->role === UserRole::Customer;
+        return $this->hasOne(EmployeeProfile::class);
     }
 
-    public function isStaff(): bool
+    public function customerProfile(): HasOne
     {
-        return $this->role->isStaff();
+        return $this->hasOne(CustomerProfile::class);
     }
 
-    public function isSupplier(): bool
+    public function supplierProfile(): HasOne
     {
-        return $this->role->isSupplier();
-    }
-
-    /** Listado admin acorde al público del usuario (clientes, empresa o proveedores). */
-    public function adminUsersListRoute(): string
-    {
-        return match ($this->role->audienceId()) {
-            'clients' => route('admin.users.clientes'),
-            'company' => route('admin.users.empresa'),
-            'suppliers' => route('admin.users.proveedores'),
-            default => route('admin.users.index'),
-        };
+        return $this->hasOne(SupplierProfile::class);
     }
 
     public function orders(): HasMany
@@ -105,16 +82,72 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(RoleSlug::ADMIN);
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->hasRole(RoleSlug::CUSTOMER);
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->hasAnyRole([RoleSlug::ADMIN, RoleSlug::EMPLOYEE]);
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->hasRole(RoleSlug::EMPLOYEE);
+    }
+
+    public function isSupplier(): bool
+    {
+        return $this->hasRole(RoleSlug::SUPPLIER);
+    }
+
+    /** Primer rol Spatie (una sola asignación prevista en UI). */
+    public function primaryRoleSlug(): ?string
+    {
+        $role = $this->roles->first();
+
+        return $role?->name;
+    }
+
+    /** Ciudad mostrada en listados admin (cliente / proveedor). */
+    public function primaryCityForList(): ?string
+    {
+        return $this->customerProfile?->city
+            ?? $this->supplierProfile?->city;
+    }
+
+    public function adminUsersListRoute(): string
+    {
+        $slug = $this->primaryRoleSlug();
+
+        return match (RoleSlug::audienceId($slug ?? '')) {
+            'clients' => route('admin.users.clientes'),
+            'suppliers' => route('admin.users.proveedores'),
+            'company' => route('admin.users.empresa'),
+            default => route('admin.users.index'),
+        };
+    }
+
     public function avatarUrl(): ?string
     {
-        if ($this->avatar_path === null || $this->avatar_path === '') {
+        if ($this->avatar === null || $this->avatar === '') {
             return null;
         }
 
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar_path);
+        return Storage::disk('public')->url($this->avatar);
     }
 
-    /** Datos mínimos para despacho a domicilio (solo aplica a compradores). */
     public function hasCompleteDeliveryProfile(): bool
     {
         if (! $this->isCustomer()) {
@@ -126,30 +159,35 @@ class User extends Authenticatable
 
     public function filledDeliveryBasics(): bool
     {
+        $p = $this->customerProfile;
+        if ($p === null) {
+            return false;
+        }
+
         return $this->phone !== null && trim((string) $this->phone) !== ''
-            && $this->address_line1 !== null && trim((string) $this->address_line1) !== ''
-            && $this->city !== null && trim((string) $this->city) !== ''
-            && $this->state !== null && trim((string) $this->state) !== '';
+            && $p->address !== null && trim((string) $p->address) !== ''
+            && $p->city !== null && trim((string) $p->city) !== ''
+            && $p->state !== null && trim((string) $p->state) !== '';
     }
 
     /**
-     * Copia al crear el pedido para conservar domicilio aunque el cliente cambie su perfil después.
-     *
      * @return array<string, string|null>
      */
     public function snapshotShippingFromProfile(): array
     {
+        $p = $this->customerProfile;
+
         return [
             'shipping_recipient_name' => $this->name,
             'shipping_phone' => $this->phone,
             'shipping_document_number' => $this->document_number,
-            'shipping_address_line1' => $this->address_line1,
-            'shipping_address_line2' => $this->address_line2,
-            'shipping_city' => $this->city,
-            'shipping_state' => $this->state,
-            'shipping_postal_code' => $this->postal_code,
-            'shipping_country' => $this->country ?? 'DO',
-            'shipping_notes' => $this->delivery_instructions,
+            'shipping_address_line1' => $p?->address,
+            'shipping_address_line2' => $p?->neighborhood,
+            'shipping_city' => $p?->city,
+            'shipping_state' => $p?->state,
+            'shipping_postal_code' => $p?->postal_code,
+            'shipping_country' => $p?->country ?? 'DO',
+            'shipping_notes' => $p?->delivery_notes,
         ];
     }
 }

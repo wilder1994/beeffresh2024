@@ -4,26 +4,30 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\UserRole;
+use App\Domain\Users\RoleSlug;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Usuario con acceso al panel (middleware auth). En local las credenciales
-     * vienen de .env; en producción definir ADMIN_* con valores seguros.
-     */
     public function run(): void
     {
-        User::updateOrCreate(
+        $full = config('admin.name', 'Administrador');
+        $parts = preg_split('/\s+/', trim((string) $full), 2) ?: [];
+        $first = $parts[0] ?? 'Administrador';
+        $last = $parts[1] ?? 'Sistema';
+
+        $user = User::query()->updateOrCreate(
             ['email' => config('admin.email')],
             [
-                'name' => config('admin.name'),
+                'first_name' => $first,
+                'last_name' => $last,
                 'password' => config('admin.password'),
                 'email_verified_at' => now(),
-                'role' => UserRole::Admin,
+                'status' => 'active',
             ]
         );
+
+        $user->syncRoles([RoleSlug::ADMIN]);
     }
 }

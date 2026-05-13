@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+    use App\Domain\Users\RoleSlug;
+    $roleSlug = $user->primaryRoleSlug();
+@endphp
+
 @section('titulo', 'Usuario · '.$user->name)
 @section('cabecera', $user->name)
 
@@ -8,9 +13,13 @@
         <div class="flex flex-wrap gap-4 justify-between items-center">
             <div class="flex items-center gap-4 min-w-0">
                 <x-user-avatar :user="$user" size="h-16 w-16" class="ring-2 ring-[var(--bf-red)]/30 shrink-0" />
-                <div class="min-w-0">
-                    <span class="badge badge-lg badge-outline">{{ $user->role->label() }}</span>
-                    <span class="badge badge-ghost ml-2">{{ $user->role->audienceLabel() }}</span>
+                <div class="min-w-0 flex flex-wrap gap-2 items-center">
+                    @if($roleSlug)
+                        <span class="badge badge-lg badge-outline">{{ RoleSlug::label($roleSlug) }}</span>
+                        <span class="badge badge-ghost">{{ RoleSlug::audienceLabel($roleSlug) }}</span>
+                    @else
+                        <span class="badge badge-ghost">Sin rol</span>
+                    @endif
                 </div>
             </div>
             <div class="flex gap-2 shrink-0">
@@ -24,18 +33,26 @@
                 <div><span class="text-gray-500 text-sm">Correo</span><br>{{ $user->email }}</div>
                 <div><span class="text-gray-500 text-sm">Teléfono</span><br>{{ $user->phone ?? '—' }}</div>
                 <div><span class="text-gray-500 text-sm">Identificación</span><br>{{ $user->document_number ?? '—' }}</div>
-                @if($user->isSupplier())
-                    <div><span class="text-gray-500 text-sm">Empresa</span><br>{{ $user->company_name ?? '—' }}</div>
+                @if($user->isSupplier() && $user->supplierProfile)
+                    <div><span class="text-gray-500 text-sm">Empresa</span><br>{{ $user->supplierProfile->company_name ?? '—' }}</div>
+                    <div><span class="text-gray-500 text-sm">NIT</span><br>{{ $user->supplierProfile->nit ?? '—' }}</div>
                 @endif
             </div>
 
-            @if($user->isCustomer())
+            @if($user->isEmployee() && $user->employeeProfile)
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-800 mb-2">Empleado</h3>
+                    <p class="text-sm"><span class="text-gray-500">Cargo:</span> {{ $user->employeeProfile->position?->name ?? '—' }}</p>
+                </div>
+            @endif
+
+            @if($user->isCustomer() && $user->customerProfile)
                 <div class="p-4">
                     <h3 class="font-semibold text-gray-800 mb-2">Domicilio de entrega</h3>
-                    <p class="text-sm whitespace-pre-line">{{ $user->address_line1 ?? '—' }}@if($user->address_line2)<br>{{ $user->address_line2 }}@endif</p>
-                    <p class="text-sm mt-2">{{ $user->city ?? '' }}@if($user->state), {{ $user->state }}@endif @if($user->postal_code) · {{ $user->postal_code }}@endif · {{ $user->country ?? 'DO' }}</p>
-                    @if($user->delivery_instructions)
-                        <p class="text-sm mt-2"><span class="text-gray-500">Indicaciones:</span> {{ $user->delivery_instructions }}</p>
+                    <p class="text-sm whitespace-pre-line">{{ $user->customerProfile->address ?? '—' }}@if($user->customerProfile->neighborhood)<br>{{ $user->customerProfile->neighborhood }}@endif</p>
+                    <p class="text-sm mt-2">{{ $user->customerProfile->city ?? '' }}@if($user->customerProfile->state), {{ $user->customerProfile->state }}@endif @if($user->customerProfile->postal_code) · {{ $user->customerProfile->postal_code }}@endif · {{ $user->customerProfile->country ?? 'DO' }}</p>
+                    @if($user->customerProfile->delivery_notes)
+                        <p class="text-sm mt-2"><span class="text-gray-500">Indicaciones:</span> {{ $user->customerProfile->delivery_notes }}</p>
                     @endif
                 </div>
             @endif

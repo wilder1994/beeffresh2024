@@ -9,6 +9,7 @@
 
     @include('layouts.partials.fonts')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="bf-panel-bg min-h-screen antialiased text-[var(--bf-ink)]">
 
@@ -98,5 +99,6 @@
     </div>
 @endif
 
+@livewireScripts
 </body>
 </html>

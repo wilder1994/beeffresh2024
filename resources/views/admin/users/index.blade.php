@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    use App\Domain\Users\RoleSlug;
+@endphp
+
 @section('titulo', 'Usuarios')
 @section('cabecera', $pageHeading ?? 'Usuarios del sistema')
 
@@ -55,13 +59,14 @@
                 </thead>
                 <tbody>
                     @forelse($users as $u)
+                        @php($slug = $u->primaryRoleSlug())
                         <tr>
                             <td class="font-medium">{{ $u->name }}</td>
                             <td>{{ $u->email }}</td>
-                            <td><span class="badge badge-ghost badge-sm">{{ $u->role->audienceLabel() }}</span></td>
-                            <td>{{ $u->role->label() }}</td>
+                            <td><span class="badge badge-ghost badge-sm">{{ $slug ? RoleSlug::audienceLabel($slug) : '—' }}</span></td>
+                            <td>{{ $slug ? RoleSlug::label($slug) : '—' }}</td>
                             <td>{{ $u->phone ?? '—' }}</td>
-                            <td>{{ $u->city ?? '—' }}</td>
+                            <td>{{ $u->primaryCityForList() ?? '—' }}</td>
                             <td class="text-right whitespace-nowrap">
                                 <a href="{{ route('admin.users.show', $u) }}" class="link link-primary text-sm">Ver</a>
                                 <a href="{{ route('admin.users.edit', $u) }}" class="link text-sm ml-2">Editar</a>

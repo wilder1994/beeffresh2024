@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\UserRole;
+use App\Domain\Users\RoleSlug;
 use App\Http\Controllers\Controller;
+use App\Models\CustomerProfile;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
@@ -15,17 +16,12 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): View
     {
         return view('auth.register');
     }
 
     /**
-     * Handle an incoming registration request.
-     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
@@ -36,11 +32,26 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
+        $full = trim((string) $request->name);
+        $parts = preg_split('/\s+/', $full, 2, PREG_SPLIT_NO_EMPTY) ?: [];
+        $first = $parts[0] ?? 'Usuario';
+        $last = $parts[1] ?? '';
+
+        $user = User::query()->create([
+            'first_name' => $first,
+            'last_name' => $last,
             'email' => $request->email,
             'password' => $request->password,
-            'role' => UserRole::Customer,
+            'status' => 'active',
+        ]);
+
+        $user->assignRole(RoleSlug::CUSTOMER);
+        CustomerProfile::query()->create([
+            'user_id' => $user->id,
+            'country' => 'DO',
+            'accepts_promotions' => true,
+            'loyalty_points' => 0,
+            'balance' => 0,
         ]);
 
         event(new Registered($user));

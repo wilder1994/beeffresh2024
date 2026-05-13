@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
+use App\Domain\Users\RoleSlug;
 use App\Services\AdminDashboardService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -15,13 +15,12 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        return match ($user->role) {
-            UserRole::Admin => view('dashboard', $adminDashboard->metrics()),
-            UserRole::Customer => view('dashboards.customer'),
-            UserRole::Cashier => view('dashboards.cashier'),
-            UserRole::OrderClerk => view('dashboards.order-clerk'),
-            UserRole::Delivery => view('dashboards.delivery'),
-            UserRole::Supplier => redirect()->route('supplier.home'),
+        return match (true) {
+            $user->hasRole(RoleSlug::ADMIN) => view('dashboard', $adminDashboard->metrics()),
+            $user->hasRole(RoleSlug::CUSTOMER) => view('dashboards.customer'),
+            $user->hasRole(RoleSlug::SUPPLIER) => redirect()->route('supplier.home'),
+            $user->hasRole(RoleSlug::EMPLOYEE) => view('dashboards.employee'),
+            default => view('dashboards.employee'),
         };
     }
 }
