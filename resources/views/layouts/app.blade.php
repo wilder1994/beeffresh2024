@@ -15,13 +15,14 @@
 
 @if(auth()->check() && auth()->user()->isStaff())
     <div x-data="staffLayout()" class="min-h-screen" x-on:keydown.escape.window="closeMobileMenu()">
-        <div
-            x-show="mobileMenuOpen"
-            x-transition.opacity
-            x-on:click="closeMobileMenu()"
-            class="fixed inset-0 bg-black/40 z-30 lg:hidden"
-            x-cloak
-        ></div>
+        {{-- x-if: el scrim no permanece en el DOM al cerrar (evita capa bloqueando clics si Alpine queda desincronizado) --}}
+        <template x-if="mobileMenuOpen">
+            <div
+                x-transition.opacity
+                x-on:click="closeMobileMenu()"
+                class="fixed inset-0 bg-black/40 z-30 lg:hidden"
+            ></div>
+        </template>
 
         <button
             type="button"
