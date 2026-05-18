@@ -10,8 +10,9 @@ use App\Models\SupplierProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Support\ProfileModalRedirect;
+use App\Support\UserAvatarStorage;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -42,10 +43,7 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-            $user->avatar = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = UserAvatarStorage::replace($user->avatar, $request->file('avatar'));
         }
 
         if ($user->isDirty('email')) {
@@ -53,6 +51,8 @@ class ProfileController extends Controller
         }
 
         $user->save();
+        $user->refresh();
+        auth()->setUser($user);
 
         if ($user->isCustomer()) {
             CustomerProfile::query()->updateOrCreate(
@@ -63,7 +63,7 @@ class ProfileController extends Controller
                     'city' => $data['customer_city'],
                     'state' => $data['customer_state'],
                     'postal_code' => $data['customer_postal_code'] ?? null,
-                    'country' => $data['customer_country'] ?? 'DO',
+                    'country' => $data['customer_country'] ?? 'CO',
                     'delivery_notes' => $data['customer_delivery_notes'] ?? null,
                 ]
             );
@@ -84,7 +84,7 @@ class ProfileController extends Controller
             );
         }
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return ProfileModalRedirect::after($request, ['status' => 'profile-updated']);
     }
 
     public function destroy(Request $request): RedirectResponse

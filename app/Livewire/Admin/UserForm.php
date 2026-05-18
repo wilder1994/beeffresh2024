@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Admin\AdminUserPersistence;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -19,6 +20,10 @@ class UserForm extends Component
     use WithFileUploads;
 
     public ?int $userId = null;
+
+    public bool $embedded = false;
+
+    public string $activeTab = 'cuenta';
 
     public string $first_name = '';
 
@@ -123,9 +128,10 @@ class UserForm extends Component
 
     public ?string $existing_avatar_url = null;
 
-    public function mount(?int $userId = null): void
+    public function mount(?int $userId = null, bool $embedded = false): void
     {
         $this->userId = $userId;
+        $this->embedded = $embedded;
         if ($userId !== null) {
             $user = User::query()
                 ->with(['roles', 'employeeProfile.position', 'customerProfile', 'supplierProfile'])
@@ -134,11 +140,57 @@ class UserForm extends Component
         }
     }
 
+    public function setActiveTab(string $tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
+    private function focusTabForValidationErrors(ValidationException $e): void
+    {
+        $keys = array_keys($e->validator->errors()->messages());
+        $employeePrefixes = ['employee_', 'permissions'];
+        $customerPrefixes = ['customer_'];
+        $supplierPrefixes = ['supplier_'];
+
+        foreach ($keys as $key) {
+            foreach ($employeePrefixes as $prefix) {
+                if (str_starts_with($key, $prefix) && $this->role_slug === RoleSlug::EMPLOYEE) {
+                    $this->activeTab = 'empleado';
+
+                    return;
+                }
+            }
+            foreach ($customerPrefixes as $prefix) {
+                if (str_starts_with($key, $prefix) && $this->role_slug === RoleSlug::CUSTOMER) {
+                    $this->activeTab = 'cliente';
+
+                    return;
+                }
+            }
+            foreach ($supplierPrefixes as $prefix) {
+                if (str_starts_with($key, $prefix) && $this->role_slug === RoleSlug::SUPPLIER) {
+                    $this->activeTab = 'proveedor';
+
+                    return;
+                }
+            }
+        }
+    }
+
     public function updatedRoleSlug(string $value): void
     {
         if ($value !== RoleSlug::EMPLOYEE) {
             $this->permissions = [];
             $this->employee_position_id = null;
+            if ($this->activeTab === 'empleado') {
+                $this->activeTab = 'cuenta';
+            }
+        }
+        if ($value !== RoleSlug::CUSTOMER && $this->activeTab === 'cliente') {
+            $this->activeTab = 'cuenta';
+        }
+        if ($value !== RoleSlug::SUPPLIER && $this->activeTab === 'proveedor') {
+            $this->activeTab = 'cuenta';
         }
     }
 
@@ -166,7 +218,12 @@ class UserForm extends Component
 
     public function save(AdminUserPersistence $persistence): void
     {
-        $this->validate($this->rules(), $this->messages());
+        try {
+            $this->validate($this->rules(), $this->messages());
+        } catch (ValidationException $e) {
+            $this->focusTabForValidationErrors($e);
+            throw $e;
+        }
 
         if ($this->userId !== null) {
             $existing = User::query()->findOrFail($this->userId);
@@ -191,6 +248,14 @@ class UserForm extends Component
         );
 
         session()->flash('success', $this->userId ? 'Usuario actualizado.' : 'Usuario creado correctamente.');
+
+        if ($this->embedded) {
+            $this->userId = $user->id;
+            $this->hydrateFromUser($user->fresh(['roles', 'employeeProfile.position', 'customerProfile', 'supplierProfile']));
+            $this->dispatch('user-saved', userId: $user->id);
+
+            return;
+        }
 
         $this->redirect(route('admin.users.show', $user));
     }

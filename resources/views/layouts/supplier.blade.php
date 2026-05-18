@@ -1,3 +1,10 @@
+@php
+    use App\Models\Logo;
+    $logoPrincipal = Logo::where('tipo', 'principal')->first();
+    $logoPrincipalSrc = ($logoPrincipal && $logoPrincipal->imagen)
+        ? asset('storage/logos/'.$logoPrincipal->imagen)
+        : asset('logos/logo.jpeg');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -8,22 +15,28 @@
     @include('layouts.partials.fonts')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen flex flex-col bf-panel-bg text-[var(--bf-ink)]">
-    <header class="border-b border-amber-100/80 bg-white/95 backdrop-blur shadow-sm">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
-            <div>
-                <p class="text-xs uppercase tracking-wider text-[var(--bf-muted)]">Proveedores</p>
-                <h1 class="text-lg font-brand text-[var(--bf-brand)]">BEEF FRESH</h1>
-            </div>
-            <nav class="flex flex-wrap items-center gap-3 text-sm">
-                <a href="{{ route('supplier.home') }}" class="px-3 py-2 rounded-xl hover:bg-[var(--bf-cream-muted)] {{ request()->routeIs('supplier.home') ? 'bg-[var(--bf-cream-muted)] font-medium text-[var(--bf-rust)]' : 'text-[var(--bf-ink)]' }}">Resumen</a>
-                <a href="{{ route('supplier.contact') }}" class="px-3 py-2 rounded-xl hover:bg-[var(--bf-cream-muted)] {{ request()->routeIs('supplier.contact') ? 'bg-[var(--bf-cream-muted)] font-medium text-[var(--bf-rust)]' : 'text-[var(--bf-ink)]' }}">Contacto</a>
-                <a href="{{ route('home') }}" class="text-[var(--bf-muted)] hover:text-[var(--bf-red)]">Ver tienda pública</a>
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="text-red-700 hover:underline">Salir</button>
-                </form>
+<body class="min-h-screen flex flex-col bf-panel-bg text-[var(--bf-ink)] antialiased">
+    <header class="sticky top-0 z-50 border-b border-amber-100/80 bg-[var(--bf-brand)] text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <a href="{{ route('supplier.home') }}" class="flex items-center gap-3 shrink-0 group" title="BEEF FRESH · Portal proveedor">
+                <img src="{{ $logoPrincipalSrc }}" alt="BEEF FRESH" class="h-11 w-11 rounded-full object-cover ring-2 ring-white/30">
+                <div class="leading-tight">
+                    <span class="font-brand tracking-tight text-lg">BEEF FRESH</span>
+                    <span class="block text-[11px] uppercase tracking-widest text-white/75">Portal proveedores</span>
+                </div>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
+                <a href="{{ route('supplier.home') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 {{ request()->routeIs('supplier.home') ? 'bg-white/15' : '' }}">Resumen</a>
+                <a href="{{ route('supplier.contact') }}" class="px-3 py-2 rounded-lg hover:bg-white/10 {{ request()->routeIs('supplier.contact') ? 'bg-white/15' : '' }}">Contacto</a>
+                <a href="{{ route('home') }}" class="px-3 py-2 rounded-lg hover:bg-white/10">Tienda pública</a>
             </nav>
+
+            <div class="flex items-center gap-2 shrink-0 ml-auto">
+                @auth
+                    <x-nav-user-menu :user="auth()->user()" variant="dark" />
+                @endauth
+            </div>
         </div>
     </header>
 
@@ -37,5 +50,9 @@
     <footer class="shrink-0 py-2 px-3 text-center border-0 bg-transparent mt-auto" role="contentinfo">
         @include('layouts.footer')
     </footer>
+
+    @auth
+        <x-account.profile-dialog />
+    @endauth
 </body>
 </html>

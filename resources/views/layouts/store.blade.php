@@ -26,6 +26,24 @@
     </main>
 
     @include('layouts.partials.footer-store')
+
+    @auth
+        <x-account.profile-dialog />
+    @endauth
+
     @stack('scripts')
+    {{-- Si hubo modal/dialog de depuración (p. ej. Livewire) u overflow bloqueado, al entrar a la tienda se normaliza el documento --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('dialog[open]').forEach(function (d) {
+                try { d.close(); } catch (e) {}
+            });
+            document.querySelectorAll('#livewire-error').forEach(function (el) {
+                el.remove();
+            });
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+        });
+    </script>
 </body>
 </html>

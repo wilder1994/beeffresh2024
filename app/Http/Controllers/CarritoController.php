@@ -97,8 +97,9 @@ class CarritoController extends Controller
 
         if (! $user->hasCompleteDeliveryProfile()) {
             return redirect()
-                ->route('profile.edit')
-                ->with('error', 'Completa en tu perfil el teléfono y la dirección de entrega (ciudad y provincia) antes de pedir a domicilio.');
+                ->back()
+                ->with('error', 'Completa en tu perfil el teléfono y la dirección de entrega (ciudad y provincia) antes de pedir a domicilio.')
+                ->with('open_profile_modal', true);
         }
 
         try {

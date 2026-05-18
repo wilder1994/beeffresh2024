@@ -4,7 +4,9 @@
     $logoPrincipalSrc = ($logoPrincipal && $logoPrincipal->imagen)
         ? asset('storage/logos/'.$logoPrincipal->imagen)
         : asset('logos/logo.jpeg');
-    $inicioHref = auth()->check() ? route('dashboard') : route('home');
+    $inicioHref = auth()->check()
+        ? \App\Support\PostLoginRedirect::url(auth()->user())
+        : route('home');
 @endphp
 
 {{-- Barra superior para invitados y clientes (perfil). Personal interno usa sidebar. --}}
@@ -48,7 +50,7 @@
                     <x-user-avatar :user="auth()->user()" size="h-10 w-10" />
                 </div>
                 <ul class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-white text-gray-900 rounded-box w-52">
-                    <li><a href="{{ route('profile.edit') }}">Mi perfil</a></li>
+                    <li><x-profile.open-button tag="a" class="w-full text-left rounded-lg px-3 py-2 hover:bg-base-200">Mi perfil</x-profile.open-button></li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

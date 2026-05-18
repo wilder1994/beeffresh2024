@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CintaController;
 use App\Http\Controllers\Admin\CompanyProfileController;
 use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Publico\ProductoPublicoController;
 use App\Http\Controllers\RecetaController;
 use App\Http\Controllers\NosotrosController;
 use App\Http\Controllers\VideoRecetaController;
+use App\Models\CintaSlide;
 use App\Models\Corte;
 use App\Models\Promocion;
 use App\Models\VideoReceta;
@@ -30,11 +32,12 @@ Route::post('/carrito/agregar', [CarritoController::class, 'agregar'])
 Route::get('/carrito', [CarritoController::class, 'ver'])->name('carrito.ver');
 
 Route::get('/', function () {
+    $cintaSlides = CintaSlide::query()->orderBy('sort_order')->orderBy('id')->get();
     $videos = VideoReceta::latest()->take(6)->get();
     $promociones = Promocion::latest()->take(6)->get();
     $cortes = Corte::latest()->take(8)->get();
 
-    return view('welcome', compact('videos', 'promociones', 'cortes'));
+    return view('welcome', compact('cintaSlides', 'videos', 'promociones', 'cortes'));
 })->name('home');
 
 Route::get('/nosotros', NosotrosController::class)->name('nosotros');
@@ -63,6 +66,10 @@ Route::middleware(['auth', 'role_or_permission:admin|module.settings'])->name('a
     Route::post('/logo/empresa', [LogoController::class, 'update'])->name('logo.update');
     Route::get('/empresa', [CompanyProfileController::class, 'edit'])->name('empresa.edit');
     Route::put('/empresa', [CompanyProfileController::class, 'update'])->name('empresa.update');
+    Route::get('/cinta', [CintaController::class, 'edit'])->name('cinta.edit');
+    Route::post('/cinta', [CintaController::class, 'store'])->name('cinta.store');
+    Route::put('/cinta/{cintaSlide}', [CintaController::class, 'update'])->name('cinta.update');
+    Route::delete('/cinta/{cintaSlide}', [CintaController::class, 'destroy'])->name('cinta.destroy');
 });
 
 Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->group(function () {

@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Support\UserAvatarStorage;
 use Illuminate\Support\Facades\Storage;
 
 final class AdminUserPersistence
@@ -43,10 +44,7 @@ final class AdminUserPersistence
             $user->save();
 
             if ($avatar instanceof UploadedFile) {
-                if ($user->avatar) {
-                    Storage::disk('public')->delete($user->avatar);
-                }
-                $user->avatar = $avatar->store('avatars', 'public');
+                $user->avatar = UserAvatarStorage::replace($user->avatar, $avatar);
                 $user->save();
             }
 

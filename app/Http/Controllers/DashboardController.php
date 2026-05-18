@@ -17,7 +17,7 @@ class DashboardController extends Controller
 
         return match (true) {
             $user->hasRole(RoleSlug::ADMIN) => view('dashboard', $adminDashboard->metrics()),
-            $user->hasRole(RoleSlug::CUSTOMER) => view('dashboards.customer'),
+            $user->hasRole(RoleSlug::CUSTOMER) => redirect()->route('home'),
             $user->hasRole(RoleSlug::SUPPLIER) => redirect()->route('supplier.home'),
             $user->hasRole(RoleSlug::EMPLOYEE) => view('dashboards.employee'),
             default => view('dashboards.employee'),

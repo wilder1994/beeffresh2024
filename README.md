@@ -12,13 +12,21 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-13
+**Última actualización de esta documentación:** 2026-05-18
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
 
 **Formularios (panel admin, catálogo, perfil):** clases utilitarias en la capa `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file`, etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). **Usuarios (admin):** alta y edición con **Livewire 3** (`App\Livewire\Admin\UserForm`, vista `resources/views/livewire/admin/user-form.blade.php`); persistencia en `App\Services\Admin\AdminUserPersistence`. **Cargos:** CRUD en `/admin/positions` (modelo `Position`; el domiciliario es un **cargo** con slug `domiciliario`, no un rol). Tras cambiar CSS o JS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
 
 **Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes en **`/admin/empresa`**.
+
+**Cinta (inicio):** carrusel horizontal a ancho completo en la tienda (`/`), hasta **15** imágenes en proporción **16:9** (recomendado 1920×1080, mínimo 960×540). La validación admite un margen de **±3 %** sobre 16:9 (`config/cinta.php` → `aspect_ratio_tolerance`; regla `App\Rules\CintaImageAspectRatio`). Archivos en disco `public/cinta/…` vía `App\Support\CintaSlideStorage`. El administrador gestiona las diapositivas en **`/admin/cinta`** (Ajustes → Cinta en el sidebar). La marquesina duplica diapositivas hasta 15 tiles para un bucle continuo (`App\Support\CintaMarqueeSlides`).
+
+**Tras login:** clientes van a **`/`** (inicio), no a `/dashboard` (`App\Support\PostLoginRedirect`). Proveedores a `/portal-proveedor`; personal interno a `/dashboard`.
+
+**Perfil y cuenta:** **Mi perfil** (`/profile`) usa panel modal reutilizable (`resources/views/components/account/*`). Avatares en `users.avatar` (`App\Support\UserAvatarStorage`, disco `public/avatars/`). En admin, vista de cuenta en modal Livewire (`App\Livewire\Admin\UserAccountModal`).
+
+**Videos / recetas:** URLs de YouTube se normalizan a embed (`App\Support\YoutubeEmbedUrl`) en formularios de contenido.
 
 **Migraciones:** `users` mantiene datos de cuenta (nombre, documento, teléfono, email, avatar `users.avatar`, estado). Perfiles en tablas `employee_profiles`, `customer_profiles`, `supplier_profiles`; roles y permisos con **Spatie** (`roles`, `permissions`, tablas pivot). Config publicada: `config/permission.php`. En desarrollo, ante un esquema desalineado: `php artisan migrate:fresh --seed`. En producción ya desplegada conviene migraciones incrementales; este repo define el esquema base para instalaciones nuevas.
 
@@ -41,7 +49,7 @@ php artisan key:generate
 ```
 
 1. Configura en `.env`: `DB_*`, `APP_URL`, y `ADMIN_*` (administrador inicial vía semillas).
-2. Enlaza almacenamiento público para imágenes de productos, promociones, etc.:
+2. Enlaza almacenamiento público para imágenes de productos, promociones, **cinta**, avatares, etc.:
 
 ```bash
 php artisan storage:link
@@ -113,7 +121,7 @@ Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`.
 
 | Rol | Uso |
 |-----|-----|
-| `customer` | Registro público Breeze; perfil de entrega en `customer_profiles` |
+| `customer` | Registro público Breeze; perfil de entrega en `customer_profiles`; tras login → inicio `/` |
 | `admin` | Panel completo, usuarios, pedidos, CRUD catálogo, API mutaciones |
 | `employee` | Personal interno; **cargo** en `employee_profiles` → `positions` (p. ej. domiciliario) |
 | `supplier` | Portal `/portal-proveedor`; datos comerciales en `supplier_profiles` |
@@ -142,9 +150,10 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 
 | Área | Ruta / nota |
 |------|-------------|
-| Tienda (clientes) | `/`, `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Tienda (clientes) | `/` (carrusel cinta si hay diapositivas), `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
 | Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
-| Dashboard | `/dashboard` (según rol: admin con KPIs, cliente tienda `layouts.store`, proveedor redirige a portal) |
+| Cinta (admin) | `GET /admin/cinta`, `POST/PUT/DELETE` diapositivas (`cinta_slides`, `config/cinta.php`) |
+| Dashboard | `/dashboard` (admin/empleado con KPIs; **clientes** usan inicio `/` tras login) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (admin) | `/admin/pedidos` |
 | Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
@@ -182,7 +191,9 @@ php artisan test
 
 ## Base de datos y migraciones
 
-Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles (`employee_profiles`, `customer_profiles`, `supplier_profiles`), resto del dominio (`productos`, `orders`, etc.). La columna de roles en `users` **no** se usa: roles en tablas Spatie.
+Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles (`employee_profiles`, `customer_profiles`, `supplier_profiles`), resto del dominio (`productos`, `orders`, `cinta_slides`, etc.). La columna de roles en `users` **no** se usa: roles en tablas Spatie.
+
+Semilla opcional de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`.
 
 ### Comando destructivo (solo si lo necesitas a sabiendas)
 

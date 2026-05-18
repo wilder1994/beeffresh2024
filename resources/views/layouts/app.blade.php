@@ -100,6 +100,10 @@
     </div>
 @endif
 
+@auth
+    <x-account.profile-dialog />
+@endauth
+
 @livewireScripts
 </body>
 </html>

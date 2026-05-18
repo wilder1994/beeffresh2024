@@ -1,14 +1,22 @@
-<form wire:submit="save" class="bf-form-panel bf-form-panel-tight space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-stone-200 pb-4">
-        <div>
-            <h2 class="text-base font-bold text-stone-800">{{ $userId ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
-            <p class="text-xs text-stone-500 mt-0.5">Los campos cambian según el rol seleccionado.</p>
-        </div>
-        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
-            Rol: {{ \App\Domain\Users\RoleSlug::label($role_slug) }}
-        </span>
-    </div>
+@php
+    use App\Domain\Users\RoleSlug;
+@endphp
 
+<form wire:submit="save" class="space-y-4">
+    <nav class="flex flex-wrap gap-1 border-b border-stone-200 -mb-px" role="tablist">
+        <button type="button" wire:click="setActiveTab('cuenta')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'cuenta', 'border-transparent text-stone-600' => $activeTab !== 'cuenta'])>Cuenta</button>
+        @if($role_slug === RoleSlug::EMPLOYEE)
+            <button type="button" wire:click="setActiveTab('empleado')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'empleado', 'border-transparent text-stone-600' => $activeTab !== 'empleado'])>Empleado</button>
+        @endif
+        @if($role_slug === RoleSlug::CUSTOMER)
+            <button type="button" wire:click="setActiveTab('cliente')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'cliente', 'border-transparent text-stone-600' => $activeTab !== 'cliente'])>Cliente</button>
+        @endif
+        @if($role_slug === RoleSlug::SUPPLIER)
+            <button type="button" wire:click="setActiveTab('proveedor')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'proveedor', 'border-transparent text-stone-600' => $activeTab !== 'proveedor'])>Proveedor</button>
+        @endif
+    </nav>
+
+    @if($activeTab === 'cuenta')
     <div class="flex flex-col items-center gap-2 py-1">
         <div class="relative shrink-0">
             <div class="h-24 w-24 rounded-full overflow-hidden ring-2 ring-stone-200 bg-stone-100 flex items-center justify-center">
@@ -85,8 +93,9 @@
             @error('role_slug')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
     </div>
+    @endif
 
-    @if($role_slug === \App\Domain\Users\RoleSlug::EMPLOYEE)
+    @if($role_slug === \App\Domain\Users\RoleSlug::EMPLOYEE && $activeTab === 'empleado')
         <div class="rounded-xl border border-stone-200 bg-stone-50/80 p-4 space-y-4">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Empleado</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
@@ -189,7 +198,7 @@
         </div>
     @endif
 
-    @if($role_slug === \App\Domain\Users\RoleSlug::CUSTOMER)
+    @if($role_slug === \App\Domain\Users\RoleSlug::CUSTOMER && $activeTab === 'cliente')
         <div class="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Cliente · entrega</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
@@ -244,7 +253,7 @@
         </div>
     @endif
 
-    @if($role_slug === \App\Domain\Users\RoleSlug::SUPPLIER)
+    @if($role_slug === \App\Domain\Users\RoleSlug::SUPPLIER && $activeTab === 'proveedor')
         <div class="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Proveedor</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
@@ -299,6 +308,10 @@
 
     <div class="bf-form-actions">
         <button type="submit" class="bf-btn-primary" wire:loading.attr="disabled">Guardar</button>
-        <a href="{{ $userId ? route('admin.users.show', $userId) : route('admin.users.index') }}" class="bf-btn-ghost" wire:navigate>Cancelar</a>
+        @if($embedded)
+            <button type="button" class="bf-btn-ghost" wire:click="$dispatch('user-form-cancelled')">Cancelar</button>
+        @else
+            <a href="{{ $userId ? route('admin.users.show', $userId) : route('admin.users.index') }}" class="bf-btn-ghost" wire:navigate>Cancelar</a>
+        @endif
     </div>
 </form>

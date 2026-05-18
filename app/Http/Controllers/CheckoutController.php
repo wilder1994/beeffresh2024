@@ -24,8 +24,9 @@ class CheckoutController extends Controller
 
         if (! $user->hasCompleteDeliveryProfile()) {
             return redirect()
-                ->route('profile.edit')
-                ->with('error', 'Antes de pagar, completa tu teléfono y dirección de entrega en Mi perfil.');
+                ->back()
+                ->with('error', 'Antes de pagar, completa tu teléfono y dirección de entrega en Mi perfil.')
+                ->with('open_profile_modal', true);
         }
 
         $carritoSession = session()->get('carrito', []);

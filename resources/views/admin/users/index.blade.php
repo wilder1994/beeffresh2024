@@ -41,11 +41,15 @@
                 </div>
                 <button type="submit" class="bf-btn-primary">Filtrar</button>
             </form>
-            <a href="{{ route('admin.users.create') }}" class="bf-btn-primary shrink-0">Nuevo usuario</a>
+            <button
+                type="button"
+                class="bf-btn-primary shrink-0"
+                onclick="window.Livewire && Livewire.dispatch('open-user-account', { mode: 'create' })"
+            >Nuevo usuario</button>
         </div>
 
-        <div class="overflow-x-auto bg-base-100 rounded-lg shadow">
-            <table class="table table-zebra table-sm">
+        <div class="bf-table-panel">
+            <table class="bf-table">
                 <thead>
                     <tr>
                         <th>Nombre</th>
@@ -54,27 +58,39 @@
                         <th>Rol</th>
                         <th>Teléfono</th>
                         <th>Ciudad</th>
-                        <th></th>
+                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($users as $u)
                         @php($slug = $u->primaryRoleSlug())
                         <tr>
-                            <td class="font-medium">{{ $u->name }}</td>
-                            <td>{{ $u->email }}</td>
-                            <td><span class="badge badge-ghost badge-sm">{{ $slug ? RoleSlug::audienceLabel($slug) : '—' }}</span></td>
-                            <td>{{ $slug ? RoleSlug::label($slug) : '—' }}</td>
-                            <td>{{ $u->phone ?? '—' }}</td>
-                            <td>{{ $u->primaryCityForList() ?? '—' }}</td>
+                            <td class="font-medium text-stone-900">{{ $u->name }}</td>
+                            <td class="text-stone-700">{{ $u->email }}</td>
+                            <td>
+                                <span class="badge badge-sm border border-stone-200 bg-stone-100 text-stone-700">
+                                    {{ $slug ? RoleSlug::audienceLabel($slug) : '—' }}
+                                </span>
+                            </td>
+                            <td class="text-stone-800">{{ $slug ? RoleSlug::label($slug) : '—' }}</td>
+                            <td class="text-stone-700">{{ $u->phone ?? '—' }}</td>
+                            <td class="text-stone-700">{{ $u->primaryCityForList() ?? '—' }}</td>
                             <td class="text-right whitespace-nowrap">
-                                <a href="{{ route('admin.users.show', $u) }}" class="link link-primary text-sm">Ver</a>
-                                <a href="{{ route('admin.users.edit', $u) }}" class="link text-sm ml-2">Editar</a>
+                                <button
+                                    type="button"
+                                    class="text-sm font-medium text-[var(--bf-brand)] hover:underline"
+                                    onclick="window.Livewire && Livewire.dispatch('open-user-account', { mode: 'view', userId: {{ $u->id }} })"
+                                >Ver</button>
+                                <button
+                                    type="button"
+                                    class="text-sm font-medium text-stone-600 hover:text-[var(--bf-brand)] hover:underline ml-3"
+                                    onclick="window.Livewire && Livewire.dispatch('open-user-account', { mode: 'edit', userId: {{ $u->id }} })"
+                                >Editar</button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-8 text-gray-500">No hay usuarios con estos filtros.</td>
+                            <td colspan="7" class="text-center py-8 text-stone-500">No hay usuarios con estos filtros.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -85,4 +101,6 @@
             {{ $users->links() }}
         </div>
     </div>
+
+    <livewire:admin.user-account-modal />
 @endsection

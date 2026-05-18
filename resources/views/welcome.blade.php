@@ -3,13 +3,9 @@
 @section('titulo', 'Inicio | BEEF FRESH · Tienda')
 
 @section('content')
-<div class="bg-white py-10 px-6 md:px-16">
-    {{-- Encabezado principal de bienvenida --}}
-    <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold text-red-600 mb-4">Bienvenido a BEEF FRESH</h1>
-        <p class="text-lg text-gray-600">Carnes frescas y de calidad directamente a tu mesa.</p>
-    </div>
+    <x-store.cinta-carousel :slides="$cintaSlides" />
 
+<div class="bg-white py-10 px-6 md:px-16">
     {{-- Sección: Videos Promocionales o de recetas --}}
     <section class="mb-16">
         <h2 class="text-2xl font-semibold text-gray-800 mb-4">Recetas en Video</h2>
@@ -21,7 +17,15 @@
                 @foreach($videos as $video)
                     <div class="aspect-w-16 aspect-h-9">
                         @if($video->tipo === 'youtube')
-                            <iframe class="rounded-xl w-full h-full" src="{{ $video->url }}" frameborder="0" allowfullscreen></iframe>
+                            @php
+                                $ytSrc = $video->url;
+                                $ytEmbedOk = is_string($ytSrc) && str_starts_with($ytSrc, 'https://www.youtube.com/embed/');
+                            @endphp
+                            @if($ytEmbedOk)
+                                <iframe class="rounded-xl w-full h-full" src="{{ $ytSrc }}" title="{{ $video->titulo }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                            @else
+                                <p class="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-gray-600">Este video no se puede mostrar (enlace no válido).</p>
+                            @endif
                         @elseif($video->tipo === 'archivo')
                             <video controls class="rounded-xl w-full h-full">
                                 <source src="{{ asset('storage/videos/' . $video->archivo) }}" type="video/mp4">

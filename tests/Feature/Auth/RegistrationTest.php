@@ -4,7 +4,6 @@ namespace Tests\Feature\Auth;
 
 use App\Domain\Users\RoleSlug;
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -29,7 +28,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertRedirect(route('home'));
 
         $created = User::query()->where('email', 'test@example.com')->first();
         $this->assertNotNull($created);

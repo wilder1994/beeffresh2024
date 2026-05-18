@@ -4,6 +4,13 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
+/** Abre el modal de Mi perfil (tienda y panel); funciona aunque Alpine falle en el clic. */
+window.bfOpenProfileModal = function () {
+    window.dispatchEvent(
+        new CustomEvent('open-modal', { detail: 'profile-account', bubbles: true })
+    );
+};
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('staffLayout', () => ({
         mobileMenuOpen: false,
