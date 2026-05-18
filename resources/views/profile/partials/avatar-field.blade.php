@@ -1,6 +1,8 @@
 @props([
     'formId' => 'profile-update-form',
+    'inputId' => 'profile-avatar-input',
     'size' => 'h-16 w-16',
+    'forLivewire' => false,
 ])
 
 <section class="relative shrink-0">
@@ -10,16 +12,26 @@
             x-bind:src="preview"
             alt="Foto de perfil"
             class="h-full w-full object-cover"
+            x-cloak
         />
         <span
             x-show="!preview"
+            x-cloak
             x-text="initial"
             class="text-xl font-bold text-stone-400 select-none"
             aria-hidden="true"
         ></span>
     </section>
+    <input
+        type="file"
+        id="{{ $inputId }}"
+        @unless($forLivewire) name="avatar" form="{{ $formId }}" @endunless
+        class="sr-only"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        x-on:change="pickFile($event)"
+    />
     <label
-        for="profile-avatar-input"
+        for="{{ $inputId }}"
         class="absolute bottom-0 right-0 btn btn-circle btn-xs bg-[var(--bf-brand)] text-white border-0 shadow-md cursor-pointer"
         title="Cambiar foto"
     >

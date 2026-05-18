@@ -13,15 +13,6 @@
         <input type="hidden" name="_profile_modal" value="1" />
     @endif
 
-    <input
-        type="file"
-        name="avatar"
-        id="profile-avatar-input"
-        class="sr-only"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        x-on:change="$root.onFile($event)"
-    >
-
     <section class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <section>
             <label class="bf-label" for="first_name">Nombre</label>

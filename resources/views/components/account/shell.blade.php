@@ -18,18 +18,11 @@
 
 <div
     @if($avatarEdit)
-        x-data="{
+        x-data="avatarEditor({
             preview: @js($user->avatarUrl()),
             initial: @js($avatarInitial),
-            onFile(event) {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                if (this.preview && String(this.preview).startsWith('blob:')) {
-                    URL.revokeObjectURL(this.preview);
-                }
-                this.preview = URL.createObjectURL(file);
-            }
-        }"
+            inputId: 'profile-avatar-input',
+        })"
     @endif
     {{ $attributes->merge(['class' => $shellClass]) }}
 >
@@ -70,6 +63,10 @@
         <section class="bf-account-shell__body mt-4">
             {{ $slot }}
         </section>
+    @endif
+
+    @if($avatarEdit)
+        <x-avatar.crop-dialog />
     @endif
 
     @if($user && $mode === 'view')

@@ -1,6 +1,7 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import registerAvatarEditor from './avatarEditor';
 
 window.Alpine = Alpine;
 
@@ -12,6 +13,8 @@ window.bfOpenProfileModal = function () {
 };
 
 document.addEventListener('alpine:init', () => {
+    registerAvatarEditor(Alpine);
+
     Alpine.data('staffLayout', () => ({
         mobileMenuOpen: false,
         sidebarCollapsed: false,

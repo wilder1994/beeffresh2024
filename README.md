@@ -24,7 +24,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Tras login:** clientes van a **`/`** (inicio), no a `/dashboard` (`App\Support\PostLoginRedirect`). Proveedores a `/portal-proveedor`; personal interno a `/dashboard`.
 
-**Perfil y cuenta:** **Mi perfil** (`/profile`) usa panel modal reutilizable (`resources/views/components/account/*`). Avatares en `users.avatar` (`App\Support\UserAvatarStorage`, disco `public/avatars/`). En admin, vista de cuenta en modal Livewire (`App\Livewire\Admin\UserAccountModal`).
+**Perfil y cuenta:** **Mi perfil** (`/profile`) usa panel modal reutilizable (`resources/views/components/account/*`). Avatares en `users.avatar` (`App\Support\UserAvatarStorage`, disco `public/avatars/`). Al cambiar la foto se abre un **editor circular** (girar, zoom, arrastrar para centrar) antes de guardar; lógica en `resources/js/avatarEditor.js` (Alpine `avatarEditor`) y vista `resources/views/components/avatar/crop-dialog.blade.php`. Aplica en el modal de perfil y en el formulario Livewire de usuarios (`UserForm`). En admin, vista de cuenta en modal Livewire (`App\Livewire\Admin\UserAccountModal`).
 
 **Videos / recetas:** URLs de YouTube se normalizan a embed (`App\Support\YoutubeEmbedUrl`) en formularios de contenido.
 
@@ -95,7 +95,7 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 ### Logo de la empresa y fotos de perfil
 
 - **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo circular en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
-- **Foto de usuario**: columna `users.avatar` (disco `public/avatars/…`). En **Mi perfil** el usuario elige archivo con el botón circular de cámara sobre el avatar. En **crear/editar usuario** (`/admin/users`) el componente Livewire replica el mismo patrón de avatar.
+- **Foto de usuario**: columna `users.avatar` (disco `public/avatars/…`). En **Mi perfil** y en **crear/editar usuario** (`/admin/users`) el botón de cámara abre el editor de recorte circular; la imagen exportada es JPEG cuadrado (512×512) lista para `object-cover` en círculo.
 
 ## Usuario administrador (semillas)
 
