@@ -33,31 +33,13 @@
                                 @include('admin.users.partials.account-view', ['user' => $viewUser])
                             </x-account.shell>
                         @elseif($mode === 'edit' && $userId)
-                            <x-account.shell
-                                :user="$viewUser"
-                                mode="edit"
-                                context="admin"
-                                in-modal
-                            >
-                                <x-slot:headerActions>
-                                    @if($viewUser)
-                                        <button type="button" wire:click="$set('mode', 'view')" class="bf-btn-ghost btn-sm">Ver ficha</button>
-                                    @endif
-                                    <button type="button" wire:click="close" class="bf-btn-ghost btn-sm">Cerrar</button>
-                                </x-slot:headerActions>
+                            <div class="bf-account-shell bf-account-shell--modal">
                                 <livewire:admin.user-form :user-id="$userId" :embedded="true" :key="'user-form-edit-'.$userId" />
-                            </x-account.shell>
+                            </div>
                         @elseif($mode === 'create')
-                            <x-account.shell
-                                mode="create"
-                                context="admin"
-                                in-modal
-                            >
-                                <x-slot:headerActions>
-                                    <button type="button" wire:click="close" class="bf-btn-ghost btn-sm">Cerrar</button>
-                                </x-slot:headerActions>
+                            <div class="bf-account-shell bf-account-shell--modal">
                                 <livewire:admin.user-form :embedded="true" key="user-form-create" />
-                            </x-account.shell>
+                            </div>
                         @endif
                     </div>
                 </div>

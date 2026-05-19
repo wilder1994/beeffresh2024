@@ -114,9 +114,9 @@
                     <h2 class="text-lg font-semibold text-gray-900">Últimos pedidos</h2>
                     <a href="{{ route('admin.pedidos.index') }}" class="text-sm text-[var(--bf-red)] font-medium hover:underline">Ver todos</a>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="table table-sm">
-                        <thead class="text-xs text-gray-500">
+                <div class="bf-table-panel bf-table-panel--flush">
+                    <table class="bf-table">
+                        <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Cliente</th>
@@ -126,7 +126,7 @@
                         </thead>
                         <tbody>
                             @forelse($recent_orders as $pedido)
-                                <tr class="hover:bg-amber-50/50">
+                                <tr>
                                     <td class="font-mono text-xs">{{ $pedido->id }}</td>
                                     <td class="max-w-[140px] truncate text-sm" title="{{ $pedido->user?->email }}">{{ $pedido->user?->name ?? '—' }}</td>
                                     <td><span class="badge badge-sm badge-ghost">{{ $pedido->status->label() }}</span></td>
@@ -134,7 +134,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-8 text-gray-500 text-sm">Aún no hay pedidos.</td>
+                                    <td colspan="4" class="text-center py-8 text-stone-500 text-sm">Aún no hay pedidos.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -147,9 +147,9 @@
                     <h2 class="text-lg font-semibold text-gray-900">Seguimiento · stock bajo</h2>
                     <a href="{{ route('productos.index') }}" class="text-sm text-[var(--bf-red)] font-medium hover:underline">Gestionar</a>
                 </div>
-                <div class="overflow-x-auto max-h-72 overflow-y-auto">
-                    <table class="table table-sm">
-                        <thead class="text-xs text-gray-500 sticky top-0 bg-white">
+                <div class="bf-table-panel bf-table-panel--flush max-h-72 overflow-y-auto overflow-x-auto">
+                    <table class="bf-table bf-table--sticky-head">
+                        <thead>
                             <tr>
                                 <th>Producto</th>
                                 <th class="text-right">Stock</th>

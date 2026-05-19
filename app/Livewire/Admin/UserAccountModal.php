@@ -59,6 +59,20 @@ class UserAccountModal extends Component
         $this->mode = 'view';
     }
 
+    #[On('close-user-account')]
+    public function onCloseUserAccount(): void
+    {
+        $this->close();
+    }
+
+    #[On('user-account-show-view')]
+    public function onUserAccountShowView(): void
+    {
+        if ($this->userId !== null) {
+            $this->mode = 'view';
+        }
+    }
+
     public function switchToEdit(): void
     {
         if ($this->userId !== null) {

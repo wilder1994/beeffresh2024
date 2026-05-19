@@ -178,14 +178,14 @@
             type="checkbox"
             name="accepts_promotions"
             value="1"
-            class="mt-0.5 rounded border-stone-300 text-[var(--bf-brand)] focus:ring-[var(--bf-brand)]"
+            class="mt-0.5 rounded border-[var(--bf-border-brand-subtle)] text-[var(--bf-brand)] focus:ring-[var(--bf-brand)]"
             @checked(old('accepts_promotions', true))
         />
         <span>Deseo recibir promociones y novedades por correo.</span>
     </label>
     <x-input-error :messages="$errors->get('accepts_promotions')" class="mt-1" />
 
-    <div @class(['flex items-center justify-end pt-2 border-t border-stone-100', 'gap-2 flex-wrap' => $inModal, 'mt-4' => ! $inModal])>
+    <div @class(['bf-form-actions pt-2 justify-end items-center', 'gap-2 flex-wrap' => $inModal, 'mt-4' => ! $inModal])>
         @if($inModal)
             <button type="button" class="bf-btn-ghost btn-sm" x-on:click="$dispatch('close-modal', 'register-client')">Cancelar</button>
         @else

@@ -22,6 +22,15 @@
         --bf-card: #ffffff;
         --bf-ink: #2c1810;
         --bf-muted: #5c534c;
+        --bf-border-brand: rgba(123, 48, 27, 0.28);
+        --bf-border-brand-subtle: rgba(123, 48, 27, 0.14);
+        --bf-surface-gradient: linear-gradient(
+            165deg,
+            var(--bf-cream) 0%,
+            var(--bf-cream-muted) 48%,
+            rgba(255, 194, 14, 0.1) 100%
+        );
+        --bf-field-bg: rgba(255, 255, 255, 0.58);
     }
 
     html {
@@ -37,16 +46,22 @@
 
 @layer components {
     .bf-panel-bg {
-        background: linear-gradient(
-            165deg,
-            var(--bf-cream) 0%,
-            var(--bf-cream-muted) 45%,
-            rgba(255, 194, 14, 0.12) 100%
-        );
+        background: var(--bf-surface-gradient);
+    }
+
+    /** Superficie crema con borde café fino (formularios, modales, paneles). */
+    .bf-surface {
+        border-radius: 0.75rem;
+        border: 1px solid var(--bf-border-brand);
+        background: var(--bf-surface-gradient);
+        box-shadow: 0 1px 3px rgba(44, 24, 16, 0.06);
     }
 
     .bf-auth-card {
-        @apply bg-white shadow-lg rounded-2xl border border-amber-100/90;
+        @apply shadow-lg rounded-2xl p-0;
+        border: 1px solid var(--bf-border-brand);
+        background: var(--bf-surface-gradient);
+        box-shadow: 0 4px 24px -8px rgba(44, 24, 16, 0.12);
     }
 
     [x-cloak] {
@@ -414,37 +429,64 @@
         @apply text-center text-[10px] sm:text-[11px] leading-tight font-normal tracking-wide text-stone-600/45;
     }
 
-    /** Tablas del panel: fondo claro y texto legible (evita table-zebra + base-100 oscuros de DaisyUI). */
+    /** Tablas del sistema: café BEEF FRESH, fondo crema con degradado suave. */
     .bf-table-panel {
-        @apply overflow-x-auto rounded-xl border border-stone-200/90 bg-white shadow-sm;
+        overflow-x: auto;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(123, 48, 27, 0.28);
+        box-shadow: 0 1px 3px rgba(44, 24, 16, 0.06);
     }
 
-    .bf-table-panel .bf-table {
-        @apply table table-sm w-full text-stone-800;
+    .bf-table-panel--flush {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+        box-shadow: none;
     }
 
-    .bf-table-panel .bf-table :where(thead) {
-        @apply bg-stone-100 text-stone-600;
+    .bf-table {
+        @apply table table-sm w-full border-collapse;
+        color: var(--bf-ink);
     }
 
-    .bf-table-panel .bf-table :where(thead th) {
-        @apply font-semibold text-[11px] uppercase tracking-wide text-stone-600 border-b border-stone-200;
+    .bf-table :where(thead) {
+        background: linear-gradient(180deg, var(--bf-brand) 0%, var(--bf-rust-deep) 100%);
     }
 
-    .bf-table-panel .bf-table :where(tbody td) {
-        @apply text-stone-800 border-b border-stone-100;
+    .bf-table :where(thead th) {
+        @apply font-semibold text-[11px] uppercase tracking-wide text-white/95 px-3 py-2.5;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     }
 
-    .bf-table-panel .bf-table :where(tbody tr:nth-child(even)) {
-        @apply bg-stone-50/70;
+    .bf-table :where(tbody) {
+        background: var(--bf-surface-gradient);
     }
 
-    .bf-table-panel .bf-table :where(tbody tr:hover) {
-        @apply bg-amber-50/50;
+    .bf-table :where(tbody td) {
+        @apply px-3 py-2 text-[13px] text-stone-800;
+        border: 1px solid rgba(123, 48, 27, 0.14);
+    }
+
+    .bf-table :where(tbody tr:nth-child(even)) {
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .bf-table :where(tbody tr:hover) {
+        background: rgba(253, 245, 230, 0.72);
+    }
+
+    .bf-table--sticky-head :where(thead th) {
+        position: sticky;
+        top: 0;
+        z-index: 2;
     }
 
     .bf-account-shell {
-        @apply bg-white rounded-xl border border-stone-200/90 shadow-sm p-4 sm:p-5 md:p-6;
+        @apply rounded-xl shadow-sm p-4 sm:p-5 md:p-6;
+        border: 1px solid var(--bf-border-brand);
+        background: var(--bf-surface-gradient);
     }
 
     .bf-account-shell--modal {
@@ -464,51 +506,103 @@
     }
 
     /**
-     * Formularios panel — densidad alta, bordes definidos, mejor uso del ancho
+     * Formularios panel — densidad alta, bordes café finos, fondo crema degradado
      */
     .bf-form-panel {
-        @apply bg-white rounded-xl border border-stone-300/90 shadow-sm p-4 sm:p-5 md:p-6 text-[13px] leading-snug text-stone-800;
+        @apply rounded-xl shadow-sm p-4 sm:p-5 md:p-6 text-[13px] leading-snug text-stone-800;
+        border: 1px solid var(--bf-border-brand);
+        background: var(--bf-surface-gradient);
     }
 
     .bf-form-panel-tight {
         @apply space-y-3 sm:space-y-4;
     }
 
+    .bf-form-toolbar {
+        @apply rounded-xl p-3 sm:p-4;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: var(--bf-surface-gradient);
+    }
+
+    .bf-form-section {
+        @apply rounded-xl p-4 space-y-3;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: linear-gradient(
+            165deg,
+            rgba(255, 255, 255, 0.42) 0%,
+            rgba(253, 245, 230, 0.72) 100%
+        );
+    }
+
+    .bf-form-section--nested {
+        @apply p-4 space-y-3;
+        border: 1px solid rgba(123, 48, 27, 0.12);
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    .bf-form-check-item {
+        @apply flex items-center gap-2 rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: var(--bf-field-bg);
+    }
+
+    .bf-form-check-item:hover {
+        border-color: rgba(123, 48, 27, 0.32);
+        background: rgba(255, 255, 255, 0.72);
+    }
+
     .bf-label {
-        @apply block text-[11px] font-semibold uppercase tracking-wide text-stone-600 mb-1 select-none;
+        @apply block text-[11px] font-semibold uppercase tracking-wide mb-1 select-none;
+        color: rgba(44, 24, 16, 0.72);
     }
 
     .bf-label-muted {
-        @apply block text-[11px] font-medium text-stone-500 mb-0.5;
+        @apply block text-[11px] font-medium mb-0.5;
+        color: var(--bf-muted);
     }
 
     .bf-input {
-        @apply input input-bordered input-sm w-full bg-white border-stone-300 text-stone-900 placeholder:text-stone-400
+        @apply input input-bordered input-sm w-full text-stone-900 placeholder:text-stone-400
             h-9 min-h-[2.25rem] py-1.5 px-2.5 text-sm
             focus:border-[var(--bf-brand)] focus:outline-none focus:ring-1 focus:ring-[rgb(178_30_41_/_0.25)];
+        background-color: var(--bf-field-bg);
+        border-color: var(--bf-border-brand-subtle);
+        border-width: 1px;
     }
 
     .bf-select {
-        @apply select select-bordered select-sm w-full bg-white border-stone-300 text-stone-900
+        @apply select select-bordered select-sm w-full text-stone-900
             h-9 min-h-[2.25rem] py-1.5 pl-2.5 pr-8 text-sm
             focus:border-[var(--bf-brand)] focus:outline-none focus:ring-1 focus:ring-[rgb(178_30_41_/_0.25)];
+        background-color: var(--bf-field-bg);
+        border-color: var(--bf-border-brand-subtle);
+        border-width: 1px;
     }
 
     .bf-textarea {
-        @apply textarea textarea-bordered w-full bg-white border-stone-300 text-stone-900 text-sm leading-snug py-2 px-2.5
+        @apply textarea textarea-bordered w-full text-stone-900 text-sm leading-snug py-2 px-2.5
             min-h-[4.5rem] focus:border-[var(--bf-brand)] focus:outline-none focus:ring-1 focus:ring-[rgb(178_30_41_/_0.25)];
+        background-color: var(--bf-field-bg);
+        border-color: var(--bf-border-brand-subtle);
+        border-width: 1px;
     }
 
     .bf-file {
-        @apply file-input file-input-bordered file-input-sm w-full bg-white border-stone-300 text-sm max-w-full;
+        @apply file-input file-input-bordered file-input-sm w-full text-sm max-w-full;
+        background-color: var(--bf-field-bg);
+        border-color: var(--bf-border-brand-subtle);
+        border-width: 1px;
     }
 
     .bf-form-section-title {
-        @apply text-xs font-bold uppercase tracking-wider text-stone-500 border-b border-stone-200 pb-2 mb-3 mt-1;
+        @apply text-xs font-bold uppercase tracking-wider pb-2 mb-3 mt-1;
+        color: rgba(44, 24, 16, 0.55);
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
     }
 
     .bf-form-actions {
-        @apply flex flex-wrap gap-2 pt-4 mt-2 border-t border-stone-200;
+        @apply flex flex-wrap gap-2 pt-4 mt-2;
+        border-top: 1px solid var(--bf-border-brand-subtle);
     }
 
     .bf-btn-primary {
@@ -516,7 +610,14 @@
     }
 
     .bf-btn-ghost {
-        @apply btn btn-sm btn-ghost border border-stone-200;
+        @apply btn btn-sm btn-ghost;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    .bf-btn-ghost:hover {
+        border-color: rgba(123, 48, 27, 0.32);
+        background: rgba(255, 255, 255, 0.68);
     }
 
     .bf-avatar-crop__stage {

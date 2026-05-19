@@ -145,6 +145,16 @@ class UserForm extends Component
         $this->activeTab = $tab;
     }
 
+    public function closeEmbedded(): void
+    {
+        $this->dispatch('close-user-account');
+    }
+
+    public function showEmbeddedView(): void
+    {
+        $this->dispatch('user-account-show-view');
+    }
+
     private function focusTabForValidationErrors(ValidationException $e): void
     {
         $keys = array_keys($e->validator->errors()->messages());

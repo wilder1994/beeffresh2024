@@ -2,8 +2,11 @@
     use App\Domain\Users\RoleSlug;
 @endphp
 
-<form wire:submit="save" class="space-y-4">
-    <nav class="flex flex-wrap gap-1 border-b border-stone-200 -mb-px" role="tablist">
+<div>
+    @include('livewire.admin.partials.user-form-header')
+
+    <form wire:submit="save" class="space-y-4">
+    <nav class="flex flex-wrap gap-1 border-b border-[var(--bf-border-brand-subtle)] -mb-px" role="tablist">
         <button type="button" wire:click="setActiveTab('cuenta')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'cuenta', 'border-transparent text-stone-600' => $activeTab !== 'cuenta'])>Cuenta</button>
         @if($role_slug === RoleSlug::EMPLOYEE)
             <button type="button" wire:click="setActiveTab('empleado')" @class(['px-3 py-2 text-xs font-semibold uppercase tracking-wide border-b-2 rounded-t-md', 'border-[var(--bf-brand)] text-[var(--bf-brand)]' => $activeTab === 'empleado', 'border-transparent text-stone-600' => $activeTab !== 'empleado'])>Empleado</button>
@@ -17,28 +20,6 @@
     </nav>
 
     @if($activeTab === 'cuenta')
-    @php
-        $ufAvatarInitial = mb_strtoupper(mb_substr(trim($first_name) !== '' ? $first_name : 'U', 0, 1, 'UTF-8'));
-    @endphp
-    <div
-        wire:key="avatar-editor-{{ $userId ?? 'new' }}-{{ $existing_avatar_url ?? 'none' }}"
-        class="flex flex-col items-center gap-2 py-1"
-        x-data="avatarEditor({
-            preview: @js($existing_avatar_url),
-            initial: @js($ufAvatarInitial),
-            inputId: 'uf-avatar',
-            useLivewire: true,
-        })"
-    >
-        @include('profile.partials.avatar-field', [
-            'inputId' => 'uf-avatar',
-            'size' => 'h-24 w-24',
-            'forLivewire' => true,
-        ])
-        <x-avatar.crop-dialog />
-    </div>
-    @error('avatar')<p class="text-xs text-red-600 text-center">{{ $message }}</p>@enderror
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
         <div>
             <label class="bf-label" for="uf-first">Nombre</label>
@@ -96,7 +77,7 @@
     @endif
 
     @if($role_slug === \App\Domain\Users\RoleSlug::EMPLOYEE && $activeTab === 'empleado')
-        <div class="rounded-xl border border-stone-200 bg-stone-50/80 p-4 space-y-4">
+        <div class="bf-form-section space-y-4">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Empleado</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
                 <div class="md:col-span-2">
@@ -144,8 +125,8 @@
             </div>
 
             @if($this->isDeliveryPosition())
-                <div class="rounded-lg border border-amber-200 bg-amber-50/60 p-4 space-y-3">
-                    <p class="text-xs font-bold uppercase tracking-wide text-amber-900">Logística · Domiciliario</p>
+                <div class="bf-form-section--nested space-y-3">
+                    <p class="text-xs font-bold uppercase tracking-wide text-[var(--bf-brand)]">Logística · Domiciliario</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
                         <div>
                             <label class="bf-label" for="uf-vt">Tipo vehículo</label>
@@ -187,7 +168,7 @@
                 <p class="bf-form-section-title">Permisos de acceso (módulos)</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                     @foreach(\App\Domain\Users\PermissionKey::employeeModuleKeys() as $key)
-                        <label class="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm cursor-pointer hover:border-stone-300">
+                        <label class="bf-form-check-item">
                             <input type="checkbox" wire:model="permissions" value="{{ $key }}" class="checkbox checkbox-sm checkbox-primary" />
                             <span>{{ \App\Domain\Users\PermissionKey::label($key) }}</span>
                         </label>
@@ -199,7 +180,7 @@
     @endif
 
     @if($role_slug === \App\Domain\Users\RoleSlug::CUSTOMER && $activeTab === 'cliente')
-        <div class="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+        <div class="bf-form-section">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Cliente · entrega</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
                 <div class="md:col-span-2">
@@ -254,7 +235,7 @@
     @endif
 
     @if($role_slug === \App\Domain\Users\RoleSlug::SUPPLIER && $activeTab === 'proveedor')
-        <div class="rounded-xl border border-stone-200 bg-white p-4 space-y-3">
+        <div class="bf-form-section">
             <p class="bf-form-section-title border-0 pb-0 mb-0">Proveedor</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
                 <div>
@@ -315,3 +296,4 @@
         @endif
     </div>
 </form>
+</div>

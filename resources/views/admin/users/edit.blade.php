@@ -13,6 +13,7 @@
             mode="edit"
             context="admin"
             :back-url="route('admin.users.show', $user)"
+            compact-header
         >
             <livewire:admin.user-form :user-id="$user->id" />
         </x-account.shell>

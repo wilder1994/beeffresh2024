@@ -10,7 +10,7 @@
 @section('contenido')
     <div class="py-4 max-w-7xl mx-auto px-3 sm:px-4">
         <div class="flex flex-col sm:flex-row flex-wrap gap-3 justify-between items-start sm:items-end mb-4">
-            <form method="get" action="{{ $formAction ?? route('admin.users.index') }}" class="flex flex-wrap gap-2 sm:gap-3 items-end">
+            <form method="get" action="{{ $formAction ?? route('admin.users.index') }}" class="bf-form-toolbar flex flex-wrap gap-2 sm:gap-3 items-end">
                 @if(($audienceFixed ?? null) === null)
                     <div>
                         <label class="bf-label-muted normal-case">Tipo</label>

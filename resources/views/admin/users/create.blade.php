@@ -12,6 +12,7 @@
             mode="create"
             context="admin"
             :back-url="route('admin.users.index')"
+            compact-header
         >
             <livewire:admin.user-form />
         </x-account.shell>

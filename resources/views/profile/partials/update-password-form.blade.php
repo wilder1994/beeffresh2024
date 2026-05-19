@@ -30,7 +30,7 @@
         @enderror
     </div>
 
-    <div class="bf-form-actions border-t border-stone-100 pt-4">
+    <div class="bf-form-actions pt-4">
         <button type="submit" class="bf-btn-primary">Actualizar contraseña</button>
         @if (session('status') === 'password-updated')
             <span class="text-xs text-green-700 font-medium">Actualizada</span>

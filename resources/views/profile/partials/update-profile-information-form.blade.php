@@ -43,12 +43,12 @@
     </section>
 
     @if($profileUser->isCustomer() || $profileUser->isSupplier())
-        <section class="pt-2 border-t border-stone-100">
+        <section class="pt-2 border-t border-[var(--bf-border-brand-subtle)]">
             @include('profile.partials.contact-address', ['user' => $profileUser])
         </section>
     @endif
 
-    <section class="bf-form-actions border-t border-stone-100 pt-4 mt-2">
+    <section class="bf-form-actions pt-4 mt-2">
         <button type="submit" class="bf-btn-primary">Guardar cambios</button>
         @if (session('status') === 'profile-updated')
             <span class="text-xs text-green-700 font-medium">Guardado</span>

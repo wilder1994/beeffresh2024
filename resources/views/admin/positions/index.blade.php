@@ -16,8 +16,8 @@
             <a href="{{ route('admin.positions.create') }}" class="bf-btn-primary">Nuevo cargo</a>
         </div>
 
-        <div class="overflow-x-auto bg-base-100 rounded-lg shadow">
-            <table class="table table-zebra table-sm">
+        <div class="bf-table-panel">
+            <table class="bf-table">
                 <thead>
                     <tr>
                         <th>Nombre</th>

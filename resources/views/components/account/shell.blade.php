@@ -8,6 +8,7 @@
     'inModal' => false,
     'editableAvatar' => false,
     'avatarFormId' => 'profile-update-form',
+    'compactHeader' => false,
 ])
 
 @php
@@ -32,6 +33,7 @@
         :context="$context"
         :editable-avatar="$avatarEdit"
         :avatar-form-id="$avatarFormId"
+        :compact-header="$compactHeader"
     >
         <x-slot:actions>
             @if($editUrl && $mode === 'view')

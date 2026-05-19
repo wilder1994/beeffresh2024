@@ -5,8 +5,8 @@
 
 @section('contenido')
     <div class="max-w-7xl mx-auto -mt-1">
-        <div class="overflow-x-auto bg-base-100 rounded-lg shadow border border-base-200/80">
-            <table class="table table-zebra table-sm md:table-md text-xs md:text-sm">
+        <div class="bf-table-panel">
+            <table class="bf-table text-xs md:text-sm">
                 <thead>
                     <tr>
                         <th class="whitespace-nowrap">#</th>
