@@ -33,9 +33,9 @@
             <p class="mt-4 text-sm text-gray-500">En el catálogo también puedes usar el botón rápido para agregar con cantidad 1.</p>
         @else
             <p class="mb-4">
-                <a href="{{ route('login') }}" class="text-blue-600 underline font-medium">Inicia sesión</a>
+                <a href="{{ route('login', ['tipo' => 'cliente']) }}" class="text-blue-600 underline font-medium">Inicia sesión como cliente</a>
                 o
-                <a href="{{ route('register') }}" class="text-blue-600 underline font-medium">regístrate</a>
+                <a href="{{ route('home', ['registro' => 'confirm']) }}" class="text-blue-600 underline font-medium">regístrate</a>
                 para agregar productos al carrito y pagar.
             </p>
         @endauth

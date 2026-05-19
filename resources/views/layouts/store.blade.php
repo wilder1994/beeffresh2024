@@ -27,6 +27,14 @@
 
     @include('layouts.partials.footer-store')
 
+    @guest
+        @php
+            $openRegisterConfirm = request('registro') === 'confirm';
+            $openRegisterModal = $errors->hasAny(\App\Http\Requests\Auth\RegisterCustomerRequest::FIELD_KEYS);
+        @endphp
+        <x-auth.register-modals :open-confirm="$openRegisterConfirm" :open-register="$openRegisterModal" />
+    @endguest
+
     @auth
         <x-account.profile-dialog />
     @endauth

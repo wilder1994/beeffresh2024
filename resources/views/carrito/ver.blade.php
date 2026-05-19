@@ -41,10 +41,10 @@
         @if(count($carrito))
             <div class="mt-8 text-center space-y-4">
                 @guest
-                    <p class="text-gray-700 mb-2">Para pagar debes tener una cuenta.</p>
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <a href="{{ route('login') }}" class="btn btn-primary">Ingresar</a>
-                        <a href="{{ route('register') }}" class="btn btn-outline">Registrarse</a>
+                    <p class="text-gray-700 mb-2">Para pagar debes tener una cuenta de cliente.</p>
+                    <div class="flex flex-wrap justify-center gap-3 items-center">
+                        <x-auth.login-dropdown variant="store" />
+                        <a href="{{ route('home', ['registro' => 'confirm']) }}" class="btn btn-outline">Registrarse como cliente</a>
                     </div>
                 @else
                     <a href="{{ route('checkout.show') }}" class="btn btn-primary btn-lg">

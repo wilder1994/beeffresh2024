@@ -61,9 +61,8 @@
             </div>
         </div>
     @else
-        <div class="space-x-2 ml-auto shrink-0">
-            <a href="{{ route('login') }}" class="btn btn-outline btn-sm bg-white/95 text-[var(--bf-rust)] border-0 hover:bg-[var(--bf-cream)]">Ingresar</a>
-            <a href="{{ route('register') }}" class="btn btn-outline btn-sm bg-[var(--bf-gold)] text-[var(--bf-rust-deep)] border-0 hover:brightness-105">Registrarse</a>
+        <div class="ml-auto shrink-0">
+            <x-auth.login-dropdown variant="panel" />
         </div>
     @endauth
 </div>

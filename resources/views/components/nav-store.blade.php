@@ -53,8 +53,8 @@
                     <x-nav-user-menu :user="$navUser" variant="dark" />
                 @endif
             @else
-                <a href="{{ route('login') }}" class="btn btn-sm bg-white/10 hover:bg-white/20 border border-white/40 text-white">Ingresar</a>
-                <a href="{{ route('register') }}" class="btn btn-sm bg-[var(--bf-gold)] text-[var(--bf-rust-deep)] border-0 hover:brightness-105">Registrarse</a>
+                <x-auth.login-dropdown variant="store" />
+                <x-auth.register-button variant="store" />
             @endauth
 
             <details class="relative md:hidden">
@@ -64,6 +64,21 @@
                     <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
                     <li><a href="{{ route('productos.publico.index') }}">Catálogo</a></li>
                     <li><a href="{{ route('carrito.ver') }}">Carrito</a></li>
+                    @guest
+                        <li><a href="{{ route('login', ['tipo' => 'cliente']) }}">Ingresar — cliente</a></li>
+                        <li><a href="{{ route('login', ['tipo' => 'empleado']) }}">Ingresar — empleado</a></li>
+                        <li><a href="{{ route('login', ['tipo' => 'proveedor']) }}">Ingresar — proveedor</a></li>
+                        <li>
+                            <button
+                                type="button"
+                                class="w-full text-left rounded-lg px-3 py-2 hover:bg-stone-100 font-normal"
+                                x-on:click.prevent="window.bfOpenRegisterConfirm && window.bfOpenRegisterConfirm()"
+                                onclick="event.preventDefault(); window.bfOpenRegisterConfirm && window.bfOpenRegisterConfirm();"
+                            >
+                                Registrarse
+                            </button>
+                        </li>
+                    @endguest
                     @auth
                         @if(auth()->user()->isSupplier())
                             <li><a href="{{ route('supplier.home') }}">Portal proveedor</a></li>

@@ -12,7 +12,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-18
+**Última actualización de esta documentación:** 2026-05-19
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`.
 
@@ -23,6 +23,8 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 **Cinta (inicio):** carrusel horizontal a ancho completo en la tienda (`/`), hasta **15** imágenes en proporción **16:9** (recomendado 1920×1080, mínimo 960×540). La validación admite un margen de **±3 %** sobre 16:9 (`config/cinta.php` → `aspect_ratio_tolerance`; regla `App\Rules\CintaImageAspectRatio`). Archivos en disco `public/cinta/…` vía `App\Support\CintaSlideStorage`. El administrador gestiona las diapositivas en **`/admin/cinta`** (Ajustes → Cinta en el sidebar). La marquesina duplica diapositivas hasta 15 tiles para un bucle continuo (`App\Support\CintaMarqueeSlides`).
 
 **Tras login:** clientes van a **`/`** (inicio), no a `/dashboard` (`App\Support\PostLoginRedirect`). Proveedores a `/portal-proveedor`; personal interno a `/dashboard`.
+
+**Ingreso y registro (tienda):** solo los **clientes** pueden registrarse por su cuenta. En la navbar, **Ingresar** despliega Cliente / Empleado / Proveedor (`/login?tipo=cliente|empleado|proveedor`, lógica en `App\Support\AuthLoginAudience`). **Registrarse** abre modales en la tienda: confirmación («te registras como cliente») y formulario completo (`RegisterCustomerRequest`: datos personales, cuenta y domicilio de entrega → `users` + `customer_profiles`). `GET /register` redirige a `/?registro=confirm`. Empleados y proveedores reciben credenciales del administrador. JS: `window.bfOpenRegisterConfirm()` / `bfOpenRegisterClient()` en `resources/js/app.js`; vistas `resources/views/components/auth/*`.
 
 **Perfil y cuenta:** **Mi perfil** (`/profile`) usa panel modal reutilizable (`resources/views/components/account/*`). Avatares en `users.avatar` (`App\Support\UserAvatarStorage`, disco `public/avatars/`). Al cambiar la foto se abre un **editor circular** (girar, zoom, arrastrar para centrar) antes de guardar; lógica en `resources/js/avatarEditor.js` (Alpine `avatarEditor`) y vista `resources/views/components/avatar/crop-dialog.blade.php`. Aplica en el modal de perfil y en el formulario Livewire de usuarios (`UserForm`). En admin, vista de cuenta en modal Livewire (`App\Livewire\Admin\UserAccountModal`).
 
@@ -121,7 +123,7 @@ Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`.
 
 | Rol | Uso |
 |-----|-----|
-| `customer` | Registro público Breeze; perfil de entrega en `customer_profiles`; tras login → inicio `/` |
+| `customer` | **Único rol con registro público**; formulario modal con domicilio completo; tras login → inicio `/` |
 | `admin` | Panel completo, usuarios, pedidos, CRUD catálogo, API mutaciones |
 | `employee` | Personal interno; **cargo** en `employee_profiles` → `positions` (p. ej. domiciliario) |
 | `supplier` | Portal `/portal-proveedor`; datos comerciales en `supplier_profiles` |
@@ -138,7 +140,7 @@ Roles válidos en el comando: `admin`, `employee`, `customer`, `supplier`.
 
 Los listados se agrupan en **tres ámbitos** (filtros y etiquetas vía `App\Domain\Users\RoleSlug::audienceId()`): **clientes** (`customer`), **empresa** (`admin`, `employee`) y **proveedores** (`supplier`).
 
-- **Clientes:** dirección y ciudad en `customer_profiles`; en **Mi perfil** deben completar teléfono, dirección, ciudad y provincia para **checkout**; el modelo `User` expone `filledDeliveryBasics()` / `hasCompleteDeliveryProfile()`.
+- **Clientes:** al registrarse se crea `customer_profiles` con domicilio; el checkout exige perfil de entrega completo (`User::hasCompleteDeliveryProfile()`).
 - **Proveedores:** razón social, NIT y contacto en `supplier_profiles` (editable también en perfil).
 - **Administración:** alta/edición con Livewire; listados `/admin/users`, `/admin/users/clientes`, `/admin/users/empresa`, `/admin/users/proveedores`. **Cargos:** `/admin/positions`. No se expone borrado masivo de usuarios; al cambiar rol se evita dejar sin ningún `admin`.
 
@@ -151,6 +153,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Área | Ruta / nota |
 |------|-------------|
 | Tienda (clientes) | `/` (carrusel cinta si hay diapositivas), `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Auth invitados | `/login?tipo=cliente|empleado|proveedor`; registro cliente vía modal en tienda o `/register` → `/?registro=confirm` |
 | Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
 | Cinta (admin) | `GET /admin/cinta`, `POST/PUT/DELETE` diapositivas (`cinta_slides`, `config/cinta.php`) |
 | Dashboard | `/dashboard` (admin/empleado con KPIs; **clientes** usan inicio `/` tras login) |

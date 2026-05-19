@@ -7,6 +7,9 @@
 
 @php
 $maxWidthClass = match ($maxWidth) {
+    'md' => 'sm:max-w-md',
+    'lg' => 'sm:max-w-lg',
+    '2xl' => 'sm:max-w-2xl',
     '3xl' => 'sm:max-w-3xl',
     '4xl' => 'sm:max-w-4xl',
     '5xl' => 'sm:max-w-5xl',
@@ -45,12 +48,12 @@ $initialShow = $show || session('open_profile_modal');
     <div
         x-show="show"
         x-transition.opacity
-        class="fixed inset-0 bg-stone-900/50"
+        class="fixed inset-0 bg-stone-900/50 z-0"
         x-on:click="show = false"
         aria-hidden="true"
     ></div>
 
-    <div class="flex min-h-full items-start sm:items-center justify-center pointer-events-none">
+    <div class="relative z-10 flex min-h-full items-start sm:items-center justify-center pointer-events-none py-8 sm:py-10">
         <div
             x-show="show"
             x-transition

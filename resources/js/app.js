@@ -12,6 +12,25 @@ window.bfOpenProfileModal = function () {
     );
 };
 
+/** Modales de registro cliente (tienda / login). */
+window.bfOpenRegisterConfirm = function () {
+    window.dispatchEvent(
+        new CustomEvent('open-modal', { detail: 'register-client-confirm', bubbles: true })
+    );
+};
+
+window.bfOpenRegisterClient = function () {
+    window.dispatchEvent(
+        new CustomEvent('open-modal', { detail: 'register-client', bubbles: true })
+    );
+};
+
+window.bfCloseRegisterConfirm = function () {
+    window.dispatchEvent(
+        new CustomEvent('close-modal', { detail: 'register-client-confirm', bubbles: true })
+    );
+};
+
 document.addEventListener('alpine:init', () => {
     registerAvatarEditor(Alpine);
 
