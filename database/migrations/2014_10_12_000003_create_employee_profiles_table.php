@@ -21,6 +21,12 @@ return new class extends Migration
             $table->string('emergency_contact', 191)->nullable();
             $table->string('emergency_phone', 32)->nullable();
             $table->string('home_address', 255)->nullable();
+            $table->string('home_neighborhood', 120)->nullable();
+            $table->string('home_city', 120)->nullable();
+            $table->string('home_state', 120)->nullable();
+            $table->string('home_country', 2)->nullable()->default('CO');
+            $table->decimal('home_latitude', 10, 7)->nullable();
+            $table->decimal('home_longitude', 10, 7)->nullable();
             $table->text('notes')->nullable();
             $table->string('vehicle_type', 64)->nullable();
             $table->string('plate_number', 32)->nullable();

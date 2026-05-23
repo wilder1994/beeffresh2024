@@ -1,53 +1,73 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use App\Models\Producto;
+use App\Models\Product;
+use App\Services\Catalog\CartSessionService;
 use App\Services\CheckoutService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CarritoController extends Controller
 {
-        public function agregar(Request $request)
-    {
-        $id = (int) $request->input('producto_id'); // <-- ID desde JSON
+    public function __construct(
+        private readonly CartSessionService $cartSession,
+    ) {}
 
-        $cantidad = max(1, (int) $request->input('cantidad', 1));
-        $producto = Producto::findOrFail($id);
+    public function agregar(Request $request)
+    {
+        $id = (int) ($request->input('product_id') ?? $request->input('producto_id'));
+        $saleUnit = $this->cartSession->parseSaleUnit($request->input('sale_unit'));
+        $cantidad = $this->cartSession->normalizeQuantity($request->input('cantidad', 1));
+        $product = Product::query()->findOrFail($id);
 
         $carrito = session()->get('carrito', []);
+        $lineKey = $this->cartSession->lineKey($id, $saleUnit);
+        $unitPrice = $this->cartSession->unitPrice($product, $saleUnit);
 
-        if ($producto->stock < $cantidad) {
+        $existingQty = isset($carrito[$lineKey]['cantidad'])
+            ? (float) $carrito[$lineKey]['cantidad']
+            : 0.0;
+        $totalStockNeeded = $this->cartSession->stockRequired(
+            $product,
+            $existingQty + $cantidad,
+            $saleUnit
+        );
+
+        if ((float) $product->stock < $totalStockNeeded) {
             if ($request->isJson()) {
                 return response()->json([
-                    'mensaje' => 'Stock insuficiente para este producto.',
-                    'totalProductos' => array_sum(array_column($carrito, 'cantidad')),
+                    'mensaje' => 'Stock insuficiente para esta cantidad.',
+                    'totalProductos' => (int) round($this->cartSession->totalItemCount($carrito)),
                 ], 400);
             }
 
-            return redirect()->back()->with('error', 'Stock insuficiente para este producto.');
+            return redirect()->back()->with('error', 'Stock insuficiente para esta cantidad.');
         }
 
-        if (isset($carrito[$id])) {
-            $carrito[$id]['cantidad'] += $cantidad;
+        if (isset($carrito[$lineKey])) {
+            $carrito[$lineKey]['cantidad'] = $existingQty + $cantidad;
         } else {
-            $carrito[$id] = [
-                'producto_id' => $id,
-                'nombre' => $producto->nombre,
-                'precio' => $producto->precio,
-                'imagen' => $producto->imagen,
+            $carrito[$lineKey] = [
+                'product_id' => $id,
+                'sale_unit' => $saleUnit->value,
+                'nombre' => $product->name,
+                'precio' => $unitPrice,
+                'imagen' => $product->image,
                 'cantidad' => $cantidad,
             ];
         }
 
         session()->put('carrito', $carrito);
 
-        $totalProductos = array_sum(array_column($carrito, 'cantidad'));
+        $totalProductos = (int) round($this->cartSession->totalItemCount($carrito));
+        $unitLabel = $saleUnit->value === 'lb' ? 'lb' : 'kg';
 
         if ($request->isJson()) {
             return response()->json([
-                'mensaje' => 'Producto agregado al carrito',
+                'mensaje' => "Agregado: {$cantidad} {$unitLabel} de {$product->name}",
                 'totalProductos' => $totalProductos,
             ]);
         }
@@ -55,31 +75,48 @@ class CarritoController extends Controller
         return redirect()->back()->with('success', 'Producto agregado al carrito.');
     }
 
-
-        public function ver()
+    public function ver()
     {
         $carritoSession = session()->get('carrito', []);
+        $productIds = $this->cartSession->productIds($carritoSession);
 
-        $productos = \App\Models\Producto::whereIn('id', array_keys($carritoSession))->get();
+        $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
 
-        $carrito = [];
+        $lineas = [];
+        $total = 0;
+        $itemCount = 0;
 
-            foreach ($productos as $producto) {
-                $item = $carritoSession[$producto->id] ?? null;
-
-                if (is_array($item) && isset($item['cantidad'])) {
-                    $carrito[$producto->id] = [
-                        'nombre' => $producto->nombre,
-                        'precio' => $producto->precio,
-                        'imagen' => $producto->imagen,
-                        'cantidad' => $item['cantidad'],
-                    ];
-                }
+        foreach ($carritoSession as $lineKey => $item) {
+            if (! is_array($item) || ! isset($item['cantidad'])) {
+                continue;
             }
 
+            [$productId, $saleUnit] = $this->cartSession->parseLineKey($lineKey);
+            $product = $products->get($productId);
 
+            if ($product === null) {
+                continue;
+            }
 
-        return view('carrito.ver', compact('carrito'));
+            $cantidad = (float) $item['cantidad'];
+            $precio = $this->cartSession->unitPrice($product, $saleUnit);
+            $subtotal = $precio * $cantidad;
+
+            $lineas[] = [
+                'product_id' => $product->id,
+                'nombre' => $product->name,
+                'precio' => $precio,
+                'cantidad' => $cantidad,
+                'sale_unit' => $saleUnit,
+                'subtotal' => $subtotal,
+                'imagen_url' => $product->imageUrl(),
+            ];
+
+            $total += $subtotal;
+            $itemCount += $cantidad;
+        }
+
+        return view('carrito.ver', compact('lineas', 'total', 'itemCount'));
     }
 
     public function finalizarCompra(CheckoutService $checkoutService): RedirectResponse
@@ -114,5 +151,4 @@ class CarritoController extends Controller
             ->route('home')
             ->with('success', 'Pedido #'.$order->id.' registrado correctamente.');
     }
-
 }

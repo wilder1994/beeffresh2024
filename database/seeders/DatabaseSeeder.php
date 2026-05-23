@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
             PositionSeeder::class,
             AdminUserSeeder::class,
             DemoUsersSeeder::class,
+            CatalogSeeder::class,
+            StoreContentSeeder::class,
         ]);
     }
 }

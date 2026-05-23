@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Domain\Geo\Colombia;
 use App\Domain\Users\PermissionKey;
 use App\Domain\Users\RoleSlug;
 use App\Models\CustomerProfile;
@@ -93,7 +94,9 @@ final class AdminUserPersistence
                 'loyalty_points' => (int) ($v['customer_loyalty_points'] ?? 0),
                 'balance' => (string) ($v['customer_balance'] ?? '0'),
                 'postal_code' => $v['customer_postal_code'] ?? null,
-                'country' => $v['customer_country'] ?? 'DO',
+                'country' => $v['customer_country'] ?? Colombia::COUNTRY_CODE,
+                'latitude' => self::nullableDecimal($v['customer_latitude'] ?? null),
+                'longitude' => self::nullableDecimal($v['customer_longitude'] ?? null),
             ]
         );
     }
@@ -117,6 +120,12 @@ final class AdminUserPersistence
             'emergency_contact' => $v['employee_emergency_contact'] ?? null,
             'emergency_phone' => $v['employee_emergency_phone'] ?? null,
             'home_address' => $v['employee_home_address'] ?? null,
+            'home_neighborhood' => $v['employee_home_neighborhood'] ?? null,
+            'home_city' => $v['employee_home_city'] ?? null,
+            'home_state' => $v['employee_home_state'] ?? null,
+            'home_country' => $v['employee_home_country'] ?? Colombia::COUNTRY_CODE,
+            'home_latitude' => self::nullableDecimal($v['employee_home_latitude'] ?? null),
+            'home_longitude' => self::nullableDecimal($v['employee_home_longitude'] ?? null),
             'notes' => $v['employee_notes'] ?? null,
             'vehicle_type' => $isDelivery ? ($v['employee_vehicle_type'] ?? null) : null,
             'plate_number' => $isDelivery ? ($v['employee_plate_number'] ?? null) : null,
@@ -142,12 +151,26 @@ final class AdminUserPersistence
                 'business_phone' => $v['supplier_business_phone'] ?? null,
                 'business_email' => $v['supplier_business_email'] ?? null,
                 'business_address' => $v['supplier_business_address'] ?? null,
+                'neighborhood' => $v['supplier_neighborhood'] ?? null,
                 'city' => $v['supplier_city'] ?? null,
+                'state' => $v['supplier_state'] ?? null,
+                'country' => $v['supplier_country'] ?? Colombia::COUNTRY_CODE,
+                'latitude' => self::nullableDecimal($v['supplier_latitude'] ?? null),
+                'longitude' => self::nullableDecimal($v['supplier_longitude'] ?? null),
                 'bank_name' => $v['supplier_bank_name'] ?? null,
                 'account_type' => $v['supplier_account_type'] ?? null,
                 'account_number' => $v['supplier_account_number'] ?? null,
                 'credit_days' => isset($v['supplier_credit_days']) ? (int) $v['supplier_credit_days'] : null,
             ]
         );
+    }
+
+    private static function nullableDecimal(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (string) $value;
     }
 }

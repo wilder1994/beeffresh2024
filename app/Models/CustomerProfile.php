@@ -22,12 +22,16 @@ class CustomerProfile extends Model
         'balance',
         'postal_code',
         'country',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
         'accepts_promotions' => 'boolean',
         'loyalty_points' => 'integer',
         'balance' => 'decimal:2',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo

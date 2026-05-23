@@ -19,7 +19,12 @@ return new class extends Migration
             $table->string('business_phone', 32)->nullable();
             $table->string('business_email', 191)->nullable();
             $table->string('business_address', 255)->nullable();
+            $table->string('neighborhood', 120)->nullable();
             $table->string('city', 120)->nullable();
+            $table->string('state', 120)->nullable();
+            $table->string('country', 2)->nullable()->default('CO');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->string('bank_name', 120)->nullable();
             $table->string('account_type', 64)->nullable();
             $table->string('account_number', 64)->nullable();

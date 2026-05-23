@@ -13,7 +13,7 @@ class OrderController extends Controller
     public function index(): View
     {
         $pedidos = Order::query()
-            ->with(['user', 'items.producto'])
+            ->with(['user', 'items.product'])
             ->latest()
             ->paginate(15)
             ->withQueryString();

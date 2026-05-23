@@ -19,6 +19,8 @@ class CompanyProfile extends Model
         'social_facebook',
         'social_instagram',
         'social_twitter',
+        'social_whatsapp',
+        'social_tiktok',
         'social_youtube',
     ];
 

@@ -32,6 +32,7 @@ class RegisteredUserController extends Controller
             'email' => $data['email'],
             'password' => $data['password'],
             'phone' => $data['phone'],
+            'document_type' => $data['document_type'] ?? null,
             'document_number' => $data['document_number'] ?? null,
             'status' => 'active',
         ]);
@@ -46,6 +47,8 @@ class RegisteredUserController extends Controller
             'state' => $data['customer_state'],
             'postal_code' => $data['customer_postal_code'] ?? null,
             'country' => $data['customer_country'] ?? 'CO',
+            'latitude' => $data['customer_latitude'] ?? null,
+            'longitude' => $data['customer_longitude'] ?? null,
             'delivery_notes' => $data['customer_delivery_notes'] ?? null,
             'accepts_promotions' => $request->boolean('accepts_promotions', true),
             'loyalty_points' => 0,

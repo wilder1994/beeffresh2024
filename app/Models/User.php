@@ -167,7 +167,8 @@ class User extends Authenticatable
         return $this->phone !== null && trim((string) $this->phone) !== ''
             && $p->address !== null && trim((string) $p->address) !== ''
             && $p->city !== null && trim((string) $p->city) !== ''
-            && $p->state !== null && trim((string) $p->state) !== '';
+            && $p->state !== null && trim((string) $p->state) !== ''
+            && $p->neighborhood !== null && trim((string) $p->neighborhood) !== '';
     }
 
     /**
@@ -186,7 +187,7 @@ class User extends Authenticatable
             'shipping_city' => $p?->city,
             'shipping_state' => $p?->state,
             'shipping_postal_code' => $p?->postal_code,
-            'shipping_country' => $p?->country ?? 'DO',
+            'shipping_country' => $p?->country ?? 'CO',
             'shipping_notes' => $p?->delivery_notes,
         ];
     }

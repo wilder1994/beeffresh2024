@@ -19,6 +19,12 @@ class EmployeeProfile extends Model
         'emergency_contact',
         'emergency_phone',
         'home_address',
+        'home_neighborhood',
+        'home_city',
+        'home_state',
+        'home_country',
+        'home_latitude',
+        'home_longitude',
         'notes',
         'vehicle_type',
         'plate_number',
@@ -35,6 +41,8 @@ class EmployeeProfile extends Model
         'salary' => 'decimal:2',
         'average_rating' => 'decimal:2',
         'available' => 'boolean',
+        'home_latitude' => 'decimal:7',
+        'home_longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Domain\Geo\Colombia;
+use App\Domain\Users\ColombianDocumentType;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -33,6 +35,7 @@ class ProfileUpdateRequest extends FormRequest
                 'string',
                 'max:32',
             ],
+            'document_type' => ColombianDocumentType::validationRules(),
             'document_number' => ['nullable', 'string', 'max:64'],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ];
@@ -43,7 +46,9 @@ class ProfileUpdateRequest extends FormRequest
             $rules['customer_city'] = ['required', 'string', 'max:120'];
             $rules['customer_state'] = ['required', 'string', 'max:120'];
             $rules['customer_postal_code'] = ['nullable', 'string', 'max:32'];
-            $rules['customer_country'] = ['nullable', 'string', 'size:2'];
+            $rules['customer_country'] = ['nullable', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])];
+            $rules['customer_latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+            $rules['customer_longitude'] = ['nullable', 'numeric', 'between:-180,180'];
             $rules['customer_delivery_notes'] = ['nullable', 'string', 'max:2000'];
         }
 
@@ -54,7 +59,12 @@ class ProfileUpdateRequest extends FormRequest
             $rules['supplier_business_phone'] = ['nullable', 'string', 'max:32'];
             $rules['supplier_business_email'] = ['nullable', 'email', 'max:191'];
             $rules['supplier_business_address'] = ['nullable', 'string', 'max:255'];
+            $rules['supplier_neighborhood'] = ['nullable', 'string', 'max:120'];
             $rules['supplier_city'] = ['nullable', 'string', 'max:120'];
+            $rules['supplier_state'] = ['nullable', 'string', 'max:120'];
+            $rules['supplier_country'] = ['nullable', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])];
+            $rules['supplier_latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+            $rules['supplier_longitude'] = ['nullable', 'numeric', 'between:-180,180'];
         }
 
         return $rules;

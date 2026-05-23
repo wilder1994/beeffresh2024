@@ -48,11 +48,32 @@
             </div>
             <div>
                 @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}document_number">Identificación</label>
-                    <input id="{{ $pfx }}document_number" name="document_number" type="text" class="bf-input" value="{{ old('document_number') }}" autocomplete="off" />
+                    <label class="bf-label" for="{{ $pfx }}document_type">Tipo documento</label>
+                    <x-forms.document-type-select
+                        id="{{ $pfx }}document_type"
+                        name="document_type"
+                        :legacy-value="old('document_type')"
+                        required
+                    />
                 @else
-                    <x-input-label for="{{ $pfx }}document_number" :value="'Identificación'" />
-                    <x-text-input id="{{ $pfx }}document_number" class="{{ $fieldClass }}" type="text" name="document_number" :value="old('document_number')" />
+                    <x-input-label for="{{ $pfx }}document_type" :value="'Tipo documento'" />
+                    <x-forms.document-type-select
+                        id="{{ $pfx }}document_type"
+                        name="document_type"
+                        :legacy-value="old('document_type')"
+                        class="{{ $fieldClass }}"
+                        required
+                    />
+                @endif
+                <x-input-error :messages="$errors->get('document_type')" class="mt-1" />
+            </div>
+            <div>
+                @if($inModal)
+                    <label class="bf-label" for="{{ $pfx }}document_number">Número documento</label>
+                    <input id="{{ $pfx }}document_number" name="document_number" type="text" class="bf-input" value="{{ old('document_number') }}" required autocomplete="off" />
+                @else
+                    <x-input-label for="{{ $pfx }}document_number" :value="'Número documento'" />
+                    <x-text-input id="{{ $pfx }}document_number" class="{{ $fieldClass }}" type="text" name="document_number" :value="old('document_number')" required />
                 @endif
                 <x-input-error :messages="$errors->get('document_number')" class="mt-1" />
             </div>
@@ -99,78 +120,44 @@
 
     <section>
         <h3 @class(['bf-form-section-title' => $inModal, 'text-sm font-semibold text-stone-700 mb-3' => ! $inModal])>Domicilio de entrega</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 {{ $gridGap }}">
-            <div class="sm:col-span-2">
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_address">Dirección</label>
-                    <input id="{{ $pfx }}customer_address" name="customer_address" type="text" class="bf-input" value="{{ old('customer_address') }}" required autocomplete="street-address" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_address" :value="'Dirección'" />
-                    <x-text-input id="{{ $pfx }}customer_address" class="{{ $fieldClass }}" type="text" name="customer_address" :value="old('customer_address')" required autocomplete="street-address" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_address')" class="mt-1" />
-            </div>
-            <div>
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_neighborhood">Barrio</label>
-                    <input id="{{ $pfx }}customer_neighborhood" name="customer_neighborhood" type="text" class="bf-input" value="{{ old('customer_neighborhood') }}" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_neighborhood" :value="'Barrio'" />
-                    <x-text-input id="{{ $pfx }}customer_neighborhood" class="{{ $fieldClass }}" type="text" name="customer_neighborhood" :value="old('customer_neighborhood')" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_neighborhood')" class="mt-1" />
-            </div>
-            <div>
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_city">Ciudad</label>
-                    <input id="{{ $pfx }}customer_city" name="customer_city" type="text" class="bf-input" value="{{ old('customer_city') }}" required autocomplete="address-level2" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_city" :value="'Ciudad'" />
-                    <x-text-input id="{{ $pfx }}customer_city" class="{{ $fieldClass }}" type="text" name="customer_city" :value="old('customer_city')" required autocomplete="address-level2" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_city')" class="mt-1" />
-            </div>
-            <div>
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_state">Provincia</label>
-                    <input id="{{ $pfx }}customer_state" name="customer_state" type="text" class="bf-input" value="{{ old('customer_state') }}" required autocomplete="address-level1" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_state" :value="'Provincia'" />
-                    <x-text-input id="{{ $pfx }}customer_state" class="{{ $fieldClass }}" type="text" name="customer_state" :value="old('customer_state')" required autocomplete="address-level1" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_state')" class="mt-1" />
-            </div>
-            <div>
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_postal_code">Código postal</label>
-                    <input id="{{ $pfx }}customer_postal_code" name="customer_postal_code" type="text" class="bf-input" value="{{ old('customer_postal_code') }}" autocomplete="postal-code" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_postal_code" :value="'Código postal'" />
-                    <x-text-input id="{{ $pfx }}customer_postal_code" class="{{ $fieldClass }}" type="text" name="customer_postal_code" :value="old('customer_postal_code')" autocomplete="postal-code" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_postal_code')" class="mt-1" />
-            </div>
-            <div>
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_country">País (ISO)</label>
-                    <input id="{{ $pfx }}customer_country" name="customer_country" type="text" maxlength="2" class="bf-input uppercase" value="{{ old('customer_country', 'CO') }}" autocomplete="country" />
-                @else
-                    <x-input-label for="{{ $pfx }}customer_country" :value="'País (ISO)'" />
-                    <x-text-input id="{{ $pfx }}customer_country" class="{{ $fieldClass }} uppercase" type="text" name="customer_country" maxlength="2" :value="old('customer_country', 'CO')" autocomplete="country" />
-                @endif
-                <x-input-error :messages="$errors->get('customer_country')" class="mt-1" />
-            </div>
-            <div class="sm:col-span-2">
-                @if($inModal)
-                    <label class="bf-label" for="{{ $pfx }}customer_delivery_notes">Indicaciones de entrega</label>
-                    <textarea id="{{ $pfx }}customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem]">{{ old('customer_delivery_notes') }}</textarea>
-                @else
-                    <x-input-label for="{{ $pfx }}customer_delivery_notes" :value="'Indicaciones de entrega'" />
-                    <textarea id="{{ $pfx }}customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem] mt-1 w-full">{{ old('customer_delivery_notes') }}</textarea>
-                @endif
-                <x-input-error :messages="$errors->get('customer_delivery_notes')" class="mt-1" />
-            </div>
-        </div>
+        <x-forms.colombia-address
+            prefix="customer"
+            :id-prefix="$pfx"
+            :address="old('customer_address')"
+            :neighborhood="old('customer_neighborhood')"
+            :city="old('customer_city')"
+            :department="old('customer_state')"
+            :latitude="old('customer_latitude')"
+            :longitude="old('customer_longitude')"
+            show-postal
+            show-delivery-notes
+            class="!grid !grid-cols-1 sm:!grid-cols-2 {{ $gridGap }}"
+        >
+            <x-slot:postal>
+                <div>
+                    @if($inModal)
+                        <label class="bf-label" for="{{ $pfx }}customer_postal_code">Código postal</label>
+                        <input id="{{ $pfx }}customer_postal_code" name="customer_postal_code" type="text" class="bf-input" value="{{ old('customer_postal_code') }}" autocomplete="postal-code" />
+                    @else
+                        <x-input-label for="{{ $pfx }}customer_postal_code" :value="'Código postal'" />
+                        <x-text-input id="{{ $pfx }}customer_postal_code" class="{{ $fieldClass }}" type="text" name="customer_postal_code" :value="old('customer_postal_code')" autocomplete="postal-code" />
+                    @endif
+                    <x-input-error :messages="$errors->get('customer_postal_code')" class="mt-1" />
+                </div>
+            </x-slot:postal>
+            <x-slot:deliveryNotes>
+                <div class="sm:col-span-2">
+                    @if($inModal)
+                        <label class="bf-label" for="{{ $pfx }}customer_delivery_notes">Indicaciones de entrega</label>
+                        <textarea id="{{ $pfx }}customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem]">{{ old('customer_delivery_notes') }}</textarea>
+                    @else
+                        <x-input-label for="{{ $pfx }}customer_delivery_notes" :value="'Indicaciones de entrega'" />
+                        <textarea id="{{ $pfx }}customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem] mt-1 w-full">{{ old('customer_delivery_notes') }}</textarea>
+                    @endif
+                    <x-input-error :messages="$errors->get('customer_delivery_notes')" class="mt-1" />
+                </div>
+            </x-slot:deliveryNotes>
+        </x-forms.colombia-address>
     </section>
 
     <label class="flex items-start gap-2 cursor-pointer text-sm text-stone-600">

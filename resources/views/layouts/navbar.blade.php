@@ -28,7 +28,7 @@
             <ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-[#f8fafc] text-gray-800 rounded-box w-52">
                 <li><a href="{{ $inicioHref }}">Inicio</a></li>
                 <li><a href="{{ route('home') }}">Servicios</a></li>
-                <li><a href="{{ route('productos.publico.index') }}">Productos</a></li>
+                <li><a href="{{ route('products.public.index') }}">Productos</a></li>
                 <li><a href="{{ route('nosotros') }}">Nosotros</a></li>
             </ul>
         </div>
@@ -37,7 +37,7 @@
     <div class="hidden md:flex flex-1 flex-wrap items-center gap-x-2">
         <a href="{{ $inicioHref }}" class="btn btn-ghost btn-sm text-white">Inicio</a>
         <a href="{{ route('home') }}" class="btn btn-ghost btn-sm text-white">Servicios</a>
-        <a href="{{ route('productos.publico.index') }}" class="btn btn-ghost btn-sm text-white">Productos</a>
+        <a href="{{ route('products.public.index') }}" class="btn btn-ghost btn-sm text-white">Productos</a>
         <a href="{{ route('nosotros') }}" class="btn btn-ghost btn-sm text-white">Nosotros</a>
     </div>
 

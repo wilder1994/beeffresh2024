@@ -16,11 +16,15 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`).
 
+**Catálogo comercial (admin):** módulo en `/catalogo` con pestañas: Productos, Tipos de carne, Cortes, Promociones, Precios e Inventario. Tablas `meat_types`, `meat_cuts`, `products`; servicios en `App\Services\Catalog\`. Semillas `CatalogSeeder` y `StoreContentSeeder`. Contenido visual del inicio: `store_banners` y `store_highlights` en **Ajustes → Banners inicio / Destacados inicio**.
+
 **Tablas (panel admin):** contenedor `bf-table-panel` (variante `bf-table-panel--flush`), tabla `bf-table` (opcional `bf-table--sticky-head`): encabezado café con degradado, cuerpo crema degradado, celdas con bordes finos. Usado en listados de usuarios, pedidos, cargos y tablas del dashboard.
+
+**Identificación y domicilio (Colombia):** tipos de documento en `App\Domain\Users\ColombianDocumentType` (`x-forms.document-type-select`); país fijo Colombia (`App\Domain\Geo\Colombia`, `x-forms.colombia-country`). Dirección unificada con **`x-forms.colombia-address`**: cascada departamento → ciudad → barrio (datos en `resources/data/colombia-locations.json`, `App\Domain\Geo\ColombianLocations`), icono de mapa (Google Maps: Places, Geocoding) y coordenadas `latitude` / `longitude` en perfiles (`customer_profiles`, `employee_profiles`, `supplier_profiles`). Alpine `colombiaAddressPicker` en `resources/js/addressPicker.js`. Variable de entorno **`GOOGLE_MAPS_API_KEY`** (`config/services.php`); sin clave el formulario funciona, el mapa muestra aviso. Restringe la clave por dominio (localhost, `beeffresh2024.test`, IP LAN si aplica).
 
 **Formularios (panel admin, catálogo, perfil, auth):** clases en `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, barra de filtros `bf-form-toolbar`, secciones internas `bf-form-section` / `bf-form-section--nested`, ítems checkbox `bf-form-check-item`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file` (fondo semitransparente y borde café), etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. Paneles de cuenta y login: `bf-account-shell`, `bf-auth-card`; modales de registro y confirmación usan `bf-surface`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). **Usuarios (admin):** alta y edición con **Livewire 3** (`App\Livewire\Admin\UserForm`, vista `resources/views/livewire/admin/user-form.blade.php`, cabecera en `livewire/admin/partials/user-form-header.blade.php`); persistencia en `App\Services\Admin\AdminUserPersistence`. **Cargos:** CRUD en `/admin/positions` (modelo `Position`; el domiciliario es un **cargo** con slug `domiciliario`, no un rol). Tras cambiar CSS o JS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
 
-**Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes en **`/admin/empresa`**.
+**Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes (WhatsApp, TikTok, Instagram, Facebook, X) en **`/admin/empresa`**. Iconos reutilizables: `x-store.social-icons`.
 
 **Cinta (inicio):** carrusel horizontal a ancho completo en la tienda (`/`), hasta **15** imágenes en proporción **16:9** (recomendado 1920×1080, mínimo 960×540). La validación admite un margen de **±3 %** sobre 16:9 (`config/cinta.php` → `aspect_ratio_tolerance`; regla `App\Rules\CintaImageAspectRatio`). Archivos en disco `public/cinta/…` vía `App\Support\CintaSlideStorage`. El administrador gestiona las diapositivas en **`/admin/cinta`** (Ajustes → Cinta en el sidebar). La marquesina duplica diapositivas hasta 15 tiles para un bucle continuo (`App\Support\CintaMarqueeSlides`).
 
@@ -52,7 +56,7 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-1. Configura en `.env`: `DB_*`, `APP_URL`, y `ADMIN_*` (administrador inicial vía semillas).
+1. Configura en `.env`: `DB_*`, `APP_URL`, `ADMIN_*` (administrador inicial vía semillas) y, para el selector de mapa, `GOOGLE_MAPS_API_KEY` (opcional en local si no usas el mapa).
 2. Enlaza almacenamiento público para imágenes de productos, promociones, **cinta**, avatares, etc.:
 
 ```bash
@@ -85,7 +89,7 @@ Alternativa: **Menu → Path → Add Laragon to Path** y usar la **terminal de L
 
 **Livewire:** en `resources/views/layouts/app.blade.php` están `@livewireStyles` (head) y `@livewireScripts` (antes de `</body>`). Tras `composer install`, conviene `php artisan optimize:clear` si algo de paquetes no se refleja.
 
-**PSR-4:** el catálogo público usa `App\Http\Controllers\Publico\ProductoPublicoController` en la carpeta **`app/Http/Controllers/Publico/`** (P mayúscula), coherente con el namespace.
+**PSR-4:** el catálogo público usa `App\Http\Controllers\Publico\ProductPublicController` en **`app/Http/Controllers/Publico/`** (P mayúscula).
 
 ### Acceso en LAN por IP (Laragon / Apache)
 
@@ -154,7 +158,9 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 
 | Área | Ruta / nota |
 |------|-------------|
-| Tienda (clientes) | `/` (carrusel cinta si hay diapositivas), `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Tienda (clientes) | `/` (cinta, banners, destacados), `/nosotros`, `/productos-publicos`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Catálogo admin | `/catalogo/productos` (default), `/catalogo/tipos-carne`, `/catalogo/cortes`, `/catalogo/promociones`, `/catalogo/precios`, `/catalogo/inventario` |
+| Contenido inicio | `/admin/contenido-tienda/banners`, `/admin/contenido-tienda/destacados` |
 | Auth invitados | `/login?tipo=cliente|empleado|proveedor`; registro cliente vía modal en tienda o `/register` → `/?registro=confirm` |
 | Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
 | Cinta (admin) | `GET /admin/cinta`, `POST/PUT/DELETE` diapositivas (`cinta_slides`, `config/cinta.php`) |
@@ -169,10 +175,13 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 
 ## Tienda y pedidos
 
-- Carrito en sesión; solo **cuentas cliente** pueden cerrar compra en línea; **checkout** exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
-- Confirmación: tablas **`orders`** (con snapshot `shipping_*`) y **`order_items`**, descuento de stock vía `App\Services\CheckoutService`.
+- **Catálogo público:** `/productos-publicos` (rutas `products.public.*`). Cada tarjeta incluye selector **Kg / Lb** (default Kg), cantidad entera y precio según unidad (`x-store.product-purchase`, Alpine + `resources/js/storeCart.js`). Estilos compactos de la fila unidad/cantidad: `.bf-store-unit-toggle` y `.bf-store-qty-input` en `resources/css/app.css` (scoped a `[data-product-purchase]`).
+- **Carrito en sesión:** líneas con clave `{product_id}:{kg|lb}`; servicios `App\Services\Catalog\CartSessionService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg, coherente con `price_per_lb = price_per_kg ÷ 2`). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
+- Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
+- Confirmación: tablas **`orders`** (snapshot `shipping_*`) y **`order_items`** (`sale_unit`, `quantity` decimal, `unit_price`, `subtotal`); descuento de stock vía `App\Services\CheckoutService`.
 - Panel admin: listado en `/admin/pedidos` (columna resumen de entrega); dashboard admin muestra KPIs, pedidos recientes, stock bajo y volumen de pedidos (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
+- Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.
 
 ## API (Sanctum)
 

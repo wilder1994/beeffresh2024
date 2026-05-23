@@ -22,14 +22,15 @@ class RegistrationTest extends TestCase
             'email' => 'maria@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
-            'phone' => '8095551234',
-            'document_number' => '001-1234567-8',
-            'customer_address' => 'Calle Principal 123',
+            'phone' => '3001234567',
+            'document_type' => 'CC',
+            'document_number' => '1234567890',
+            'customer_address' => 'Calle 10 # 20-30',
             'customer_neighborhood' => 'Centro',
-            'customer_city' => 'Santo Domingo',
-            'customer_state' => 'Distrito Nacional',
-            'customer_postal_code' => '10101',
-            'customer_country' => 'DO',
+            'customer_city' => 'Medellín',
+            'customer_state' => 'Antioquia',
+            'customer_postal_code' => '050001',
+            'customer_country' => 'CO',
             'customer_delivery_notes' => 'Portón negro',
             'accepts_promotions' => '1',
         ];
@@ -54,7 +55,7 @@ class RegistrationTest extends TestCase
             ]);
 
         $response->assertRedirect(route('home'));
-        $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'password', 'phone', 'customer_address', 'customer_city', 'customer_state']);
+        $response->assertSessionHasErrors(['first_name', 'last_name', 'email', 'password', 'phone', 'document_type', 'document_number', 'customer_address', 'customer_neighborhood', 'customer_city', 'customer_state']);
     }
 
     public function test_new_users_can_register_with_full_customer_profile(): void
@@ -67,13 +68,15 @@ class RegistrationTest extends TestCase
         $created = User::query()->where('email', 'maria@example.com')->first();
         $this->assertNotNull($created);
         $this->assertTrue($created->hasRole(RoleSlug::CUSTOMER));
-        $this->assertSame('8095551234', $created->phone);
+        $this->assertSame('3001234567', $created->phone);
+        $this->assertSame('CC', $created->document_type);
         $this->assertTrue($created->hasCompleteDeliveryProfile());
 
         $profile = $created->customerProfile;
         $this->assertNotNull($profile);
-        $this->assertSame('Calle Principal 123', $profile->address);
-        $this->assertSame('Santo Domingo', $profile->city);
-        $this->assertSame('Distrito Nacional', $profile->state);
+        $this->assertSame('Calle 10 # 20-30', $profile->address);
+        $this->assertSame('Medellín', $profile->city);
+        $this->assertSame('Antioquia', $profile->state);
+        $this->assertSame('CO', $profile->country);
     }
 }

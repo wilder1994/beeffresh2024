@@ -30,11 +30,13 @@
 
                         <div class="card-actions justify-end mt-4">
                             <a href="{{ route('videos.edit', $video->id) }}" class="btn btn-outline btn-sm">✏️ Editar</a>
-                            <form action="{{ route('videos.destroy', $video->id) }}" method="POST" onsubmit="return confirm('¿Eliminar este video?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-error btn-sm">🗑️ Eliminar</button>
-                            </form>
+                            <x-bf.delete-action
+                                :action="route('videos.destroy', $video->id)"
+                                confirm-title="¿Eliminar este video?"
+                                :confirm-message="'Se eliminará «'.$video->titulo.'».'"
+                                label="🗑️ Eliminar"
+                                button-class="btn btn-error btn-sm"
+                            />
                         </div>
                     </div>
                 </div>

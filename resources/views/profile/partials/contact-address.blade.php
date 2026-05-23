@@ -27,14 +27,17 @@
             <label class="bf-label" for="supplier_business_email">Correo comercial</label>
             <input id="supplier_business_email" name="supplier_business_email" type="email" class="bf-input" value="{{ old('supplier_business_email', $sp?->business_email) }}" />
         </div>
-        <div class="sm:col-span-2">
-            <label class="bf-label" for="supplier_business_address">Dirección</label>
-            <input id="supplier_business_address" name="supplier_business_address" type="text" class="bf-input" value="{{ old('supplier_business_address', $sp?->business_address) }}" />
-        </div>
-        <div>
-            <label class="bf-label" for="supplier_city">Ciudad</label>
-            <input id="supplier_city" name="supplier_city" type="text" class="bf-input" value="{{ old('supplier_city', $sp?->city) }}" />
-        </div>
+        <x-forms.colombia-address
+            prefix="supplier"
+            :required="false"
+            :address="old('supplier_business_address', $sp?->business_address)"
+            :neighborhood="old('supplier_neighborhood', $sp?->neighborhood)"
+            :city="old('supplier_city', $sp?->city)"
+            :department="old('supplier_state', $sp?->state)"
+            :latitude="old('supplier_latitude', $sp?->latitude)"
+            :longitude="old('supplier_longitude', $sp?->longitude)"
+            class="sm:col-span-2 !p-0"
+        />
     @endif
 
     <div>
@@ -43,43 +46,45 @@
         @error('phone')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
     <div>
-        <label class="bf-label" for="document_number">Identificación</label>
+        <label class="bf-label" for="document_type">Tipo documento</label>
+        <x-forms.document-type-select
+            id="document_type"
+            name="document_type"
+            :legacy-value="old('document_type', $user->document_type)"
+        />
+        @error('document_type')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+    </div>
+    <div>
+        <label class="bf-label" for="document_number">Número documento</label>
         <input id="document_number" name="document_number" type="text" class="bf-input" value="{{ old('document_number', $user->document_number) }}" />
         @error('document_number')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
     </div>
 
     @if($user->isCustomer())
-        <div class="sm:col-span-2">
-            <label class="bf-label" for="customer_address">Dirección</label>
-            <input id="customer_address" name="customer_address" type="text" class="bf-input" value="{{ old('customer_address', $cp?->address) }}" />
-            @error('customer_address')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-        </div>
-        <div>
-            <label class="bf-label" for="customer_neighborhood">Barrio</label>
-            <input id="customer_neighborhood" name="customer_neighborhood" type="text" class="bf-input" value="{{ old('customer_neighborhood', $cp?->neighborhood) }}" />
-        </div>
-        <div>
-            <label class="bf-label" for="customer_city">Ciudad</label>
-            <input id="customer_city" name="customer_city" type="text" class="bf-input" value="{{ old('customer_city', $cp?->city) }}" />
-            @error('customer_city')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-        </div>
-        <div>
-            <label class="bf-label" for="customer_state">Provincia</label>
-            <input id="customer_state" name="customer_state" type="text" class="bf-input" value="{{ old('customer_state', $cp?->state) }}" />
-            @error('customer_state')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-        </div>
-        <div>
-            <label class="bf-label" for="customer_postal_code">C.P.</label>
-            <input id="customer_postal_code" name="customer_postal_code" type="text" class="bf-input" value="{{ old('customer_postal_code', $cp?->postal_code) }}" />
-        </div>
-        <div>
-            <label class="bf-label" for="customer_country">País</label>
-            <input id="customer_country" name="customer_country" type="text" maxlength="2" class="bf-input" value="{{ old('customer_country', $cp?->country ?? 'CO') }}" />
-        </div>
-        <div class="sm:col-span-2">
-            <label class="bf-label" for="customer_delivery_notes">Indicaciones entrega</label>
-            <textarea id="customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem]">{{ old('customer_delivery_notes', $cp?->delivery_notes) }}</textarea>
-        </div>
+        <x-forms.colombia-address
+            prefix="customer"
+            :address="old('customer_address', $cp?->address)"
+            :neighborhood="old('customer_neighborhood', $cp?->neighborhood)"
+            :city="old('customer_city', $cp?->city)"
+            :department="old('customer_state', $cp?->state)"
+            :latitude="old('customer_latitude', $cp?->latitude)"
+            :longitude="old('customer_longitude', $cp?->longitude)"
+            show-postal
+            show-delivery-notes
+            class="sm:col-span-2 !p-0"
+        >
+            <x-slot:postal>
+                <div>
+                    <label class="bf-label" for="customer_postal_code">C.P.</label>
+                    <input id="customer_postal_code" name="customer_postal_code" type="text" class="bf-input" value="{{ old('customer_postal_code', $cp?->postal_code) }}" />
+                </div>
+            </x-slot:postal>
+            <x-slot:deliveryNotes>
+                <div class="sm:col-span-2">
+                    <label class="bf-label" for="customer_delivery_notes">Indicaciones entrega</label>
+                    <textarea id="customer_delivery_notes" name="customer_delivery_notes" rows="2" class="bf-textarea min-h-[3rem]">{{ old('customer_delivery_notes', $cp?->delivery_notes) }}</textarea>
+                </div>
+            </x-slot:deliveryNotes>
+        </x-forms.colombia-address>
     @endif
 </div>
-

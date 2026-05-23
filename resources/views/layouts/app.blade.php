@@ -104,6 +104,8 @@
     <x-account.profile-dialog />
 @endauth
 
+<x-bf.confirm-dialog />
+
 @livewireScripts
 </body>
 </html>

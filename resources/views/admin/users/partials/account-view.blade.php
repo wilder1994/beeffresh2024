@@ -1,4 +1,6 @@
 @php
+    use App\Domain\Geo\Colombia;
+    use App\Domain\Users\ColombianDocumentType;
     use App\Domain\Users\RoleSlug;
     use App\Domain\Users\PermissionKey;
     $roleSlug = $user->primaryRoleSlug();
@@ -9,7 +11,7 @@
         <x-account.field label="Nombre" :value="$user->name" />
         <x-account.field label="Correo" :value="$user->email" />
         <x-account.field label="Teléfono" :value="$user->phone" />
-        <x-account.field label="Tipo documento" :value="$user->document_type" />
+        <x-account.field label="Tipo documento" :value="ColombianDocumentType::label($user->document_type) ?? $user->document_type" />
         <x-account.field label="Número documento" :value="$user->document_number" />
         <x-account.field label="Rol" :value="$roleSlug ? RoleSlug::label($roleSlug) : null" />
         <x-account.field label="Audiencia" :value="$roleSlug ? RoleSlug::audienceLabel($roleSlug) : null" />
@@ -29,6 +31,10 @@
             <x-account.field label="Contacto emergencia" :value="$ep->emergency_contact" />
             <x-account.field label="Tel. emergencia" :value="$ep->emergency_phone" />
             <x-account.field label="Dirección" :value="$ep->home_address" :colspan="true" />
+            <x-account.field label="Barrio" :value="$ep->home_neighborhood" />
+            <x-account.field label="Ciudad" :value="$ep->home_city" />
+            <x-account.field label="Departamento" :value="$ep->home_state" />
+            <x-account.field label="País" :value="$ep->home_country ?? Colombia::COUNTRY_CODE" />
             @if($ep->isDeliveryRole())
                 <x-account.field label="Vehículo" :value="$ep->vehicle_type" />
                 <x-account.field label="Placa" :value="$ep->plate_number" />
@@ -59,7 +65,7 @@
             <x-account.field label="Dirección" :value="$cp->address" :colspan="true" />
             <x-account.field label="Barrio" :value="$cp->neighborhood" />
             <x-account.field label="Ciudad" :value="$cp->city" />
-            <x-account.field label="Provincia" :value="$cp->state" />
+            <x-account.field label="Departamento" :value="$cp->state" />
             <x-account.field label="Código postal" :value="$cp->postal_code" />
             <x-account.field label="País" :value="$cp->country" />
             <x-account.field label="Referencia" :value="$cp->address_reference" :colspan="true" />
@@ -81,7 +87,10 @@
             <x-account.field label="Teléfono" :value="$sp->business_phone" />
             <x-account.field label="Correo" :value="$sp->business_email" />
             <x-account.field label="Dirección" :value="$sp->business_address" :colspan="true" />
+            <x-account.field label="Barrio" :value="$sp->neighborhood" />
             <x-account.field label="Ciudad" :value="$sp->city" />
+            <x-account.field label="Departamento" :value="$sp->state" />
+            <x-account.field label="País" :value="$sp->country ?? Colombia::COUNTRY_CODE" />
             <x-account.field label="Banco" :value="$sp->bank_name" />
             <x-account.field label="Tipo cuenta" :value="$sp->account_type" />
             <x-account.field label="Número cuenta" :value="$sp->account_number" />

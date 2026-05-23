@@ -86,7 +86,7 @@
                 <ul class="space-y-3 text-sm">
                     <li class="flex justify-between gap-2 border-b border-gray-100 pb-2">
                         <span class="text-gray-600">Productos</span>
-                        <a href="{{ route('productos.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['productos'] }}</a>
+                        <a href="{{ route('catalog.products.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['productos'] }}</a>
                     </li>
                     <li class="flex justify-between gap-2 border-b border-gray-100 pb-2">
                         <span class="text-gray-600">Videos</span>
@@ -97,12 +97,12 @@
                         <a href="{{ route('recetas.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['recetas'] }}</a>
                     </li>
                     <li class="flex justify-between gap-2 border-b border-gray-100 pb-2">
-                        <span class="text-gray-600">Promociones</span>
-                        <a href="{{ route('promociones.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['promociones'] }}</a>
+                        <span class="text-gray-600">Banners inicio</span>
+                        <a href="{{ route('admin.store.banners.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['banners'] }}</a>
                     </li>
                     <li class="flex justify-between gap-2">
-                        <span class="text-gray-600">Cortes</span>
-                        <a href="{{ route('cortes.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['cortes'] }}</a>
+                        <span class="text-gray-600">Destacados inicio</span>
+                        <a href="{{ route('admin.store.highlights.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['highlights'] }}</a>
                     </li>
                 </ul>
             </div>
@@ -145,7 +145,7 @@
             <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm overflow-hidden">
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-gray-900">Seguimiento · stock bajo</h2>
-                    <a href="{{ route('productos.index') }}" class="text-sm text-[var(--bf-red)] font-medium hover:underline">Gestionar</a>
+                    <a href="{{ route('catalog.inventory.index', ['low_only' => 1]) }}" class="text-sm text-[var(--bf-red)] font-medium hover:underline">Gestionar</a>
                 </div>
                 <div class="bf-table-panel bf-table-panel--flush max-h-72 overflow-y-auto overflow-x-auto">
                     <table class="bf-table bf-table--sticky-head">
@@ -158,12 +158,12 @@
                         <tbody>
                             @forelse($low_stock as $p)
                                 <tr>
-                                    <td class="text-sm max-w-[200px] truncate">{{ $p->nombre }}</td>
-                                    <td class="text-right font-semibold tabular-nums {{ $p->stock <= 3 ? 'text-red-600' : 'text-amber-700' }}">{{ $p->stock }}</td>
+                                    <td class="text-sm max-w-[200px] truncate">{{ $p->name }}</td>
+                                    <td class="text-right font-semibold tabular-nums {{ (float) $p->stock <= (float) $p->min_stock ? 'text-red-600' : 'text-amber-700' }}">{{ number_format((float) $p->stock, 1, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="2" class="text-center py-8 text-gray-500 text-sm">Ningún producto por debajo del umbral (≤ 10).</td>
+                                    <td colspan="2" class="text-center py-8 text-gray-500 text-sm">Ningún producto por debajo del umbral configurado.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -1,0 +1,28 @@
+@php
+    $tabClass = static fn (bool $active): string => $active
+        ? 'border-[var(--bf-brand)] text-[var(--bf-brand)] bg-white shadow-sm'
+        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-white/70';
+@endphp
+
+<nav class="sticky top-0 z-10 -mx-2 sm:-mx-3 md:-mx-4 px-2 sm:px-3 md:px-4 py-3 mb-4 bg-[var(--bf-cream)]/95 backdrop-blur border-b border-amber-100/80" aria-label="Secciones del catálogo">
+    <div class="max-w-7xl mx-auto flex flex-wrap gap-1.5 sm:gap-2">
+        <a href="{{ route('catalog.products.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.products.*'))])>
+            Productos
+        </a>
+        <a href="{{ route('catalog.meat-types.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.meat-types.*'))])>
+            Tipos de carne
+        </a>
+        <a href="{{ route('catalog.meat-cuts.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.meat-cuts.*'))])>
+            Cortes
+        </a>
+        <a href="{{ route('catalog.promotions.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.promotions.*'))])>
+            Promociones
+        </a>
+        <a href="{{ route('catalog.pricing.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.pricing.*'))])>
+            Precios
+        </a>
+        <a href="{{ route('catalog.inventory.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.inventory.*'))])>
+            Inventario
+        </a>
+    </div>
+</nav>

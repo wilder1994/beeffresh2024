@@ -23,7 +23,9 @@ return new class extends Migration
             $table->unsignedInteger('loyalty_points')->default(0);
             $table->decimal('balance', 12, 2)->default(0);
             $table->string('postal_code', 32)->nullable();
-            $table->string('country', 2)->nullable()->default('DO');
+            $table->string('country', 2)->nullable()->default('CO');
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
             $table->timestamps();
 
             $table->unique('user_id');

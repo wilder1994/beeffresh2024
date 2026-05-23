@@ -17,7 +17,12 @@ class SupplierProfile extends Model
         'business_phone',
         'business_email',
         'business_address',
+        'neighborhood',
         'city',
+        'state',
+        'country',
+        'latitude',
+        'longitude',
         'bank_name',
         'account_type',
         'account_number',
@@ -26,6 +31,8 @@ class SupplierProfile extends Model
 
     protected $casts = [
         'credit_days' => 'integer',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
     ];
 
     public function user(): BelongsTo

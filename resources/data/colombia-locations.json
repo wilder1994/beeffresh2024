@@ -1,0 +1,83 @@
+{
+    "Antioquia": {
+        "cities": ["Medellín", "Bello", "Envigado", "Itagüí", "Rionegro", "Apartadó"],
+        "neighborhoods": {
+            "Medellín": ["El Poblado", "Laureles", "Belén", "Centro", "Castilla", "Robledo", "Aranjuez", "Buenos Aires"],
+            "Bello": ["Niquía", "Cabecera", "Zamora"],
+            "Envigado": ["Centro", "Loma del Escobero", "Jardines"]
+        }
+    },
+    "Atlántico": {
+        "cities": ["Barranquilla", "Soledad", "Malambo", "Puerto Colombia"],
+        "neighborhoods": {
+            "Barranquilla": ["Norte Centro Histórico", "Riomar", "Sur", "Metropolitana", "El Prado"]
+        }
+    },
+    "Bogotá D.C.": {
+        "cities": ["Bogotá"],
+        "neighborhoods": {
+            "Bogotá": ["Chapinero", "Usaquén", "Suba", "Kennedy", "Teusaquillo", "Engativá", "Fontibón", "Ciudad Bolívar", "Santa Fe"]
+        }
+    },
+    "Bolívar": {
+        "cities": ["Cartagena", "Magangué", "Turbaco"],
+        "neighborhoods": {
+            "Cartagena": ["Bocagrande", "Manga", "Centro", "Castillogrande", "Pie de la Popa"]
+        }
+    },
+    "Cundinamarca": {
+        "cities": ["Soacha", "Chía", "Zipaquirá", "Facatativá", "Girardot", "Fusagasugá"],
+        "neighborhoods": {
+            "Soacha": ["Compartir", "Ciudad Verde", "San Mateo"],
+            "Chía": ["Centro", "La Balsa", "Hacienda"]
+        }
+    },
+    "Valle del Cauca": {
+        "cities": ["Cali", "Palmira", "Buenaventura", "Tuluá", "Jamundí"],
+        "neighborhoods": {
+            "Cali": ["Granada", "San Antonio", "Ciudad Jardín", "Pance", "Centro", "Normandía"]
+        }
+    },
+    "Santander": {
+        "cities": ["Bucaramanga", "Floridablanca", "Piedecuesta", "Girón"],
+        "neighborhoods": {
+            "Bucaramanga": ["Cabecera", "Provenza", "García Rovira", "La Concordia"]
+        }
+    },
+    "Norte de Santander": {
+        "cities": ["Cúcuta", "Villa del Rosario", "Los Patios"],
+        "neighborhoods": {
+            "Cúcuta": ["Centro", "Caobos", "Prados del Este", "El Bosque"]
+        }
+    },
+    "Risaralda": {
+        "cities": ["Pereira", "Dosquebradas", "Santa Rosa de Cabal"],
+        "neighborhoods": {
+            "Pereira": ["Centro", "Cuba", "San Nicolás", "Villa Santana"]
+        }
+    },
+    "Quindío": {
+        "cities": ["Armenia", "Calarcá", "La Tebaida"],
+        "neighborhoods": {
+            "Armenia": ["Centro", "La Castellana", "Norte"]
+        }
+    },
+    "Tolima": {
+        "cities": ["Ibagué", "Espinal", "Melgar"],
+        "neighborhoods": {
+            "Ibagué": ["Centro", "Belén", "San Simón"]
+        }
+    },
+    "Huila": {
+        "cities": ["Neiva", "Pitalito", "Garzón"],
+        "neighborhoods": {
+            "Neiva": ["Centro", "Quirinal", "Santa Isabel"]
+        }
+    },
+    "Meta": {
+        "cities": ["Villavicencio", "Acacías", "Granada"],
+        "neighborhoods": {
+            "Villavicencio": ["Centro", "Barzal", "El Buque"]
+        }
+    }
+}

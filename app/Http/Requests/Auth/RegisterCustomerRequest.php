@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Auth;
 
+use App\Domain\Geo\Colombia;
+use App\Domain\Users\ColombianDocumentType;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,6 +21,7 @@ class RegisterCustomerRequest extends FormRequest
         'password',
         'password_confirmation',
         'phone',
+        'document_type',
         'document_number',
         'customer_address',
         'customer_neighborhood',
@@ -26,6 +29,8 @@ class RegisterCustomerRequest extends FormRequest
         'customer_state',
         'customer_postal_code',
         'customer_country',
+        'customer_latitude',
+        'customer_longitude',
         'customer_delivery_notes',
         'accepts_promotions',
     ];
@@ -46,13 +51,16 @@ class RegisterCustomerRequest extends FormRequest
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'phone' => ['required', 'string', 'max:32'],
-            'document_number' => ['nullable', 'string', 'max:64'],
+            'document_type' => ColombianDocumentType::validationRules(true),
+            'document_number' => ['required', 'string', 'max:64'],
             'customer_address' => ['required', 'string', 'max:255'],
-            'customer_neighborhood' => ['nullable', 'string', 'max:120'],
+            'customer_neighborhood' => ['required', 'string', 'max:120'],
             'customer_city' => ['required', 'string', 'max:120'],
             'customer_state' => ['required', 'string', 'max:120'],
             'customer_postal_code' => ['nullable', 'string', 'max:32'],
-            'customer_country' => ['nullable', 'string', 'size:2'],
+            'customer_country' => ['nullable', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])],
+            'customer_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'customer_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'customer_delivery_notes' => ['nullable', 'string', 'max:2000'],
             'accepts_promotions' => ['nullable', 'boolean'],
         ];
@@ -69,11 +77,12 @@ class RegisterCustomerRequest extends FormRequest
             'email' => 'correo electrónico',
             'password' => 'contraseña',
             'phone' => 'teléfono',
-            'document_number' => 'identificación',
+            'document_type' => 'tipo de documento',
+            'document_number' => 'número de documento',
             'customer_address' => 'dirección',
             'customer_neighborhood' => 'barrio',
             'customer_city' => 'ciudad',
-            'customer_state' => 'provincia',
+            'customer_state' => 'departamento',
             'customer_postal_code' => 'código postal',
             'customer_country' => 'país',
             'customer_delivery_notes' => 'indicaciones de entrega',

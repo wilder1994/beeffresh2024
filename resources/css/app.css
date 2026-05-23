@@ -86,7 +86,8 @@
     }
 
     header details[open] > :not(summary) {
-        display: block !important;
+        display: flex !important;
+        flex-direction: column;
         pointer-events: auto !important;
     }
 
@@ -98,6 +99,8 @@
 
     .bf-cinta-marquee {
         --bf-cinta-item-width: 100vw;
+        position: relative;
+        z-index: 0;
         overflow: hidden;
         background: var(--bf-brand);
         border-bottom: 1px solid rgb(0 0 0 / 0.08);
@@ -238,6 +241,31 @@
         font-size: 0.875rem;
         font-weight: 600;
         line-height: 1.35;
+    }
+
+    .bf-confirm-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 210;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    .bf-confirm-layer__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgb(44 24 16 / 0.45);
+    }
+
+    .bf-confirm-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 24rem);
+        padding: 1.25rem 1.35rem;
+        border-radius: 1rem;
+        box-shadow: 0 24px 48px -16px rgb(44 24 16 / 0.35);
     }
 
     .bf-cinta-upload-form {
@@ -570,6 +598,44 @@
         border-width: 1px;
     }
 
+    /** Tienda — pill Kg/Lb + input cantidad (misma altura visual) */
+    [data-product-purchase] {
+        --bf-store-control-h: 1.75rem;
+    }
+
+    [data-product-purchase] .bf-store-unit-toggle {
+        @apply inline-flex shrink-0 rounded-lg border p-0.5 text-xs font-semibold;
+        border-color: var(--bf-border-brand-subtle);
+        background-color: rgb(255 255 255 / 0.7);
+    }
+
+    [data-product-purchase] .bf-store-unit-toggle button {
+        @apply rounded-md px-2.5 py-0.5 transition;
+    }
+
+    [data-product-purchase] .bf-store-qty-input {
+        height: var(--bf-store-control-h);
+        min-height: 0;
+        max-height: var(--bf-store-control-h);
+        width: 3rem;
+        padding: 0 0.375rem;
+        line-height: var(--bf-store-control-h);
+        box-sizing: border-box;
+        -moz-appearance: textfield;
+        appearance: textfield;
+        @apply shrink-0 rounded-md border text-center text-xs tabular-nums text-stone-900
+            focus:border-[var(--bf-brand)] focus:outline-none focus:ring-1 focus:ring-[rgb(178_30_41_/_0.25)];
+        background-color: var(--bf-field-bg);
+        border-color: var(--bf-border-brand-subtle);
+        border-width: 1px;
+    }
+
+    [data-product-purchase] .bf-store-qty-input::-webkit-outer-spin-button,
+    [data-product-purchase] .bf-store-qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
     .bf-select {
         @apply select select-bordered select-sm w-full text-stone-900
             h-9 min-h-[2.25rem] py-1.5 pl-2.5 pr-8 text-sm
@@ -592,6 +658,38 @@
         background-color: var(--bf-field-bg);
         border-color: var(--bf-border-brand-subtle);
         border-width: 1px;
+    }
+
+    .bf-image-upload-zone {
+        @apply relative flex cursor-pointer items-center justify-center overflow-hidden rounded-xl transition;
+        border: 2px dashed var(--bf-border-brand);
+        background: color-mix(in srgb, var(--bf-cream) 55%, white);
+    }
+
+    .bf-image-upload-zone:hover,
+    .bf-image-upload-zone--drag {
+        border-color: var(--bf-brand);
+        background: color-mix(in srgb, var(--bf-brand) 6%, white);
+    }
+
+    .bf-image-upload-zone__preview {
+        @apply absolute inset-0 h-full w-full object-cover;
+    }
+
+    .bf-image-upload-zone__empty {
+        @apply flex flex-col items-center justify-center gap-2 px-4 text-center;
+    }
+
+    .bf-image-upload-zone__cta {
+        @apply text-sm font-semibold;
+        color: var(--bf-brand);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .bf-image-upload-zone__change {
+        @apply absolute inset-x-0 bottom-0 px-3 py-2 text-center text-xs font-semibold text-white;
+        background: linear-gradient(to top, rgb(44 24 16 / 0.72), transparent);
     }
 
     .bf-form-section-title {
@@ -618,6 +716,161 @@
     .bf-btn-ghost:hover {
         border-color: rgba(123, 48, 27, 0.32);
         background: rgba(255, 255, 255, 0.68);
+    }
+
+    .bf-store-panel {
+        @apply rounded-xl shadow-sm;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: var(--bf-card);
+    }
+
+    .bf-store-page {
+        @apply mx-auto px-4 pt-4 pb-8;
+    }
+
+    .bf-store-page--wide {
+        @apply max-w-7xl;
+    }
+
+    .bf-store-page--narrow {
+        @apply max-w-3xl;
+    }
+
+    .bf-store-page--medium {
+        @apply max-w-4xl;
+    }
+
+    .bf-store-page--checkout {
+        @apply mx-auto max-w-2xl px-4 pt-4 pb-8;
+    }
+
+    .bf-checkout-stepper {
+        @apply flex items-center justify-center gap-2 sm:gap-3;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .bf-checkout-stepper__item {
+        @apply flex items-center gap-2 text-xs sm:text-sm;
+        color: var(--bf-muted);
+    }
+
+    .bf-checkout-stepper__item--active {
+        color: var(--bf-ink);
+        font-weight: 600;
+    }
+
+    .bf-checkout-stepper__item--done {
+        color: var(--bf-brand);
+    }
+
+    .bf-checkout-stepper__marker {
+        @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .bf-checkout-stepper__item--active .bf-checkout-stepper__marker {
+        background: var(--bf-brand);
+        border-color: var(--bf-brand);
+        color: #fff;
+    }
+
+    .bf-checkout-stepper__item--done .bf-checkout-stepper__marker {
+        background: color-mix(in srgb, var(--bf-brand) 12%, white);
+        border-color: var(--bf-border-brand);
+        color: var(--bf-brand);
+    }
+
+    .bf-checkout-stepper__line {
+        @apply hidden sm:block;
+        width: 2.5rem;
+        height: 1px;
+        background: var(--bf-border-brand-subtle);
+        list-style: none;
+    }
+
+    .bf-checkout-sheet {
+        @apply overflow-hidden p-0;
+    }
+
+    .bf-checkout-sheet__head {
+        @apply px-5 py-4 sm:px-6 sm:py-5;
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.55);
+    }
+
+    .bf-checkout-receipt {
+        @apply px-5 py-4 sm:px-6 space-y-0;
+    }
+
+    .bf-checkout-receipt__row {
+        @apply grid gap-3 py-3 text-sm;
+        grid-template-columns: minmax(0, 1fr) 3rem 6.5rem;
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
+    }
+
+    .bf-checkout-receipt__row:last-child {
+        border-bottom: 0;
+    }
+
+    .bf-checkout-receipt__row--head {
+        @apply py-2 text-[11px] font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
+    }
+
+    .bf-checkout-total-band {
+        @apply flex items-center justify-between gap-4 px-5 py-4 sm:px-6;
+        border-top: 1px solid var(--bf-border-brand-subtle);
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
+        background: color-mix(in srgb, var(--bf-cream) 65%, white);
+    }
+
+    .bf-checkout-section {
+        @apply px-5 py-5 sm:px-6;
+        border-bottom: 1px solid var(--bf-border-brand-subtle);
+    }
+
+    .bf-checkout-section--last {
+        border-bottom: 0;
+    }
+
+    .bf-checkout-section__title {
+        @apply text-sm font-semibold uppercase tracking-wide mb-4;
+        color: var(--bf-muted);
+    }
+
+    .bf-checkout-notice {
+        @apply rounded-lg px-4 py-3 text-sm;
+        border: 1px solid color-mix(in srgb, var(--bf-gold) 45%, transparent);
+        background: color-mix(in srgb, var(--bf-gold) 14%, white);
+        color: var(--bf-ink);
+    }
+
+    .bf-social-icon {
+        @apply inline-flex h-11 w-11 items-center justify-center rounded-full border transition;
+        border-color: var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.85);
+        color: var(--bf-social-color, var(--bf-brand));
+    }
+
+    .bf-social-icon:hover {
+        border-color: var(--bf-social-color, var(--bf-brand));
+        background: color-mix(in srgb, var(--bf-social-color, var(--bf-brand)) 12%, white);
+        transform: translateY(-1px);
+    }
+
+    .bf-social-icon--disabled {
+        @apply cursor-default;
+        opacity: 0.38;
+    }
+
+    .bf-social-icon--disabled:hover {
+        transform: none;
+        border-color: var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.85);
     }
 
     .bf-avatar-crop__stage {

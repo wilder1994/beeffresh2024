@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('social_facebook', 500)->nullable();
             $table->string('social_instagram', 500)->nullable();
             $table->string('social_twitter', 500)->nullable();
+            $table->string('social_whatsapp', 500)->nullable();
+            $table->string('social_tiktok', 500)->nullable();
             $table->string('social_youtube', 500)->nullable();
             $table->timestamps();
         });
@@ -36,6 +38,8 @@ return new class extends Migration
             'social_facebook' => null,
             'social_instagram' => null,
             'social_twitter' => null,
+            'social_whatsapp' => null,
+            'social_tiktok' => null,
             'social_youtube' => null,
             'created_at' => $now,
             'updated_at' => $now,

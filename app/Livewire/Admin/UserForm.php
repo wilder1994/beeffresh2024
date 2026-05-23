@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin;
 
+use App\Domain\Geo\Colombia;
+use App\Domain\Users\ColombianDocumentType;
 use App\Domain\Users\PermissionKey;
 use App\Domain\Users\RoleSlug;
 use App\Models\Position;
@@ -64,6 +66,18 @@ class UserForm extends Component
 
     public ?string $employee_home_address = null;
 
+    public ?string $employee_home_neighborhood = null;
+
+    public ?string $employee_home_city = null;
+
+    public ?string $employee_home_state = null;
+
+    public string $employee_home_country = Colombia::COUNTRY_CODE;
+
+    public ?string $employee_home_latitude = null;
+
+    public ?string $employee_home_longitude = null;
+
     public ?string $employee_notes = null;
 
     public ?string $employee_vehicle_type = null;
@@ -100,7 +114,11 @@ class UserForm extends Component
 
     public ?string $customer_postal_code = null;
 
-    public string $customer_country = 'DO';
+    public string $customer_country = Colombia::COUNTRY_CODE;
+
+    public ?string $customer_latitude = null;
+
+    public ?string $customer_longitude = null;
 
     public ?string $supplier_company_name = null;
 
@@ -114,7 +132,17 @@ class UserForm extends Component
 
     public ?string $supplier_business_address = null;
 
+    public ?string $supplier_neighborhood = null;
+
     public ?string $supplier_city = null;
+
+    public ?string $supplier_state = null;
+
+    public string $supplier_country = Colombia::COUNTRY_CODE;
+
+    public ?string $supplier_latitude = null;
+
+    public ?string $supplier_longitude = null;
 
     public ?string $supplier_bank_name = null;
 
@@ -294,6 +322,12 @@ class UserForm extends Component
             'employee_emergency_contact' => $this->employee_emergency_contact,
             'employee_emergency_phone' => $this->employee_emergency_phone,
             'employee_home_address' => $this->employee_home_address,
+            'employee_home_neighborhood' => $this->employee_home_neighborhood,
+            'employee_home_city' => $this->employee_home_city,
+            'employee_home_state' => $this->employee_home_state,
+            'employee_home_country' => $this->employee_home_country,
+            'employee_home_latitude' => $this->employee_home_latitude,
+            'employee_home_longitude' => $this->employee_home_longitude,
             'employee_notes' => $this->employee_notes,
             'employee_vehicle_type' => $this->employee_vehicle_type,
             'employee_plate_number' => $this->employee_plate_number,
@@ -313,13 +347,20 @@ class UserForm extends Component
             'customer_balance' => $this->customer_balance,
             'customer_postal_code' => $this->customer_postal_code,
             'customer_country' => $this->customer_country,
+            'customer_latitude' => $this->customer_latitude,
+            'customer_longitude' => $this->customer_longitude,
             'supplier_company_name' => $this->supplier_company_name,
             'supplier_nit' => $this->supplier_nit,
             'supplier_contact_name' => $this->supplier_contact_name,
             'supplier_business_phone' => $this->supplier_business_phone,
             'supplier_business_email' => $this->supplier_business_email,
             'supplier_business_address' => $this->supplier_business_address,
+            'supplier_neighborhood' => $this->supplier_neighborhood,
             'supplier_city' => $this->supplier_city,
+            'supplier_state' => $this->supplier_state,
+            'supplier_country' => $this->supplier_country,
+            'supplier_latitude' => $this->supplier_latitude,
+            'supplier_longitude' => $this->supplier_longitude,
             'supplier_bank_name' => $this->supplier_bank_name,
             'supplier_account_type' => $this->supplier_account_type,
             'supplier_account_number' => $this->supplier_account_number,
@@ -336,7 +377,7 @@ class UserForm extends Component
         $rules = [
             'first_name' => ['required', 'string', 'max:120'],
             'last_name' => ['required', 'string', 'max:120'],
-            'document_type' => ['nullable', 'string', 'max:32'],
+            'document_type' => ColombianDocumentType::validationRules(),
             'document_number' => ['nullable', 'string', 'max:64'],
             'phone' => ['nullable', 'string', 'max:32'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
@@ -357,6 +398,12 @@ class UserForm extends Component
             $rules['employee_emergency_contact'] = ['nullable', 'string', 'max:191'];
             $rules['employee_emergency_phone'] = ['nullable', 'string', 'max:32'];
             $rules['employee_home_address'] = ['nullable', 'string', 'max:255'];
+            $rules['employee_home_neighborhood'] = ['nullable', 'string', 'max:120'];
+            $rules['employee_home_city'] = ['nullable', 'string', 'max:120'];
+            $rules['employee_home_state'] = ['nullable', 'string', 'max:120'];
+            $rules['employee_home_country'] = ['nullable', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])];
+            $rules['employee_home_latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+            $rules['employee_home_longitude'] = ['nullable', 'numeric', 'between:-180,180'];
             $rules['employee_notes'] = ['nullable', 'string', 'max:5000'];
             $rules['permissions'] = ['array'];
             $rules['permissions.*'] = ['string', Rule::in(PermissionKey::employeeModuleKeys())];
@@ -374,7 +421,7 @@ class UserForm extends Component
 
         if ($this->role_slug === RoleSlug::CUSTOMER) {
             $rules['customer_address'] = ['required', 'string', 'max:255'];
-            $rules['customer_neighborhood'] = ['nullable', 'string', 'max:120'];
+            $rules['customer_neighborhood'] = ['required', 'string', 'max:120'];
             $rules['customer_city'] = ['required', 'string', 'max:120'];
             $rules['customer_state'] = ['required', 'string', 'max:120'];
             $rules['customer_address_reference'] = ['nullable', 'string', 'max:255'];
@@ -383,7 +430,9 @@ class UserForm extends Component
             $rules['customer_loyalty_points'] = ['integer', 'min:0'];
             $rules['customer_balance'] = ['numeric', 'min:0'];
             $rules['customer_postal_code'] = ['nullable', 'string', 'max:32'];
-            $rules['customer_country'] = ['nullable', 'string', 'size:2'];
+            $rules['customer_country'] = ['required', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])];
+            $rules['customer_latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+            $rules['customer_longitude'] = ['nullable', 'numeric', 'between:-180,180'];
         }
 
         if ($this->role_slug === RoleSlug::SUPPLIER) {
@@ -393,7 +442,12 @@ class UserForm extends Component
             $rules['supplier_business_phone'] = ['nullable', 'string', 'max:32'];
             $rules['supplier_business_email'] = ['nullable', 'email', 'max:191'];
             $rules['supplier_business_address'] = ['nullable', 'string', 'max:255'];
+            $rules['supplier_neighborhood'] = ['nullable', 'string', 'max:120'];
             $rules['supplier_city'] = ['nullable', 'string', 'max:120'];
+            $rules['supplier_state'] = ['nullable', 'string', 'max:120'];
+            $rules['supplier_country'] = ['nullable', 'string', 'size:2', Rule::in([Colombia::COUNTRY_CODE])];
+            $rules['supplier_latitude'] = ['nullable', 'numeric', 'between:-90,90'];
+            $rules['supplier_longitude'] = ['nullable', 'numeric', 'between:-180,180'];
             $rules['supplier_bank_name'] = ['nullable', 'string', 'max:120'];
             $rules['supplier_account_type'] = ['nullable', 'string', 'max:64'];
             $rules['supplier_account_number'] = ['nullable', 'string', 'max:64'];
@@ -436,6 +490,12 @@ class UserForm extends Component
             $this->employee_emergency_contact = $ep->emergency_contact;
             $this->employee_emergency_phone = $ep->emergency_phone;
             $this->employee_home_address = $ep->home_address;
+            $this->employee_home_neighborhood = $ep->home_neighborhood;
+            $this->employee_home_city = $ep->home_city;
+            $this->employee_home_state = $ep->home_state;
+            $this->employee_home_country = $ep->home_country ?? Colombia::COUNTRY_CODE;
+            $this->employee_home_latitude = $ep->home_latitude !== null ? (string) $ep->home_latitude : null;
+            $this->employee_home_longitude = $ep->home_longitude !== null ? (string) $ep->home_longitude : null;
             $this->employee_notes = $ep->notes;
             $this->employee_vehicle_type = $ep->vehicle_type;
             $this->employee_plate_number = $ep->plate_number;
@@ -458,7 +518,9 @@ class UserForm extends Component
             $this->customer_loyalty_points = (int) $cp->loyalty_points;
             $this->customer_balance = (string) $cp->balance;
             $this->customer_postal_code = $cp->postal_code;
-            $this->customer_country = $cp->country ?? 'DO';
+            $this->customer_country = $cp->country ?? Colombia::COUNTRY_CODE;
+            $this->customer_latitude = $cp->latitude !== null ? (string) $cp->latitude : null;
+            $this->customer_longitude = $cp->longitude !== null ? (string) $cp->longitude : null;
         }
 
         $sp = $user->supplierProfile;
@@ -469,7 +531,12 @@ class UserForm extends Component
             $this->supplier_business_phone = $sp->business_phone;
             $this->supplier_business_email = $sp->business_email;
             $this->supplier_business_address = $sp->business_address;
+            $this->supplier_neighborhood = $sp->neighborhood;
             $this->supplier_city = $sp->city;
+            $this->supplier_state = $sp->state;
+            $this->supplier_country = $sp->country ?? Colombia::COUNTRY_CODE;
+            $this->supplier_latitude = $sp->latitude !== null ? (string) $sp->latitude : null;
+            $this->supplier_longitude = $sp->longitude !== null ? (string) $sp->longitude : null;
             $this->supplier_bank_name = $sp->bank_name;
             $this->supplier_account_type = $sp->account_type;
             $this->supplier_account_number = $sp->account_number;

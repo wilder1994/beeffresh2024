@@ -15,7 +15,7 @@ class UpdateCompanyProfileRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        foreach (['social_facebook', 'social_instagram', 'social_twitter', 'social_youtube'] as $key) {
+        foreach (['social_facebook', 'social_instagram', 'social_twitter', 'social_whatsapp', 'social_tiktok', 'social_youtube'] as $key) {
             $v = $this->input($key);
             if (is_string($v) && trim($v) === '') {
                 $this->merge([$key => null]);
@@ -37,6 +37,8 @@ class UpdateCompanyProfileRequest extends FormRequest
             'social_facebook' => ['nullable', 'string', 'max:500', 'url'],
             'social_instagram' => ['nullable', 'string', 'max:500', 'url'],
             'social_twitter' => ['nullable', 'string', 'max:500', 'url'],
+            'social_whatsapp' => ['nullable', 'string', 'max:500', 'url'],
+            'social_tiktok' => ['nullable', 'string', 'max:500', 'url'],
             'social_youtube' => ['nullable', 'string', 'max:500', 'url'],
         ];
     }

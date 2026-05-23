@@ -39,7 +39,7 @@
                             <td>
                                 <ul class="text-sm list-disc list-inside">
                                     @foreach($pedido->items as $item)
-                                        <li>{{ $item->producto->nombre }} × {{ $item->quantity }}</li>
+                                        <li>{{ $item->product->name }} × {{ $item->quantity }}</li>
                                     @endforeach
                                 </ul>
                             </td>

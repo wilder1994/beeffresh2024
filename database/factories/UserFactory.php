@@ -24,7 +24,11 @@ class UserFactory extends Factory
             CustomerProfile::query()->firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'country' => 'DO',
+                    'address' => fake()->streetAddress(),
+                    'neighborhood' => 'Centro',
+                    'city' => fake()->city(),
+                    'state' => 'Antioquia',
+                    'country' => 'CO',
                     'accepts_promotions' => true,
                     'loyalty_points' => 0,
                     'balance' => 0,
@@ -41,7 +45,7 @@ class UserFactory extends Factory
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
-            'document_type' => null,
+            'document_type' => 'CC',
             'document_number' => null,
             'phone' => fake()->numerify('8#########'),
             'email' => fake()->unique()->safeEmail(),

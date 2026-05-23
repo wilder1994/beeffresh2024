@@ -2,8 +2,15 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 import registerAvatarEditor from './avatarEditor';
+import registerAddressPicker, { bootAddressPickerNodes } from './addressPicker';
+import { registerBfFeedback } from './bfFeedback';
+import { registerCartBadge } from './cartBadge';
+import { registerStoreCart } from './storeCart';
 
 window.Alpine = Alpine;
+
+registerCartBadge(window);
+registerStoreCart();
 
 /** Abre el modal de Mi perfil (tienda y panel); funciona aunque Alpine falle en el clic. */
 window.bfOpenProfileModal = function () {
@@ -32,7 +39,9 @@ window.bfCloseRegisterConfirm = function () {
 };
 
 document.addEventListener('alpine:init', () => {
+    registerBfFeedback(Alpine);
     registerAvatarEditor(Alpine);
+    registerAddressPicker(Alpine);
 
     Alpine.data('staffLayout', () => ({
         mobileMenuOpen: false,
@@ -64,6 +73,18 @@ document.addEventListener('alpine:init', () => {
             this.mobileMenuOpen = false;
         },
     }));
+});
+
+/** Restos de crop-dialog con x-teleport antiguo (huérfanos en body). */
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('body > [aria-labelledby="bf-avatar-crop-title"]').forEach((el) => el.remove());
+});
+
+document.addEventListener('livewire:init', () => {
+    if (typeof Livewire === 'undefined') {
+        return;
+    }
+    Livewire.hook('morph.added', ({ el }) => bootAddressPickerNodes(el));
 });
 
 Alpine.start();

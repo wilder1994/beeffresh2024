@@ -26,11 +26,12 @@
                 @endif
                 <div class="card-actions justify-end">
                     <a href="{{ route('recetas.edit', $receta->id) }}" class="btn btn-outline btn-sm">Editar</a>
-                    <form action="{{ route('recetas.destroy', $receta->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar esta receta?')">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-outline btn-sm">Eliminar</button>
-                    </form>
+                    <x-bf.delete-action
+                        :action="route('recetas.destroy', $receta->id)"
+                        confirm-title="¿Eliminar esta receta?"
+                        :confirm-message="'Se eliminará «'.$receta->titulo.'».'"
+                        button-class="btn btn-outline btn-sm"
+                    />
                 </div>
             </div>
         </div>

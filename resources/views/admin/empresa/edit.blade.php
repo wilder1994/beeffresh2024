@@ -44,14 +44,24 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 pt-1">
                     <div>
-                        <label for="social_facebook" class="bf-label-muted normal-case">Facebook (URL)</label>
-                        <input type="url" name="social_facebook" id="social_facebook" value="{{ old('social_facebook', $profile->social_facebook) }}" placeholder="https://…" class="bf-input" />
-                        @error('social_facebook')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                        <label for="social_whatsapp" class="bf-label-muted normal-case">WhatsApp (URL)</label>
+                        <input type="url" name="social_whatsapp" id="social_whatsapp" value="{{ old('social_whatsapp', $profile->social_whatsapp) }}" placeholder="https://wa.me/…" class="bf-input" />
+                        @error('social_whatsapp')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="social_tiktok" class="bf-label-muted normal-case">TikTok (URL)</label>
+                        <input type="url" name="social_tiktok" id="social_tiktok" value="{{ old('social_tiktok', $profile->social_tiktok) }}" placeholder="https://…" class="bf-input" />
+                        @error('social_tiktok')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="social_instagram" class="bf-label-muted normal-case">Instagram (URL)</label>
                         <input type="url" name="social_instagram" id="social_instagram" value="{{ old('social_instagram', $profile->social_instagram) }}" placeholder="https://…" class="bf-input" />
                         @error('social_instagram')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="social_facebook" class="bf-label-muted normal-case">Facebook (URL)</label>
+                        <input type="url" name="social_facebook" id="social_facebook" value="{{ old('social_facebook', $profile->social_facebook) }}" placeholder="https://…" class="bf-input" />
+                        @error('social_facebook')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="social_twitter" class="bf-label-muted normal-case">X / Twitter (URL)</label>

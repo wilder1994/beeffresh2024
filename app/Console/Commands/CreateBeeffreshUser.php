@@ -71,7 +71,7 @@ class CreateBeeffreshUser extends Command
         if ($roleRaw === RoleSlug::CUSTOMER) {
             CustomerProfile::query()->create([
                 'user_id' => $user->id,
-                'country' => 'DO',
+                'country' => 'CO',
                 'accepts_promotions' => true,
                 'loyalty_points' => 0,
                 'balance' => 0,

@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Producto;
+use App\Models\Product;
+use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\ProductPromotionResolver;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class CheckoutController extends Controller
 {
-    /**
-     * Resumen antes del pago (pasarela pendiente). Solo usuarios autenticados.
-     */
+    public function __construct(
+        private readonly CartSessionService $cartSession,
+    ) {}
+
     public function show(): View|RedirectResponse
     {
         $user = auth()->user();
@@ -37,27 +40,41 @@ class CheckoutController extends Controller
                 ->with('error', 'Tu carrito está vacío.');
         }
 
-        $productos = Producto::whereIn('id', array_keys($carritoSession))->get();
+        $productIds = $this->cartSession->productIds($carritoSession);
+        $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
+        $resolver = app(ProductPromotionResolver::class);
 
         $lineas = [];
         $total = 0;
+        $itemCount = 0;
 
-        foreach ($productos as $producto) {
-            $item = $carritoSession[$producto->id] ?? null;
+        foreach ($carritoSession as $lineKey => $item) {
             if (! is_array($item) || ! isset($item['cantidad'])) {
                 continue;
             }
-            $subtotal = (float) $producto->precio * (int) $item['cantidad'];
+
+            [$productId, $saleUnit] = $this->cartSession->parseLineKey($lineKey);
+            $product = $products->get($productId);
+
+            if ($product === null) {
+                continue;
+            }
+
+            $cantidad = (float) $item['cantidad'];
+            $precio = $resolver->effectivePrice($product, $saleUnit);
+            $subtotal = $precio * $cantidad;
             $total += $subtotal;
+            $itemCount += $cantidad;
+
             $lineas[] = [
-                'nombre' => $producto->nombre,
-                'precio' => $producto->precio,
-                'cantidad' => $item['cantidad'],
+                'nombre' => $product->name,
+                'precio' => $precio,
+                'cantidad' => $cantidad,
+                'sale_unit' => $saleUnit,
                 'subtotal' => $subtotal,
-                'imagen' => $producto->imagen,
             ];
         }
 
-        return view('checkout.show', compact('lineas', 'total'));
+        return view('checkout.show', compact('lineas', 'total', 'itemCount'));
     }
 }

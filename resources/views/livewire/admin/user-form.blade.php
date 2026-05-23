@@ -42,7 +42,13 @@
         </div>
         <div>
             <label class="bf-label" for="uf-doc-type">Tipo documento</label>
-            <input id="uf-doc-type" type="text" wire:model.blur="document_type" class="bf-input" placeholder="Cédula, RNC…" />
+            <x-forms.document-type-select
+                id="uf-doc-type"
+                wire:model.blur="document_type"
+                :wire-legacy-value="$document_type"
+                class="@error('document_type') ring-1 ring-red-400 @enderror"
+            />
+            @error('document_type')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
         <div>
             <label class="bf-label" for="uf-doc">Número documento</label>
@@ -114,10 +120,19 @@
                     <label class="bf-label" for="uf-ep">Teléfono emergencia</label>
                     <input id="uf-ep" type="text" wire:model.blur="employee_emergency_phone" class="bf-input" />
                 </div>
-                <div class="md:col-span-2">
-                    <label class="bf-label" for="uf-home">Dirección residencia</label>
-                    <input id="uf-home" type="text" wire:model.blur="employee_home_address" class="bf-input" />
-                </div>
+                <x-forms.colombia-address
+                    prefix="employee_home"
+                    id-prefix="uf"
+                    livewire
+                    :required="false"
+                    :address="$employee_home_address"
+                    :neighborhood="$employee_home_neighborhood"
+                    :city="$employee_home_city"
+                    :department="$employee_home_state"
+                    :latitude="$employee_home_latitude"
+                    :longitude="$employee_home_longitude"
+                    class="md:col-span-2 !p-0"
+                />
                 <div class="md:col-span-2">
                     <label class="bf-label" for="uf-en">Observaciones</label>
                     <textarea id="uf-en" wire:model.blur="employee_notes" class="bf-textarea min-h-[4rem]"></textarea>
@@ -179,36 +194,45 @@
         </div>
     @endif
 
-    @if($role_slug === \App\Domain\Users\RoleSlug::CUSTOMER && $activeTab === 'cliente')
-        <div class="bf-form-section">
+    @if($role_slug === \App\Domain\Users\RoleSlug::CUSTOMER)
+        <div @class(['bf-form-section', 'hidden' => $activeTab !== 'cliente'])>
             <p class="bf-form-section-title border-0 pb-0 mb-0">Cliente · entrega</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
-                <div class="md:col-span-2">
-                    <label class="bf-label" for="uf-addr">Dirección</label>
-                    <input id="uf-addr" type="text" wire:model.blur="customer_address" class="bf-input @error('customer_address') ring-1 ring-red-400 @enderror" />
-                    @error('customer_address')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="bf-label" for="uf-bar">Barrio</label>
-                    <input id="uf-bar" type="text" wire:model.blur="customer_neighborhood" class="bf-input" />
-                </div>
-                <div>
-                    <label class="bf-label" for="uf-ci">Ciudad</label>
-                    <input id="uf-ci" type="text" wire:model.blur="customer_city" class="bf-input @error('customer_city') ring-1 ring-red-400 @enderror" />
-                    @error('customer_city')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div>
-                    <label class="bf-label" for="uf-st">Provincia</label>
-                    <input id="uf-st" type="text" wire:model.blur="customer_state" class="bf-input @error('customer_state') ring-1 ring-red-400 @enderror" />
-                    @error('customer_state')<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
-                </div>
-                <div class="md:col-span-2">
-                    <label class="bf-label" for="uf-ref">Referencia dirección</label>
-                    <input id="uf-ref" type="text" wire:model.blur="customer_address_reference" class="bf-input" />
-                </div>
-                <div class="md:col-span-2">
-                    <label class="bf-label" for="uf-del">Observaciones entrega</label>
-                    <textarea id="uf-del" wire:model.blur="customer_delivery_notes" class="bf-textarea min-h-[3.5rem]"></textarea>
+                <div wire:key="customer-address-{{ $userId ?? 'new' }}">
+                <x-forms.colombia-address
+                    prefix="customer"
+                    id-prefix="uf"
+                    livewire
+                    :address="$customer_address"
+                    :neighborhood="$customer_neighborhood"
+                    :city="$customer_city"
+                    :department="$customer_state"
+                    :latitude="$customer_latitude"
+                    :longitude="$customer_longitude"
+                    show-reference
+                    show-postal
+                    show-delivery-notes
+                    class="md:col-span-2 !p-0"
+                >
+                    <x-slot:reference>
+                        <div class="md:col-span-2">
+                            <label class="bf-label" for="uf-ref">Referencia dirección</label>
+                            <input id="uf-ref" type="text" wire:model.blur="customer_address_reference" class="bf-input" />
+                        </div>
+                    </x-slot:reference>
+                    <x-slot:postal>
+                        <div>
+                            <label class="bf-label" for="uf-cp">Código postal</label>
+                            <input id="uf-cp" type="text" wire:model.blur="customer_postal_code" class="bf-input" />
+                        </div>
+                    </x-slot:postal>
+                    <x-slot:deliveryNotes>
+                        <div class="md:col-span-2">
+                            <label class="bf-label" for="uf-del">Observaciones entrega</label>
+                            <textarea id="uf-del" wire:model.blur="customer_delivery_notes" class="bf-textarea min-h-[3.5rem]"></textarea>
+                        </div>
+                    </x-slot:deliveryNotes>
+                </x-forms.colombia-address>
                 </div>
                 <div class="flex items-center gap-2">
                     <input id="uf-promo" type="checkbox" wire:model.live="customer_accepts_promotions" class="checkbox checkbox-sm checkbox-primary" />
@@ -222,20 +246,12 @@
                     <label class="bf-label" for="uf-bal">Saldo a favor</label>
                     <input id="uf-bal" type="number" step="0.01" min="0" wire:model.blur="customer_balance" class="bf-input" />
                 </div>
-                <div>
-                    <label class="bf-label" for="uf-cp">Código postal</label>
-                    <input id="uf-cp" type="text" wire:model.blur="customer_postal_code" class="bf-input" />
-                </div>
-                <div>
-                    <label class="bf-label" for="uf-ctry">País (ISO-2)</label>
-                    <input id="uf-ctry" type="text" maxlength="2" wire:model.blur="customer_country" class="bf-input" />
-                </div>
             </div>
         </div>
     @endif
 
-    @if($role_slug === \App\Domain\Users\RoleSlug::SUPPLIER && $activeTab === 'proveedor')
-        <div class="bf-form-section">
+    @if($role_slug === \App\Domain\Users\RoleSlug::SUPPLIER)
+        <div @class(['bf-form-section', 'hidden' => $activeTab !== 'proveedor'])>
             <p class="bf-form-section-title border-0 pb-0 mb-0">Proveedor</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-3">
                 <div>
@@ -259,14 +275,19 @@
                     <label class="bf-label" for="uf-se">Correo empresa</label>
                     <input id="uf-se" type="email" wire:model.blur="supplier_business_email" class="bf-input" />
                 </div>
-                <div class="md:col-span-2">
-                    <label class="bf-label" for="uf-sa">Dirección empresa</label>
-                    <input id="uf-sa" type="text" wire:model.blur="supplier_business_address" class="bf-input" />
-                </div>
-                <div>
-                    <label class="bf-label" for="uf-sci">Ciudad</label>
-                    <input id="uf-sci" type="text" wire:model.blur="supplier_city" class="bf-input" />
-                </div>
+                <x-forms.colombia-address
+                    prefix="supplier"
+                    id-prefix="uf"
+                    livewire
+                    :required="false"
+                    :address="$supplier_business_address"
+                    :neighborhood="$supplier_neighborhood"
+                    :city="$supplier_city"
+                    :department="$supplier_state"
+                    :latitude="$supplier_latitude"
+                    :longitude="$supplier_longitude"
+                    class="md:col-span-2 !p-0"
+                />
                 <div>
                     <label class="bf-label" for="uf-bk">Banco</label>
                     <input id="uf-bk" type="text" wire:model.blur="supplier_bank_name" class="bf-input" />

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Catalog\StockUnit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,14 +12,16 @@ class OrderItem extends Model
 {
     protected $fillable = [
         'order_id',
-        'producto_id',
+        'product_id',
+        'sale_unit',
         'quantity',
         'unit_price',
         'subtotal',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'sale_unit' => StockUnit::class,
+        'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
@@ -28,8 +31,8 @@ class OrderItem extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function producto(): BelongsTo
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(Producto::class);
+        return $this->belongsTo(Product::class);
     }
 }

@@ -39,6 +39,7 @@ class ProfileController extends Controller
             'last_name' => $data['last_name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
+            'document_type' => $data['document_type'] ?? null,
             'document_number' => $data['document_number'] ?? null,
         ]);
 
@@ -64,6 +65,8 @@ class ProfileController extends Controller
                     'state' => $data['customer_state'],
                     'postal_code' => $data['customer_postal_code'] ?? null,
                     'country' => $data['customer_country'] ?? 'CO',
+                    'latitude' => $data['customer_latitude'] ?? null,
+                    'longitude' => $data['customer_longitude'] ?? null,
                     'delivery_notes' => $data['customer_delivery_notes'] ?? null,
                 ]
             );
@@ -79,7 +82,12 @@ class ProfileController extends Controller
                     'business_phone' => $data['supplier_business_phone'] ?? null,
                     'business_email' => $data['supplier_business_email'] ?? null,
                     'business_address' => $data['supplier_business_address'] ?? null,
+                    'neighborhood' => $data['supplier_neighborhood'] ?? null,
                     'city' => $data['supplier_city'] ?? null,
+                    'state' => $data['supplier_state'] ?? null,
+                    'country' => $data['supplier_country'] ?? 'CO',
+                    'latitude' => $data['supplier_latitude'] ?? null,
+                    'longitude' => $data['supplier_longitude'] ?? null,
                 ]
             );
         }

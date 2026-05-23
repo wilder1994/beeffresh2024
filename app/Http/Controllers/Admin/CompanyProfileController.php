@@ -23,7 +23,7 @@ class CompanyProfileController extends Controller
     {
         $profile = CompanyProfile::singleton();
         $data = $request->validated();
-        foreach (['social_facebook', 'social_instagram', 'social_twitter', 'social_youtube'] as $urlKey) {
+        foreach (['social_facebook', 'social_instagram', 'social_twitter', 'social_whatsapp', 'social_tiktok', 'social_youtube'] as $urlKey) {
             if (isset($data[$urlKey]) && $data[$urlKey] === '') {
                 $data[$urlKey] = null;
             }

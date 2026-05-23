@@ -34,11 +34,12 @@
                             <td><span class="badge badge-sm {{ $p->status === 'active' ? 'badge-success' : 'badge-ghost' }}">{{ $p->status }}</span></td>
                             <td class="text-right whitespace-nowrap">
                                 <a href="{{ route('admin.positions.edit', $p) }}" class="link link-primary text-sm">Editar</a>
-                                <form method="post" action="{{ route('admin.positions.destroy', $p) }}" class="inline ml-2" onsubmit="return confirm('¿Eliminar este cargo?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="link text-sm text-error">Eliminar</button>
-                                </form>
+                                <x-bf.delete-action
+                                    :action="route('admin.positions.destroy', $p)"
+                                    confirm-title="¿Eliminar este cargo?"
+                                    :confirm-message="'Se eliminará «'.$p->name.'».'"
+                                    button-class="link text-sm text-error ml-2"
+                                />
                             </td>
                         </tr>
                     @empty

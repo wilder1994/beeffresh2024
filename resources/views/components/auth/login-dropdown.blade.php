@@ -16,7 +16,7 @@
         Ingresar
     </summary>
     <ul @class([
-        'menu menu-sm absolute right-0 top-full z-[100] mt-2 w-52 rounded-box border p-2 shadow-lg',
+        'menu menu-sm absolute right-0 top-full z-[200] mt-2 w-52 rounded-box border p-2 shadow-lg',
         'border-black/10 bg-white text-gray-900' => true,
     ])>
         <li>
