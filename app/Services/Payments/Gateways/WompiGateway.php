@@ -12,6 +12,8 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final class WompiGateway implements PaymentGatewayInterface
 {
@@ -93,6 +95,50 @@ final class WompiGateway implements PaymentGatewayInterface
             $transaction = [];
         }
 
+        return $this->parseTransaction(
+            $transaction,
+            (string) ($payload['event'] ?? 'unknown'),
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function fetchTransaction(string $transactionId): ?array
+    {
+        $privateKey = (string) $this->config('private_key');
+        if ($privateKey === '') {
+            return null;
+        }
+
+        $apiBase = rtrim((string) $this->config('api_base'), '/');
+        $response = Http::withToken($privateKey)
+            ->acceptJson()
+            ->timeout(12)
+            ->get("{$apiBase}/transactions/{$transactionId}");
+
+        if (! $response->successful()) {
+            Log::channel('payments')->warning('Wompi transaction fetch failed', [
+                'transaction_id' => $transactionId,
+                'http_status' => $response->status(),
+            ]);
+
+            return null;
+        }
+
+        $data = $response->json('data');
+        if (! is_array($data)) {
+            return null;
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $transaction
+     */
+    public function parseTransaction(array $transaction, string $eventType = 'status_poll'): WebhookProcessResult
+    {
         $reference = (string) ($transaction['reference'] ?? '');
         $transactionId = isset($transaction['id']) ? (string) $transaction['id'] : null;
         $wompiStatus = strtoupper((string) ($transaction['status'] ?? 'PENDING'));
@@ -106,7 +152,7 @@ final class WompiGateway implements PaymentGatewayInterface
             status: $this->mapWompiStatus($wompiStatus),
             paymentMethod: $paymentMethod,
             transaction: $transaction,
-            eventType: (string) ($payload['event'] ?? 'unknown'),
+            eventType: $eventType,
         );
     }
 

@@ -69,12 +69,13 @@ php artisan key:generate
 php artisan storage:link
 ```
 
-3. Migraciones y semilla por defecto (incluye `AdminUserSeeder`):
+3. Migraciones y semilla por defecto (incluye `AdminUserSeeder`, usuarios demo y catálogo):
 
 ```bash
-php artisan migrate
-php artisan db:seed
+php artisan migrate:fresh --seed
 ```
+
+Usuarios demo (`DemoUsersSeeder`): contraseña **`password`** (ver tabla en consola al sembrar). Catálogo: `CatalogSeeder`, `OfferSeeder`.
 
 4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`):
 
@@ -105,6 +106,19 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 - En `.env`, `APP_URL` debe coincidir con esa URL, p. ej. `APP_URL=http://192.168.18.19:8080`.
 - En `httpd.conf` de Apache debe existir `Listen 8080`; tras cambiar la configuración, **reinicia Apache** en Laragon.
 - Sigue siendo válido `http://beeffresh2024.test` en el puerto **80** si tienes el virtual host automático (`auto.beeffresh2024.test.conf`) y la entrada en `hosts`.
+
+### Túnel ngrok (pagos Wompi / webhooks)
+
+Para probar checkout y webhooks desde internet (p. ej. Wompi sandbox):
+
+1. Expone el puerto local (`8080` o el que uses): `ngrok http 8080`.
+2. En `.env`, actualiza `APP_URL` con la URL HTTPS de ngrok (cambia en cada sesión free).
+3. En el panel Wompi → Developers, configura el webhook: `https://<tu-subdominio>.ngrok-free.app/webhooks/wompi`.
+4. Ejecuta `php artisan config:clear` tras cambiar `APP_URL`.
+5. En local (`APP_ENV=local`), `TrustProxies` confía el proxy para que Vite/assets y URLs de pago usen el host HTTPS correcto.
+6. Compila assets con `npm run build` (no basta `npm run dev` para compartir el túnel).
+
+**Nequi sandbox:** solo `3991111111` (aprobado) y `3992222222` (rechazado); cualquier otro número devuelve `ERROR`.
 
 ### Logo de la empresa y fotos de perfil
 
@@ -196,7 +210,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
-- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`.
+- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` hace polling JSON (`GET /pago/estado/{uuid}` con `Accept: application/json`) vía `resources/js/paymentProcess.js`; al aprobar vacía la sesión `carrito` y actualiza el badge. Logs de pagos: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
 - **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario, tracking. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).

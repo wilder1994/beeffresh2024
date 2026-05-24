@@ -16,3 +16,13 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.bfUpdateCartCount) {
+        window.bfUpdateCartCount(0);
+    }
+});
+</script>
+@endpush

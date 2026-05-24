@@ -2119,4 +2119,16 @@
         @apply inline-flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold;
         background: color-mix(in srgb, currentColor 12%, white);
     }
+
+    .bf-payment-result--success .bf-payment-result__icon {
+        @apply text-emerald-600;
+    }
+
+    .bf-payment-result--failed .bf-payment-result__icon {
+        @apply text-red-600;
+    }
+
+    .bf-payment-result--pending .bf-payment-result__icon {
+        @apply text-amber-600;
+    }
 }

@@ -3,31 +3,67 @@
 @section('titulo', 'Procesando pago | BEEF FRESH')
 
 @section('content')
-<div class="bf-store-page bf-store-page--checkout max-w-lg mx-auto" data-wompi-checkout>
+<div
+    class="bf-store-page bf-store-page--checkout max-w-lg mx-auto"
+    data-bf-payment-process
+    data-phase="opening"
+    data-poll-url="{{ route('payments.status', $payment->uuid) }}"
+    data-auto-open-widget="1"
+    data-widget-config='@json($widget->widgetConfig)'
+>
     <h1 class="font-brand text-2xl text-[var(--bf-ink)] text-center mb-2">Completa tu pago</h1>
-    <p class="text-sm text-[var(--bf-muted)] text-center mb-6">Referencia <span class="font-mono text-xs">{{ $payment->reference }}</span> · ${{ number_format((float) $payment->amount, 0, ',', '.') }} COP</p>
+    <p class="text-sm text-[var(--bf-muted)] text-center mb-6">
+        Referencia <span class="font-mono text-xs" data-bf-payment-reference>{{ $payment->reference }}</span>
+        · ${{ number_format((float) $payment->amount, 0, ',', '.') }} COP
+    </p>
 
     <div class="bf-store-panel p-6 text-center space-y-4">
-        <div class="bf-payment-loader mx-auto" aria-hidden="true"></div>
-        <p class="text-sm text-[var(--bf-muted)]">Abriendo pasarela segura…</p>
-        <button type="button" id="wompi-open-btn" class="bf-btn-primary w-full justify-center">Pagar ahora</button>
-        <p class="text-xs text-[var(--bf-muted)]">Si no se abre automáticamente, pulsa «Pagar ahora».</p>
+        {{-- Abriendo widget --}}
+        <div data-bf-payment-phase="opening" class="space-y-4">
+            <div class="bf-payment-loader mx-auto" aria-hidden="true"></div>
+            <p class="text-sm text-[var(--bf-muted)]">Abriendo pasarela segura…</p>
+            <button type="button" data-bf-wompi-open class="bf-btn-primary w-full justify-center">Pagar ahora</button>
+            <p class="text-xs text-[var(--bf-muted)]">Si no se abre automáticamente, pulsa «Pagar ahora».</p>
+        </div>
+
+        {{-- Confirmando post-widget --}}
+        <div data-bf-payment-phase="syncing" class="hidden space-y-4">
+            <div class="bf-payment-loader mx-auto" aria-hidden="true"></div>
+            <h2 class="text-lg font-semibold text-[var(--bf-ink)]">Confirmando tu pago</h2>
+            <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>Estamos verificando el resultado con Wompi…</p>
+            <p class="text-xs text-[var(--bf-muted)]">No cierres esta ventana.</p>
+        </div>
+
+        {{-- Aprobado --}}
+        <div data-bf-payment-phase="approved" class="hidden space-y-4">
+            <div class="bf-payment-result__icon text-emerald-600 mx-auto">✓</div>
+            <h2 class="text-lg font-semibold text-[var(--bf-ink)]">¡Pago aprobado!</h2>
+            <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>Pago aprobado. Redirigiendo…</p>
+            <p class="text-base font-semibold text-[var(--bf-brand)]">Pedido <span data-bf-payment-order></span></p>
+        </div>
+
+        {{-- Rechazado / fallido --}}
+        <div data-bf-payment-phase="failed" class="hidden space-y-4">
+            <div class="bf-payment-result__icon text-red-600 mx-auto">!</div>
+            <h2 class="text-lg font-semibold text-[var(--bf-ink)]">No se completó el pago</h2>
+            <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>El pago no pudo confirmarse.</p>
+            <a href="{{ route('checkout.show') }}" class="bf-btn-primary w-full justify-center">Reintentar</a>
+            <a href="{{ route('carrito.ver') }}" class="text-sm text-[var(--bf-muted)] hover:underline">Volver al carrito</a>
+        </div>
+
+        {{-- Error de conexión / timeout --}}
+        <div data-bf-payment-phase="connection_error" class="hidden space-y-4">
+            <div class="bf-payment-result__icon text-amber-600 mx-auto">?</div>
+            <h2 class="text-lg font-semibold text-[var(--bf-ink)]">No pudimos confirmar el estado</h2>
+            <p class="text-sm text-[var(--bf-muted)]">Revisa tu correo o el estado del pago en unos segundos.</p>
+            <a href="{{ route('payments.status', $payment->uuid) }}" class="bf-btn-primary w-full justify-center">Ver estado del pago</a>
+            <button type="button" data-bf-wompi-open class="bf-btn-ghost w-full justify-center">Abrir pasarela de nuevo</button>
+        </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
 <script src="{{ $widget->widgetScriptUrl }}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const config = @json($widget->widgetConfig);
-    const open = () => {
-        if (typeof WidgetCheckout === 'undefined') return;
-        const checkout = new WidgetCheckout(config);
-        checkout.open(function () {});
-    };
-    document.getElementById('wompi-open-btn')?.addEventListener('click', open);
-    setTimeout(open, 400);
-});
-</script>
+@vite('resources/js/paymentProcess.js')
 @endpush

@@ -19,6 +19,7 @@ use App\Notifications\Payments\PaymentApprovedNotification;
 use App\Notifications\Payments\PaymentDeclinedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final class PaymentWebhookProcessor
@@ -58,6 +59,11 @@ final class PaymentWebhookProcessor
             $webhook->processed_at = now();
             $webhook->save();
 
+            Log::channel('payments')->warning('Wompi webhook ignored: invalid checksum', [
+                'event' => $payload['event'] ?? null,
+                'reference' => data_get($payload, 'data.transaction.reference'),
+            ]);
+
             return $webhook;
         }
 
@@ -69,6 +75,10 @@ final class PaymentWebhookProcessor
                 $webhook->status = PaymentWebhookStatus::Ignored;
                 $webhook->processed_at = now();
                 $webhook->save();
+
+                Log::channel('payments')->warning('Wompi webhook ignored: payment not found', [
+                    'reference' => $result->reference,
+                ]);
 
                 return $webhook;
             }
@@ -88,10 +98,23 @@ final class PaymentWebhookProcessor
             $webhook->status = PaymentWebhookStatus::Processed;
             $webhook->processed_at = now();
             $webhook->save();
+
+            Log::channel('payments')->info('Wompi webhook processed', [
+                'payment_id' => $payment->id,
+                'reference' => $payment->reference,
+                'status' => $result->status->value,
+                'transaction_id' => $result->transactionId,
+                'event' => $payload['event'] ?? null,
+            ]);
         } catch (\Throwable $e) {
             $webhook->status = PaymentWebhookStatus::Failed;
             $webhook->processed_at = now();
             $webhook->save();
+
+            Log::channel('payments')->error('Wompi webhook processing failed', [
+                'reference' => data_get($payload, 'data.transaction.reference'),
+                'error' => $e->getMessage(),
+            ]);
 
             throw $e;
         }
@@ -128,8 +151,6 @@ final class PaymentWebhookProcessor
                     $user = $payment->user()->firstOrFail();
                     $session = CheckoutSessionData::fromMetadata($payment->metadata ?? []);
                     $order = $this->fulfillment->fulfillFromPayment($payment, $user, $session);
-
-                    session()->forget('carrito');
 
                     event(new PaymentApproved($payment->fresh(), $order));
                     $user->notify(new PaymentApprovedNotification($payment->fresh()));

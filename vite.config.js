@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/js/courierOps.js',
                 'resources/js/orderTracking.js',
                 'resources/js/paymentStatus.js',
+                'resources/js/paymentProcess.js',
             ],
             refresh: true,
         }),
