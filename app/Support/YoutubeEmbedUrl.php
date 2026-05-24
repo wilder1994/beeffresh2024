@@ -38,4 +38,30 @@ final class YoutubeEmbedUrl
 
         return null;
     }
+
+    public static function videoId(string $url): ?string
+    {
+        $embed = self::resolve($url);
+
+        if ($embed === null) {
+            return null;
+        }
+
+        if (preg_match('#/embed/([a-zA-Z0-9_-]{11})#', $embed, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    public static function thumbnailUrl(string $url, string $quality = 'hqdefault'): ?string
+    {
+        $id = self::videoId($url);
+
+        if ($id === null) {
+            return null;
+        }
+
+        return 'https://img.youtube.com/vi/'.$id.'/'.$quality.'.jpg';
+    }
 }

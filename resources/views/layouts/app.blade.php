@@ -106,6 +106,6 @@
 
 <x-bf.confirm-dialog />
 
-@livewireScripts
+@livewireScriptConfig
 </body>
 </html>

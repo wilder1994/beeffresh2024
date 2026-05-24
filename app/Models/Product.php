@@ -38,6 +38,7 @@ class Product extends Model
         'min_stock',
         'sale_type',
         'featured',
+        'show_on_cinta',
     ];
 
     protected $casts = [
@@ -53,6 +54,7 @@ class Product extends Model
         'promo_start' => 'date',
         'promo_end' => 'date',
         'featured' => 'boolean',
+        'show_on_cinta' => 'boolean',
     ];
 
     public function meatType(): BelongsTo

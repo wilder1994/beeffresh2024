@@ -5,6 +5,19 @@
 @section('content')
 @php use Illuminate\Support\Str; @endphp
 <div class="bf-store-page bf-store-page--wide">
+    @if(isset($selectedMeatCut) && $selectedMeatCut)
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--bf-border-brand-subtle)] bg-white/80 px-4 py-3">
+            <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-[var(--bf-brand)]">Corte seleccionado</p>
+                <p class="text-base font-semibold text-[var(--bf-ink)]">{{ $selectedMeatCut->name }}</p>
+                @if($selectedMeatCut->meatType)
+                    <p class="text-sm text-[var(--bf-muted)]">{{ $selectedMeatCut->meatType->name }}</p>
+                @endif
+            </div>
+            <a href="{{ route('products.public.index') }}" class="bf-btn-ghost shrink-0 text-sm">Ver todo el catálogo</a>
+        </div>
+    @endif
+
     <form method="GET" action="{{ route('products.public.index') }}" class="mb-6 flex flex-col md:flex-row items-center gap-4">
         <input type="text" name="buscar" value="{{ request('buscar') }}"
             class="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
@@ -16,6 +29,10 @@
                 <option value="{{ $type->id }}" @selected((int) request('meat_type_id') === $type->id)>{{ $type->name }}</option>
             @endforeach
         </select>
+
+        @if(request('meat_cut_id'))
+            <input type="hidden" name="meat_cut_id" value="{{ request('meat_cut_id') }}">
+        @endif
 
         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
             Buscar

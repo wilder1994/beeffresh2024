@@ -1,6 +1,6 @@
 import './bootstrap';
 
-import Alpine from 'alpinejs';
+import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import registerAvatarEditor from './avatarEditor';
 import registerAddressPicker, { bootAddressPickerNodes } from './addressPicker';
 import { registerBfFeedback } from './bfFeedback';
@@ -8,6 +8,7 @@ import { registerCartBadge } from './cartBadge';
 import { registerStoreCart } from './storeCart';
 
 window.Alpine = Alpine;
+window.Livewire = Livewire;
 
 registerCartBadge(window);
 registerStoreCart();
@@ -81,10 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('livewire:init', () => {
-    if (typeof Livewire === 'undefined') {
-        return;
-    }
     Livewire.hook('morph.added', ({ el }) => bootAddressPickerNodes(el));
 });
 
-Alpine.start();
+/**
+ * Panel staff: @livewireScriptConfig evita el auto-start del ESM; arrancamos una sola vez aquí.
+ * Tienda / guest: sin config, livewire.esm arranca solo en DOMContentLoaded.
+ */
+if (window.livewireScriptConfig !== undefined) {
+    Livewire.start();
+}

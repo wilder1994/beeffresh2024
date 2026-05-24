@@ -96,13 +96,9 @@
                         <span class="text-gray-600">Recetas</span>
                         <a href="{{ route('recetas.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['recetas'] }}</a>
                     </li>
-                    <li class="flex justify-between gap-2 border-b border-gray-100 pb-2">
-                        <span class="text-gray-600">Banners inicio</span>
-                        <a href="{{ route('admin.store.banners.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['banners'] }}</a>
-                    </li>
                     <li class="flex justify-between gap-2">
-                        <span class="text-gray-600">Destacados inicio</span>
-                        <a href="{{ route('admin.store.highlights.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['highlights'] }}</a>
+                        <span class="text-gray-600">Combos y packs</span>
+                        <a href="{{ route('catalog.offers.index') }}" class="font-semibold text-[var(--bf-red)] hover:underline tabular-nums">{{ $catalog_counts['combos'] }}</a>
                     </li>
                 </ul>
             </div>

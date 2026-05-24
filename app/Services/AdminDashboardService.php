@@ -6,10 +6,9 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\Offer;
 use App\Models\Product;
 use App\Models\Receta;
-use App\Models\StoreBanner;
-use App\Models\StoreHighlight;
 use App\Models\VideoReceta;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -19,7 +18,7 @@ final class AdminDashboardService
     /**
      * @return array{
      *   kpi: array{orders_today: int, revenue_today: float, revenue_month: float, pending: int, products_catalog: int},
-     *   catalog_counts: array{productos: int, videos: int, recetas: int, banners: int, highlights: int},
+     *   catalog_counts: array{productos: int, videos: int, recetas: int, combos: int},
      *   orders_by_day: list<array{label: string, short: string, count: int}>,
      *   max_day_count: int,
      *   recent_orders: Collection<int, Order>,
@@ -98,8 +97,7 @@ final class AdminDashboardService
                 'productos' => Product::query()->count(),
                 'videos' => VideoReceta::query()->count(),
                 'recetas' => Receta::query()->count(),
-                'banners' => StoreBanner::query()->count(),
-                'highlights' => StoreHighlight::query()->count(),
+                'combos' => Offer::query()->count(),
             ],
             'orders_by_day' => $ordersByDay,
             'max_day_count' => $maxDayCount,

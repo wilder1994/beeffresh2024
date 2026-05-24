@@ -4,43 +4,45 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Models\CintaSlide;
+use App\DataTransferObjects\Store\CintaTile;
 use App\Support\CintaMarqueeSlides;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CintaMarqueeSlidesTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function test_single_slide_expands_to_fifteen_tiles(): void
+    public function test_expand_segment_repeats_single_tile_to_minimum(): void
     {
-        $slide = CintaSlide::factory()->create(['sort_order' => 0]);
+        $tile = new CintaTile(
+            url: '/producto',
+            imageUrl: 'https://example.com/img.jpg',
+            title: 'Lomo',
+            badge: 'Promo',
+        );
 
-        $segment = CintaMarqueeSlides::expandSegment(collect([$slide]));
+        $segment = CintaMarqueeSlides::expandSegment(collect([$tile]));
 
-        $this->assertCount(15, $segment);
-        $this->assertTrue($segment->every(fn (CintaSlide $s) => $s->is($slide)));
+        $this->assertGreaterThanOrEqual(15, $segment->count());
+        $this->assertTrue($segment->every(fn (CintaTile $t) => $t->title === 'Lomo'));
     }
 
-    public function test_two_slides_expand_to_at_least_fifteen_tiles(): void
+    public function test_track_duplicates_segment_for_infinite_loop(): void
     {
-        $a = CintaSlide::factory()->create(['sort_order' => 0]);
-        $b = CintaSlide::factory()->create(['sort_order' => 1]);
+        $tiles = collect([
+            new CintaTile('/', 'https://example.com/a.jpg', 'A', 'Pack'),
+            new CintaTile('/', 'https://example.com/b.jpg', 'B', 'Promo'),
+        ]);
 
-        $segment = CintaMarqueeSlides::expandSegment(collect([$a, $b]));
+        $track = CintaMarqueeSlides::track($tiles);
+        $segment = CintaMarqueeSlides::expandSegment($tiles);
 
-        $this->assertCount(15, $segment);
-        $this->assertSame(8, $segment->filter(fn (CintaSlide $s) => $s->is($a))->count());
-        $this->assertSame(7, $segment->filter(fn (CintaSlide $s) => $s->is($b))->count());
+        $this->assertSame($segment->count() * 2, $track->count());
     }
 
-    public function test_track_duplicates_segment_for_seamless_loop(): void
+    public function test_animation_duration_scales_with_tile_count(): void
     {
-        $slide = CintaSlide::factory()->create();
+        $tile = new CintaTile('/', 'https://example.com/x.jpg', 'X', 'Producto');
+        $duration = CintaMarqueeSlides::animationDurationSeconds(collect([$tile]));
 
-        $track = CintaMarqueeSlides::track(collect([$slide]));
-
-        $this->assertCount(30, $track);
+        $this->assertGreaterThanOrEqual(24, $duration);
     }
 }

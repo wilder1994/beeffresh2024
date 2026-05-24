@@ -63,6 +63,7 @@ class ProductController extends Controller
         $data['slug'] = $this->uniqueSlug((string) $data['name']);
         $data['sku'] = $skuGenerator->generate($meatType, $meatCut);
         $data['featured'] = $request->boolean('featured');
+        $data['show_on_cinta'] = $request->boolean('show_on_cinta');
 
         if ($request->hasFile('image')) {
             $data['image'] = basename($request->file('image')->store('products', 'public'));
@@ -93,6 +94,7 @@ class ProductController extends Controller
     {
         $data = $request->validated();
         $data['featured'] = $request->boolean('featured');
+        $data['show_on_cinta'] = $request->boolean('show_on_cinta');
 
         if ($request->hasFile('image')) {
             $product->deleteImageFromDisk();

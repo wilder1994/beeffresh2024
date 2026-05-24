@@ -37,8 +37,8 @@
         || ($usuariosNavUser && RoleSlug::audienceId($usuariosNavUser->primaryRoleSlug() ?? '') === 'suppliers'
             && (request()->routeIs('admin.users.show') || request()->routeIs('admin.users.edit')));
     $usuariosHijoActivo = $canUsers && request()->routeIs('admin.users.*');
-    $ajustesHijoActivo = ($canCatalog && (request()->routeIs('videos.*') || request()->routeIs('recetas.*') || request()->routeIs('admin.store.*')))
-        || ($canSettings && (request()->routeIs('admin.empresa.*') || request()->routeIs('admin.cinta.*')))
+    $ajustesHijoActivo = ($canCatalog && (request()->routeIs('videos.*') || request()->routeIs('recetas.*')))
+        || ($canSettings && request()->routeIs('admin.empresa.*'))
         || ($canUsers && request()->routeIs('admin.positions.*'));
     $sectionHeading = 'flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 pt-3 sm:pt-4 pb-1 text-[9px] sm:text-[10px] uppercase tracking-wider text-white/45 font-semibold';
 @endphp
@@ -176,24 +176,12 @@
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                     Recetas
                 </a>
-                <a href="{{ route('admin.store.banners.index') }}" @class([$navActive, request()->routeIs('admin.store.banners.*') ? $navOn : $navIdle])>
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
-                    Banners inicio
-                </a>
-                <a href="{{ route('admin.store.highlights.index') }}" @class([$navActive, request()->routeIs('admin.store.highlights.*') ? $navOn : $navIdle])>
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                    Destacados inicio
-                </a>
                 @endif
                 <a href="{{ route('home') }}" target="_blank" rel="noopener" class="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium border-l-4 border-transparent text-white/90 hover:bg-white/10">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
                     Ver en tienda
                 </a>
                 @if($canSettings)
-                <a href="{{ route('admin.cinta.edit') }}" @class([$navActive, request()->routeIs('admin.cinta.*') ? $navOn : $navIdle])>
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    Cinta
-                </a>
                 <a href="{{ route('admin.empresa.edit') }}" @class([$navActive, request()->routeIs('admin.empresa.*') ? $navOn : $navIdle])>
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     Editar contenido

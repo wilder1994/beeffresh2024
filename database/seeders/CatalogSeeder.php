@@ -12,6 +12,7 @@ use App\Models\MeatCut;
 use App\Models\MeatType;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CatalogSeeder extends Seeder
@@ -89,6 +90,7 @@ class CatalogSeeder extends Seeder
                     'sku' => sprintf('%s-%s-%04d', $typeCode, $cutCode, $skuSeq++),
                     'description' => $cutDescription,
                     'status' => ProductStatus::Available,
+                    'image' => $skuSeq <= 6 ? $this->storeProductImage() : null,
                     'price_per_kg' => $priceKg,
                     'price_per_lb' => round($priceKg / 2, 2),
                     'promo_price_kg' => $skuSeq % 4 === 0 ? round($priceKg * 0.9, 2) : null,
@@ -100,8 +102,28 @@ class CatalogSeeder extends Seeder
                     'min_stock' => 10,
                     'sale_type' => SaleType::VariableWeight,
                     'featured' => $skuSeq % 3 === 0,
+                    'show_on_cinta' => $skuSeq <= 3,
                 ]);
             }
         }
+    }
+
+    private function storeProductImage(): string
+    {
+        static $cached = null;
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $filename = Str::uuid()->toString().'.jpg';
+        $source = public_path('logos/logo.jpeg');
+
+        Storage::disk('public')->put(
+            'products/'.$filename,
+            (string) file_get_contents($source)
+        );
+
+        return $cached = $filename;
     }
 }

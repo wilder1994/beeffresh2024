@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Offer;
 use App\Models\Product;
 use App\Services\Catalog\CartSessionService;
-use App\Services\Catalog\ProductPromotionResolver;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -41,8 +41,9 @@ class CheckoutController extends Controller
         }
 
         $productIds = $this->cartSession->productIds($carritoSession);
+        $offerIds = $this->cartSession->offerIds($carritoSession);
         $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
-        $resolver = app(ProductPromotionResolver::class);
+        $offers = Offer::query()->whereIn('id', $offerIds)->get()->keyBy('id');
 
         $lineas = [];
         $total = 0;
@@ -53,15 +54,38 @@ class CheckoutController extends Controller
                 continue;
             }
 
-            [$productId, $saleUnit] = $this->cartSession->parseLineKey($lineKey);
+            $cantidad = (float) $item['cantidad'];
+
+            if ($this->cartSession->isOfferLine($lineKey)) {
+                $offer = $offers->get($this->cartSession->parseOfferLineKey($lineKey));
+                if ($offer === null) {
+                    continue;
+                }
+
+                $precio = (float) $offer->offer_price;
+                $subtotal = $precio * $cantidad;
+                $total += $subtotal;
+                $itemCount += $cantidad;
+
+                $lineas[] = [
+                    'nombre' => $offer->name,
+                    'precio' => $precio,
+                    'cantidad' => $cantidad,
+                    'sale_unit' => \App\Domain\Catalog\StockUnit::Pack,
+                    'subtotal' => $subtotal,
+                ];
+
+                continue;
+            }
+
+            [$productId, $saleUnit] = $this->cartSession->parseProductLineKey($lineKey);
             $product = $products->get($productId);
 
             if ($product === null) {
                 continue;
             }
 
-            $cantidad = (float) $item['cantidad'];
-            $precio = $resolver->effectivePrice($product, $saleUnit);
+            $precio = $this->cartSession->unitPrice($product, $saleUnit, $cantidad);
             $subtotal = $precio * $cantidad;
             $total += $subtotal;
             $itemCount += $cantidad;

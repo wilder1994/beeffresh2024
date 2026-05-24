@@ -3,88 +3,135 @@
 @section('titulo', 'Inicio | BEEF FRESH · Tienda')
 
 @section('content')
-    <x-store.cinta-carousel :slides="$cintaSlides" />
+    <x-store.cinta-carousel :tiles="$cintaTiles" />
 
-<div class="bg-white py-10 px-6 md:px-16">
-    <section class="mb-16">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Recetas en Video</h2>
-
-        @if($videos->isEmpty())
-            <p class="text-gray-500">Próximamente compartiremos nuestras recetas más deliciosas.</p>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($videos as $video)
-                    <div class="aspect-w-16 aspect-h-9">
-                        @if($video->tipo === 'youtube')
-                            @php
-                                $ytSrc = $video->url;
-                                $ytEmbedOk = is_string($ytSrc) && str_starts_with($ytSrc, 'https://www.youtube.com/embed/');
-                            @endphp
-                            @if($ytEmbedOk)
-                                <iframe class="rounded-xl w-full h-full" src="{{ $ytSrc }}" title="{{ $video->titulo }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                            @else
-                                <p class="rounded-xl border border-amber-200 bg-amber-50/80 p-4 text-sm text-gray-600">Este video no se puede mostrar (enlace no válido).</p>
-                            @endif
-                        @elseif($video->tipo === 'archivo')
-                            <video controls class="rounded-xl w-full h-full">
-                                <source src="{{ asset('storage/videos/' . $video->archivo) }}" type="video/mp4">
-                                Tu navegador no soporta este video.
-                            </video>
-                        @endif
-                    </div>
+    @if($promoProducts->isNotEmpty())
+        <x-store.home-section tone="cream">
+            <x-store.home-section-head
+                eyebrow="Ofertas"
+                title="Promociones del mes"
+                subtitle="Precios especiales en carnes seleccionadas."
+                :link-url="route('products.public.index', ['promo' => 1])"
+                link-label="Ver catálogo →"
+            />
+            <div class="bf-home-products__grid">
+                @foreach($promoProducts as $row)
+                    @php $product = $row['product']; @endphp
+                    <x-store.home-product-card
+                        :url="route('products.public.show', $product)"
+                        :image-url="$product->imageUrl()"
+                        :title="$product->name"
+                        badge="Promo"
+                        :price-label="$row['unit_price']"
+                        :reference-price="$row['reference_price']"
+                        :meta="trim(($product->meatType?->name ?? '').' · '.($product->meatCut?->name ?? ''))"
+                    />
                 @endforeach
             </div>
-        @endif
-    </section>
+        </x-store.home-section>
+    @endif
 
-    <section class="mb-16">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Promociones del Mes</h2>
-        @if ($banners->isEmpty())
-            <p class="text-gray-500">No hay promociones activas en este momento.</p>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach ($banners as $banner)
-                    <div class="p-6 bg-red-50 rounded-xl shadow hover:shadow-md">
-                        <h3 class="text-xl font-bold text-red-700 mb-2">{{ $banner->title }}</h3>
-                        <p class="text-gray-700 mb-2">{{ $banner->description }}</p>
-                        @if ($banner->imageUrl())
-                            <img src="{{ $banner->imageUrl() }}" alt="{{ $banner->title }}" class="mt-4 rounded-xl shadow w-full h-40 object-cover">
-                        @endif
-                        @if ($banner->link)
-                            <a href="{{ $banner->link }}" target="_blank" rel="noopener" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Ver más</a>
-                        @endif
-                    </div>
+    @if($offers->isNotEmpty())
+        <x-store.home-section tone="white">
+            <x-store.home-section-head
+                eyebrow="Combos"
+                title="Combos y packs"
+                subtitle="Arma tu pedido con precio especial. Disponibilidad según stock."
+            />
+            <div class="bf-home-products__grid">
+                @foreach($offers as $row)
+                    <x-store.home-offer-card
+                        :offer="$row['offer']"
+                        :reference-total="$row['reference_total']"
+                        :offer-total="$row['offer_total']"
+                        :available="$row['available']"
+                        :label="$row['label']"
+                    />
                 @endforeach
             </div>
-        @endif
-    </section>
+        </x-store.home-section>
+    @endif
 
-    <section class="mb-16">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Tipos de Cortes</h2>
-
-        @if($highlights->isEmpty())
-            <p class="text-gray-500">No hay cortes disponibles en este momento.</p>
-        @else
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                @foreach($highlights as $highlight)
-                    <div class="text-center">
-                        @if($highlight->imageUrl())
-                            <img src="{{ $highlight->imageUrl() }}" alt="{{ $highlight->title }}" class="rounded-xl shadow-md w-full h-40 object-cover">
-                        @else
-                            <div class="rounded-xl shadow-md w-full h-40 bg-stone-100 flex items-center justify-center text-stone-400 text-sm">{{ $highlight->title }}</div>
-                        @endif
-                        <p class="mt-2 font-semibold text-gray-700">{{ $highlight->title }}</p>
-                    </div>
+    @if($featuredProducts->isNotEmpty())
+        <x-store.home-section tone="cream">
+            <x-store.home-section-head
+                eyebrow="Favoritos"
+                title="Los más pedidos"
+                subtitle="Selección BEEF FRESH."
+                :link-url="route('products.public.index')"
+                link-label="Ver catálogo →"
+            />
+            <div class="bf-home-products__grid">
+                @foreach($featuredProducts as $row)
+                    @php $product = $row['product']; @endphp
+                    <x-store.home-product-card
+                        :url="route('products.public.show', $product)"
+                        :image-url="$product->imageUrl()"
+                        :title="$product->name"
+                        badge="Destacado"
+                        :price-label="$row['unit_price']"
+                        :meta="trim(($product->meatType?->name ?? '').' · '.($product->meatCut?->name ?? ''))"
+                    />
                 @endforeach
             </div>
-        @endif
-    </section>
+        </x-store.home-section>
+    @endif
 
-    <section class="mt-12 mb-4 text-center px-4">
-        <a href="{{ route('nosotros') }}" class="inline-flex items-center justify-center text-[var(--bf-brand)] font-semibold hover:underline text-base md:text-lg">
-            Conoce más sobre nosotros
-        </a>
-    </section>
+    @if($meatCuts->isNotEmpty())
+        <x-store.home-section tone="white">
+            <x-store.home-section-head
+                eyebrow="Catálogo"
+                title="Tipos de corte"
+                subtitle="Explora por corte y encuentra la pieza ideal."
+                :link-url="route('products.public.index')"
+                link-label="Ver todo el catálogo →"
+            />
+            <div class="bf-home-cuts__grid">
+                @foreach($meatCuts as $item)
+                    @php $cut = $item['cut']; @endphp
+                    <x-store.home-cut-card
+                        :name="$cut->name"
+                        :meta="$cut->meatType?->name"
+                        :image-url="$item['image_url']"
+                        :products-count="$item['products_count']"
+                        :catalog-url="$item['catalog_url']"
+                    />
+                @endforeach
+            </div>
+        </x-store.home-section>
+    @endif
 
-</div>
+    @if($videos->isNotEmpty())
+        <x-store.home-section tone="cream">
+            <x-store.home-section-head
+                eyebrow="Inspiración"
+                title="Recetas en video"
+                subtitle="Ideas para cocinar nuestras carnes."
+            />
+            @php $videoCount = $videos->count(); @endphp
+            <div class="bf-home-videos__grid bf-home-videos__grid--{{ $videoCount }}">
+                @foreach($videos as $index => $item)
+                    @php $video = $item['video']; @endphp
+                    <x-store.home-video-card
+                        :title="$video->titulo"
+                        :featured="$index === 0"
+                        :is-youtube="$item['is_youtube']"
+                        :embed-url="$item['embed_url']"
+                        :thumbnail-url="$item['thumbnail_url']"
+                        :file-url="$item['file_url']"
+                    />
+                @endforeach
+            </div>
+        </x-store.home-section>
+    @endif
+
+    <section class="bf-home-cta" aria-label="Conoce la empresa">
+        <div class="bf-home-cta__inner">
+            <div class="bf-home-cta__panel">
+                <h2 class="bf-home-cta__title">Calidad que se siente en cada corte</h2>
+                <p class="bf-home-cta__text">Conoce nuestra historia, compromiso y canales de contacto.</p>
+                <a href="{{ route('nosotros') }}" class="bf-btn-primary inline-flex justify-center">Conoce más sobre nosotros</a>
+            </div>
+        </div>
+    </section>
 @endsection

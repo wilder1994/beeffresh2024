@@ -6,26 +6,45 @@ namespace App\Services\Catalog;
 
 use App\Domain\Catalog\StockUnit;
 use App\Models\Product;
-use App\Services\Catalog\ProductPromotionResolver;
+use App\Services\Store\ProductBestPriceResolver;
 
 final class CartSessionService
 {
     public function __construct(
-        private readonly ProductPromotionResolver $promotionResolver,
+        private readonly ProductBestPriceResolver $bestPrice,
         private readonly CartUnitConverter $unitConverter,
     ) {}
 
-    public function lineKey(int $productId, StockUnit $saleUnit): string
+    public function productLineKey(int $productId, StockUnit $saleUnit): string
     {
-        return $productId.':'.$saleUnit->value;
+        return 'product:'.$productId.':'.$saleUnit->value;
+    }
+
+    public function offerLineKey(int $offerId): string
+    {
+        return 'offer:'.$offerId;
+    }
+
+    public function isOfferLine(string|int $key): bool
+    {
+        return str_starts_with((string) $key, 'offer:');
+    }
+
+    public function parseOfferLineKey(string|int $key): int
+    {
+        return (int) substr((string) $key, strlen('offer:'));
     }
 
     /**
      * @return array{0: int, 1: StockUnit}
      */
-    public function parseLineKey(string|int $key): array
+    public function parseProductLineKey(string|int $key): array
     {
         $raw = (string) $key;
+
+        if (str_starts_with($raw, 'product:')) {
+            $raw = substr($raw, strlen('product:'));
+        }
 
         if (! str_contains($raw, ':')) {
             return [(int) $raw, StockUnit::Kg];
@@ -34,6 +53,12 @@ final class CartSessionService
         [$id, $unit] = explode(':', $raw, 2);
 
         return [(int) $id, StockUnit::tryFrom($unit) ?? StockUnit::Kg];
+    }
+
+    /** @deprecated use parseProductLineKey */
+    public function parseLineKey(string|int $key): array
+    {
+        return $this->parseProductLineKey($key);
     }
 
     public function parseSaleUnit(mixed $value): StockUnit
@@ -52,9 +77,9 @@ final class CartSessionService
         return max(1.0, round($qty, 2));
     }
 
-    public function unitPrice(Product $product, StockUnit $saleUnit): float
+    public function unitPrice(Product $product, StockUnit $saleUnit, float $quantity = 1.0): float
     {
-        return $this->promotionResolver->effectivePrice($product, $saleUnit);
+        return $this->bestPrice->bestUnitPrice($product, $saleUnit, $quantity);
     }
 
     public function stockRequired(Product $product, float $saleQuantity, StockUnit $saleUnit): float
@@ -75,8 +100,29 @@ final class CartSessionService
         $ids = [];
 
         foreach (array_keys($cart) as $key) {
-            [$productId] = $this->parseLineKey($key);
+            if ($this->isOfferLine($key)) {
+                continue;
+            }
+
+            [$productId] = $this->parseProductLineKey($key);
             $ids[] = $productId;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * @param  array<string|int, array<string, mixed>>  $cart
+     * @return list<int>
+     */
+    public function offerIds(array $cart): array
+    {
+        $ids = [];
+
+        foreach (array_keys($cart) as $key) {
+            if ($this->isOfferLine($key)) {
+                $ids[] = $this->parseOfferLineKey($key);
+            }
         }
 
         return array_values(array_unique($ids));

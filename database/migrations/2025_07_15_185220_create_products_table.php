@@ -31,6 +31,7 @@ return new class extends Migration
             $table->decimal('min_stock', 12, 2)->default(0);
             $table->string('sale_type', 32)->default('variable_weight');
             $table->boolean('featured')->default(false);
+            $table->boolean('show_on_cinta')->default(false);
             $table->timestamps();
         });
     }

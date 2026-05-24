@@ -35,6 +35,10 @@
                 <input type="checkbox" name="featured" value="1" @checked(old('featured', $product?->featured))>
                 <span>Destacado en tienda</span>
             </label>
+            <label class="bf-form-check-item">
+                <input type="checkbox" name="show_on_cinta" value="1" @checked(old('show_on_cinta', $product?->show_on_cinta))>
+                <span>Mostrar en cinta (inicio)</span>
+            </label>
             @error('featured')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
         </div>
 

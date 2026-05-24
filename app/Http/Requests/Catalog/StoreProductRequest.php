@@ -40,6 +40,7 @@ class StoreProductRequest extends FormRequest
             'min_stock' => ['required', 'numeric', 'min:0'],
             'sale_type' => ['required', Rule::enum(SaleType::class)],
             'featured' => ['sometimes', 'boolean'],
+            'show_on_cinta' => ['sometimes', 'boolean'],
         ];
     }
 }

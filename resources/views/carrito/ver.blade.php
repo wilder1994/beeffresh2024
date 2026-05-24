@@ -60,22 +60,35 @@
                                 <div class="min-w-0">
                                     <h2 class="font-semibold text-[var(--bf-ink)] leading-snug">{{ $linea['nombre'] }}</h2>
                                     @php
-                                        $unitLabel = $linea['sale_unit']->value;
+                                        $unitLabel = $linea['sale_unit'] instanceof \App\Domain\Catalog\StockUnit
+                                            ? $linea['sale_unit']->value
+                                            : (string) $linea['sale_unit'];
                                         $qty = (float) $linea['cantidad'];
-                                        $qtyDisplay = fmod($qty, 1.0) === 0.0 ? (string) (int) $qty : number_format($qty, 1, ',', '.');
+                                        $isPack = $unitLabel === 'pack';
+                                        $qtyDisplay = $isPack
+                                            ? (string) (int) $qty
+                                            : (fmod($qty, 1.0) === 0.0 ? (string) (int) $qty : number_format($qty, 1, ',', '.'));
                                     @endphp
                                     <p class="text-sm text-[var(--bf-muted)] mt-0.5 md:hidden">
-                                        ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }} · {{ $qtyDisplay }} {{ $unitLabel }}
+                                        @if($isPack)
+                                            ${{ number_format($linea['precio'], 0, ',', '.') }}/pack · {{ $qtyDisplay }} {{ $qty === 1.0 ? 'pack' : 'packs' }}
+                                        @else
+                                            ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }} · {{ $qtyDisplay }} {{ $unitLabel }}
+                                        @endif
                                     </p>
                                 </div>
                             </div>
 
                             <p class="hidden md:block text-sm text-[var(--bf-muted)] text-right tabular-nums">
-                                ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $linea['sale_unit']->value }}
+                                @if($isPack)
+                                    ${{ number_format($linea['precio'], 0, ',', '.') }}/pack
+                                @else
+                                    ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }}
+                                @endif
                             </p>
 
                             <p class="hidden md:block text-sm font-medium text-[var(--bf-ink)] text-center tabular-nums">
-                                {{ $qtyDisplay }} {{ $unitLabel }}
+                                {{ $qtyDisplay }} @if($isPack){{ $qty === 1.0 ? 'pack' : 'packs' }}@else{{ $unitLabel }}@endif
                             </p>
 
                             <p class="text-base font-semibold text-[var(--bf-brand)] md:text-right tabular-nums">
@@ -103,7 +116,7 @@
                     </dl>
 
                     <p class="text-xs text-[var(--bf-muted)] leading-relaxed">
-                        Precios según la unidad elegida (kg o lb). El total final se confirma en el siguiente paso.
+                        Precios según la unidad elegida (kg, lb o pack). El total final se confirma en el siguiente paso.
                     </p>
 
                     @guest

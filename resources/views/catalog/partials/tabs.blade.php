@@ -18,6 +18,9 @@
         <a href="{{ route('catalog.promotions.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.promotions.*'))])>
             Promociones
         </a>
+        <a href="{{ route('catalog.offers.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.offers.*'))])>
+            Combos y packs
+        </a>
         <a href="{{ route('catalog.pricing.index') }}" @class(['inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium border transition', $tabClass(request()->routeIs('catalog.pricing.*'))])>
             Precios
         </a>
