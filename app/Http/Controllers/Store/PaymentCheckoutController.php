@@ -69,11 +69,10 @@ class PaymentCheckoutController extends Controller
         $this->payments->guardPaymentAccessible($payment);
 
         $transactionId = $request->query('id');
-        if (is_string($transactionId) && $transactionId !== '') {
-            $this->payments->syncFromGateway($payment, $transactionId);
-            $payment->refresh();
-        }
+        $transactionId = is_string($transactionId) && $transactionId !== '' ? $transactionId : null;
 
+        $this->payments->syncFromGateway($payment, $transactionId);
+        $payment->refresh();
         $this->payments->clearCartSessionIfApproved($payment);
 
         return match ($payment->status) {
@@ -83,12 +82,26 @@ class PaymentCheckoutController extends Controller
         };
     }
 
-    public function status(Payment $payment, Request $request): View|JsonResponse
+    public function status(Payment $payment, Request $request): View|JsonResponse|RedirectResponse
     {
         $this->payments->guardPaymentAccessible($payment);
 
         if ($request->expectsJson()) {
             return $this->poll($payment, $request);
+        }
+
+        $payment = $this->payments->refreshForPoll(
+            $payment,
+            is_string($request->query('id')) ? $request->query('id') : null,
+        );
+        $this->payments->clearCartSessionIfApproved($payment);
+
+        if ($payment->status === PaymentStatus::Approved) {
+            return redirect()->route('payments.success', $payment->uuid);
+        }
+
+        if (in_array($payment->status, [PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired], true)) {
+            return redirect()->route('payments.failed', $payment->uuid);
         }
 
         return view('payments.status', ['payment' => $payment->load('order')]);

@@ -91,6 +91,9 @@ use App\Services\Catalog\CartSessionService;
                             <li><a href="{{ route('supplier.home') }}">Portal proveedor</a></li>
                         @endif
                         <li><x-profile.open-button tag="a" class="block w-full rounded-lg px-3 py-2 hover:bg-stone-100">Mi perfil</x-profile.open-button></li>
+                        @if(auth()->user()->isCustomer())
+                            <li><a href="{{ route('customer.orders.index') }}">Mis pedidos</a></li>
+                        @endif
                     @endauth
                 </ul>
             </details>

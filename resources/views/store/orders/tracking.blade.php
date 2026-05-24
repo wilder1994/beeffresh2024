@@ -4,8 +4,15 @@
 
 @section('content')
 <div class="bf-store-page bf-store-page--wide max-w-2xl mx-auto" data-order-tracking data-feed-url="{{ auth()->check() && auth()->user()->isCustomer() ? route('orders.tracking.feed', $order) : route('orders.tracking.guest-feed', $trackingToken) }}">
+    @auth
+        @if(auth()->user()->isCustomer())
+            <p class="mb-3">
+                <a href="{{ route('customer.orders.index') }}" class="text-sm text-[var(--bf-muted)] hover:text-[var(--bf-brand)] hover:underline">← Mis pedidos</a>
+            </p>
+        @endif
+    @endauth
     <h1 class="font-brand text-2xl text-[var(--bf-ink)] mb-1">Seguimiento del pedido</h1>
-    <p class="text-sm text-[var(--bf-muted)] mb-6">Pedido #{{ $order->id }} · {{ $order->created_at->format('d/m/Y H:i') }}</p>
+    <p class="text-sm text-[var(--bf-muted)] mb-6">Pedido #{{ $order->id }} · {{ $order->created_at->timezone('America/Bogota')->format('d/m/Y H:i') }}</p>
 
     <div class="bf-store-panel p-6 space-y-6">
         <div class="flex items-center justify-between gap-4">
@@ -20,17 +27,7 @@
             <p class="text-sm text-[var(--bf-muted)]">Domiciliario: <span class="font-medium text-[var(--bf-ink)]">{{ $order->courier->name }}</span></p>
         @endif
 
-        <ol class="bf-ops-timeline" id="tracking-timeline">
-            @foreach($order->statusLogs as $log)
-                <li class="bf-ops-timeline__item">
-                    <span class="bf-ops-timeline__dot"></span>
-                    <div>
-                        <p class="font-medium text-sm">{{ $log->to_status->label() }}</p>
-                        <p class="text-xs text-[var(--bf-muted)]">{{ $log->created_at->format('d/m/Y H:i') }}</p>
-                    </div>
-                </li>
-            @endforeach
-        </ol>
+        <x-store.tracking-timeline :entries="$timeline" id="tracking-timeline" />
 
         <div class="text-sm text-[var(--bf-muted)]">
             Total: <span class="font-semibold text-[var(--bf-brand)] tabular-nums">${{ number_format((float) $order->total, 0, ',', '.') }}</span>

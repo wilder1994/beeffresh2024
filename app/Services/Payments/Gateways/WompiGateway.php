@@ -12,6 +12,7 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -132,6 +133,52 @@ final class WompiGateway implements PaymentGatewayInterface
         }
 
         return $data;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findLatestTransactionByReference(Payment $payment): ?array
+    {
+        $privateKey = (string) $this->config('private_key');
+        if ($privateKey === '') {
+            return null;
+        }
+
+        $createdAt = $payment->created_at instanceof Carbon
+            ? $payment->created_at
+            : Carbon::parse($payment->created_at ?? now());
+
+        $apiBase = rtrim((string) $this->config('api_base'), '/');
+        $response = Http::withToken($privateKey)
+            ->acceptJson()
+            ->timeout(12)
+            ->get("{$apiBase}/transactions", [
+                'reference' => $payment->reference,
+                'from_date' => $createdAt->copy()->subDay()->format('Y-m-d'),
+                'until_date' => now()->addDay()->format('Y-m-d'),
+                'page' => 1,
+                'page_size' => 5,
+            ]);
+
+        if (! $response->successful()) {
+            Log::channel('payments')->warning('Wompi transaction lookup by reference failed', [
+                'reference' => $payment->reference,
+                'http_status' => $response->status(),
+            ]);
+
+            return null;
+        }
+
+        $items = $response->json('data');
+        if (! is_array($items) || $items === []) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $latest */
+        $latest = $items[0];
+
+        return $latest;
     }
 
     /**

@@ -137,13 +137,23 @@ function openWompiWidget(root, config) {
     });
 }
 
+function bootstrapTransactionId(root) {
+    const fromQuery = new URLSearchParams(window.location.search).get('id');
+    if (fromQuery) {
+        root.dataset.transactionId = fromQuery;
+    }
+}
+
 function registerPaymentProcess() {
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.querySelector('[data-bf-payment-process]');
         if (!root) return;
 
+        bootstrapTransactionId(root);
+
         const widgetConfigRaw = root.dataset.widgetConfig;
         const autoOpen = root.dataset.autoOpenWidget === '1';
+        const transactionFromUrl = Boolean(root.dataset.transactionId);
 
         if (widgetConfigRaw) {
             let config;
@@ -159,7 +169,10 @@ function registerPaymentProcess() {
 
             openBtn?.addEventListener('click', open);
 
-            if (autoOpen) {
+            if (transactionFromUrl) {
+                setPhase(root, 'syncing');
+                startPolling(root);
+            } else if (autoOpen) {
                 window.setTimeout(open, 400);
             }
         } else {

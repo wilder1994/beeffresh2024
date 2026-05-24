@@ -19,6 +19,9 @@
     <ul class="menu menu-sm absolute right-0 top-full z-[100] mt-2 w-52 rounded-box border border-black/10 bg-white p-2 text-gray-900 shadow-lg">
         <li class="px-3 py-1.5 text-xs text-stone-500 border-b border-stone-100 mb-1 truncate">{{ $user->name }}</li>
         <li><x-profile.open-button tag="a" class="block w-full rounded-lg px-3 py-2 hover:bg-stone-100 font-normal">Mi perfil</x-profile.open-button></li>
+        @if($user->isCustomer())
+            <li><a href="{{ route('customer.orders.index') }}" class="block w-full rounded-lg px-3 py-2 hover:bg-stone-100 font-normal">Mis pedidos</a></li>
+        @endif
         <li>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

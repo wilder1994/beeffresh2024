@@ -15,6 +15,8 @@ use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\DemoUsersSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PaymentPollTest extends TestCase
@@ -114,6 +116,13 @@ class PaymentPollTest extends TestCase
             ])->toMetadata(),
         ]);
 
+        Config::set('payments.gateways.wompi.private_key', 'prv_test');
+        Config::set('payments.gateways.wompi.api_base', 'https://sandbox.wompi.co/v1');
+
+        Http::fake([
+            'sandbox.wompi.co/v1/transactions*' => Http::response(['data' => []], 200),
+        ]);
+
         $this->actingAs($customer)
             ->getJson(route('payments.status', $payment->uuid))
             ->assertOk()
@@ -121,6 +130,64 @@ class PaymentPollTest extends TestCase
                 'status' => 'processing',
                 'terminal' => false,
             ]);
+    }
+
+    public function test_poll_syncs_approved_payment_from_wompi_by_reference(): void
+    {
+        $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();
+        $product = Product::factory()->create(['stock' => 5, 'price_per_lb' => 12000]);
+
+        $cart = [
+            "product:{$product->id}:lb" => [
+                'type' => 'product',
+                'product_id' => $product->id,
+                'sale_unit' => 'lb',
+                'cantidad' => 1,
+            ],
+        ];
+
+        $payment = Payment::query()->create([
+            'user_id' => $customer->id,
+            'gateway' => PaymentGateway::Wompi,
+            'reference' => 'BF-POLL-SYNC',
+            'amount' => '12000.00',
+            'amount_in_cents' => 1200000,
+            'currency' => 'COP',
+            'status' => PaymentStatus::PendingPayment,
+            'metadata' => app(\App\Services\Payments\CheckoutQuoteService::class)
+                ->build($customer, $cart)
+                ->toMetadata(),
+        ]);
+
+        Config::set('payments.gateways.wompi.private_key', 'prv_test');
+        Config::set('payments.gateways.wompi.api_base', 'https://sandbox.wompi.co/v1');
+
+        Http::fake([
+            'sandbox.wompi.co/v1/transactions*' => Http::response([
+                'data' => [[
+                    'id' => 'tx-sync-001',
+                    'status' => 'APPROVED',
+                    'reference' => 'BF-POLL-SYNC',
+                    'amount_in_cents' => 1200000,
+                    'payment_method_type' => 'NEQUI',
+                ]],
+            ], 200),
+        ]);
+
+        $this->actingAs($customer)
+            ->withSession(['carrito' => $cart])
+            ->getJson(route('payments.status', $payment->uuid))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'approved',
+                'terminal' => true,
+                'cart_count' => 0,
+            ])
+            ->assertSessionMissing('carrito');
+
+        $payment->refresh();
+        $this->assertSame(PaymentStatus::Approved, $payment->status);
+        $this->assertNotNull($payment->order_id);
     }
 
     public function test_return_route_clears_cart_when_payment_already_approved(): void

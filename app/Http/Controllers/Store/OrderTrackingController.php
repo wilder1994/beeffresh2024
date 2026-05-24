@@ -7,18 +7,26 @@ namespace App\Http\Controllers\Store;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\OrderTrackingFeedRequest;
 use App\Models\Order;
+use App\Services\Orders\OrderTrackingTimelineBuilder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OrderTrackingController extends Controller
 {
+    public function __construct(
+        private readonly OrderTrackingTimelineBuilder $timelineBuilder,
+    ) {}
+
     public function show(Order $order): View
     {
         $this->authorize('view', $order);
 
+        $order = $this->loadTrackingDetail($order);
+
         return view('store.orders.tracking', [
-            'order' => $this->loadTrackingDetail($order),
+            'order' => $order,
+            'timeline' => $this->timelineBuilder->build($order),
             'trackingToken' => $order->tracking_token,
         ]);
     }
@@ -26,9 +34,11 @@ class OrderTrackingController extends Controller
     public function showByToken(string $trackingToken): View
     {
         $order = $this->resolveByToken($trackingToken);
+        $order = $this->loadTrackingDetail($order);
 
         return view('store.orders.tracking', [
-            'order' => $this->loadTrackingDetail($order),
+            'order' => $order,
+            'timeline' => $this->timelineBuilder->build($order),
             'trackingToken' => $trackingToken,
         ]);
     }
@@ -37,14 +47,14 @@ class OrderTrackingController extends Controller
     {
         $this->authorize('view', $order);
 
-        return response()->json($this->trackingPayload($order, $request->since()));
+        return response()->json($this->trackingPayload($order));
     }
 
     public function feedByToken(OrderTrackingFeedRequest $request, string $trackingToken): JsonResponse
     {
         $order = $this->resolveByToken($trackingToken);
 
-        return response()->json($this->trackingPayload($order, $request->since()));
+        return response()->json($this->trackingPayload($order));
     }
 
     private function resolveByToken(string $trackingToken): Order
@@ -64,7 +74,7 @@ class OrderTrackingController extends Controller
     {
         return $order->load([
             'courier:id,first_name,last_name',
-            'statusLogs' => fn ($q) => $q->latest()->limit(20),
+            'statusLogs' => fn ($q) => $q->oldest(),
             'items.product',
             'items.offer',
         ]);
@@ -73,11 +83,12 @@ class OrderTrackingController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function trackingPayload(Order $order, ?string $since): array
+    private function trackingPayload(Order $order): array
     {
-        $order->loadMissing(['courier:id,first_name,last_name', 'statusLogs']);
-
-        $logs = $order->statusLogs->sortBy('created_at')->values();
+        $order->loadMissing([
+            'courier:id,first_name,last_name',
+            'statusLogs' => fn ($q) => $q->oldest(),
+        ]);
 
         return [
             'generated_at' => now()->toIso8601String(),
@@ -92,13 +103,7 @@ class OrderTrackingController extends Controller
                 'delivered_at' => $order->delivered_at?->toIso8601String(),
                 'updated_at' => $order->updated_at?->toIso8601String(),
             ],
-            'timeline' => $logs->values()->map(fn ($log): array => [
-                'from_status' => $log->from_status?->value,
-                'to_status' => $log->to_status->value,
-                'to_status_label' => $log->to_status->label(),
-                'note' => $log->note,
-                'created_at' => $log->created_at?->toIso8601String(),
-            ]),
+            'timeline' => $this->timelineBuilder->build($order),
         ];
     }
 }

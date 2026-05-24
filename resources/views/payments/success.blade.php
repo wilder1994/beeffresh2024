@@ -11,6 +11,7 @@
         @if($payment->order)
             <p class="text-lg font-semibold text-[var(--bf-brand)] mb-6">Pedido #{{ $payment->order->id }}</p>
             <a href="{{ route('orders.tracking.show', $payment->order) }}" class="bf-btn-primary w-full justify-center mb-3">Ver seguimiento</a>
+            <a href="{{ route('customer.orders.index') }}" class="text-sm text-[var(--bf-muted)] hover:underline block mb-3">Ver todos mis pedidos</a>
         @endif
         <a href="{{ route('home') }}" class="text-sm text-[var(--bf-muted)] hover:underline">Volver a la tienda</a>
     </div>

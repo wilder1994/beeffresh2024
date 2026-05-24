@@ -107,11 +107,7 @@ final class PaymentService
             return $payment->load('order');
         }
 
-        if ($transactionId !== null && $transactionId !== '') {
-            return $this->syncFromGateway($payment, $transactionId)->load('order');
-        }
-
-        return $payment->load('order');
+        return $this->syncFromGateway($payment, $transactionId)->load('order');
     }
 
     public function syncFromGateway(Payment $payment, ?string $transactionId = null): Payment
@@ -130,11 +126,14 @@ final class PaymentService
         }
 
         $txId = filled($transactionId) ? $transactionId : $payment->transaction_id;
-        if (! filled($txId)) {
-            return $payment;
+        $transaction = filled($txId)
+            ? $driver->fetchTransaction((string) $txId)
+            : null;
+
+        if ($transaction === null) {
+            $transaction = $driver->findLatestTransactionByReference($payment);
         }
 
-        $transaction = $driver->fetchTransaction((string) $txId);
         if ($transaction === null) {
             return $payment;
         }
@@ -155,7 +154,10 @@ final class PaymentService
             'payment_id' => $payment->id,
             'type' => PaymentAttemptType::StatusPoll,
             'status' => $result->status->value,
-            'payload' => ['transaction_id' => $txId],
+            'payload' => [
+                'transaction_id' => $result->transactionId,
+                'source' => filled($txId) ? 'transaction_id' : 'reference_lookup',
+            ],
             'response' => $transaction,
         ]);
 

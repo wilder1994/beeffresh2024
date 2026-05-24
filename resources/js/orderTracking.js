@@ -14,7 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const statusLabel = document.getElementById('tracking-status-label');
     const timeline = document.getElementById('tracking-timeline');
-    let since = new Date().toISOString();
+    let pollTimer = null;
+
+    const formatDate = (iso) => {
+        if (!iso) {
+            return '';
+        }
+
+        return new Date(iso).toLocaleString('es-CO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'America/Bogota',
+        });
+    };
 
     const renderTimeline = (entries) => {
         if (!timeline || !Array.isArray(entries)) {
@@ -22,39 +37,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         timeline.innerHTML = entries
-            .map(
-                (entry) => `
-                <li class="bf-ops-timeline__item">
+            .map((entry) => {
+                const isUpcoming = entry.state === 'upcoming';
+                const label = entry.label ?? entry.to_status_label ?? entry.to_status ?? '';
+                const dateMarkup = isUpcoming
+                    ? '<p class="text-xs text-[var(--bf-muted)]">Pendiente</p>'
+                    : entry.created_at
+                      ? `<p class="text-xs text-[var(--bf-muted)]">${formatDate(entry.created_at)}</p>`
+                      : '';
+
+                return `
+                <li class="bf-ops-timeline__item${isUpcoming ? ' bf-ops-timeline__item--upcoming' : ''}">
                     <span class="bf-ops-timeline__dot"></span>
                     <div>
-                        <p class="font-medium text-sm">${entry.to_status_label ?? entry.to_status}</p>
-                        <p class="text-xs text-[var(--bf-muted)]">${formatDate(entry.created_at)}</p>
+                        <p class="font-medium text-sm${isUpcoming ? ' text-[var(--bf-muted)]' : ''}">${label}</p>
+                        ${dateMarkup}
                     </div>
-                </li>`,
-            )
+                </li>`;
+            })
             .join('');
-    };
-
-    const formatDate = (iso) => {
-        if (!iso) {
-            return '';
-        }
-        const date = new Date(iso);
-        return date.toLocaleString('es-CO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
     };
 
     const poll = async () => {
         try {
-            const url = new URL(feedUrl, window.location.origin);
-            url.searchParams.set('since', since);
-
-            const response = await fetch(url.toString(), {
+            const response = await fetch(feedUrl, {
                 headers: { Accept: 'application/json' },
                 credentials: 'same-origin',
             });
@@ -70,16 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusLabel.textContent = order.status_label;
             }
 
-            if (Array.isArray(payload.timeline) && payload.timeline.length > 0) {
+            if (Array.isArray(payload.timeline)) {
                 renderTimeline(payload.timeline);
             }
 
-            if (payload.generated_at) {
-                since = payload.generated_at;
-            }
-
             if (order.status === 'delivered' || order.status === 'cancelled') {
-                return;
+                if (pollTimer !== null) {
+                    window.clearInterval(pollTimer);
+                }
             }
         } catch {
             // ignore
@@ -87,5 +91,5 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     poll();
-    window.setInterval(poll, 12000);
+    pollTimer = window.setInterval(poll, 12000);
 });

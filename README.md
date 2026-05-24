@@ -187,7 +187,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 
 | Área | Ruta / nota |
 |------|-------------|
-| Tienda (clientes) | `/` (cinta automática, promos, combos, destacados), `/nosotros`, `/productos-publicos`, `/combos/{slug}`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo) |
+| Tienda (clientes) | `/` (cinta automática, promos, combos, destacados), `/nosotros`, `/productos-publicos`, `/combos/{slug}`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo), **`/mis-pedidos`** (historial de pedidos, menú avatar) |
 | Catálogo admin | `/catalogo/productos`, `/catalogo/combos`, `/catalogo/tipos-carne`, `/catalogo/cortes`, `/catalogo/promociones`, `/catalogo/precios`, `/catalogo/inventario` |
 | Auth invitados | `/login?tipo=cliente|empleado|proveedor`; registro cliente vía modal en tienda o `/register` → `/?registro=confirm` |
 | Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
@@ -195,7 +195,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
 | Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`) |
-| Seguimiento cliente | `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
+| Seguimiento cliente | `/mis-pedidos` (historial, auth cliente), `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
 | Pagos (admin) | `/admin/pagos` — transacciones, webhooks, intentos |
 | Checkout / pago | `POST /checkout/pagar` → widget Wompi; webhook `POST /webhooks/wompi` |
 | Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
@@ -210,8 +210,10 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
-- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` hace polling JSON (`GET /pago/estado/{uuid}` con `Accept: application/json`) vía `resources/js/paymentProcess.js`; al aprobar vacía la sesión `carrito` y actualiza el badge. Logs de pagos: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
-- **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario, tracking. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`.
+- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` hace polling JSON (`GET /pago/estado/{uuid}` con `Accept: application/json`) vía `resources/js/paymentProcess.js`; si el callback trae `?id=` de Wompi o no llega webhook, el polling consulta la API por `transaction_id` o por **referencia** (`WompiGateway::findLatestTransactionByReference`). Al aprobar vacía la sesión `carrito` y actualiza el badge. Notificaciones por correo se envían **fuera** de la transacción del webhook (evita revertir el pedido si falla el mail en local). Logs de pagos: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`; en local sin SMTP use `MAIL_MAILER=log`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
+- **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
+- **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Línea de tiempo con pasos **completados** y **pendientes** del flujo de entrega (`OrderTrackingTimelineBuilder`: Pendiente → … → Entregado). Polling cada 12 s (`resources/js/orderTracking.js`, feed JSON). Fechas en zona **`America/Bogota`**. Componente `x-store.tracking-timeline`.
+- **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 - Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.
@@ -235,7 +237,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 

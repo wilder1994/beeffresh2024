@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderOperationsController;
 use App\Http\Controllers\Admin\OrderTicketController;
 use App\Http\Controllers\Courier\CourierOrderController;
+use App\Http\Controllers\Store\CustomerOrderController;
 use App\Http\Controllers\Store\OrderTrackingController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\UserController;
@@ -87,6 +88,7 @@ Route::get('/seguimiento/{tracking_token}/feed', [OrderTrackingController::class
     ->name('orders.tracking.guest-feed');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/mis-pedidos', [CustomerOrderController::class, 'index'])->name('customer.orders.index');
     Route::get('/mis-pedidos/{order}/seguimiento', [OrderTrackingController::class, 'show'])
         ->name('orders.tracking.show');
     Route::get('/mis-pedidos/{order}/seguimiento/feed', [OrderTrackingController::class, 'feed'])

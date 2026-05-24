@@ -136,7 +136,10 @@ final class PaymentWebhookProcessor
             return $payment;
         }
 
-        return DB::transaction(function () use ($payment, $status, $transactionId, $paymentMethod, $gatewayResponse): Payment {
+        /** @var array{type: string, user: User, order?: \App\Models\Order}|null $notificationContext */
+        $notificationContext = null;
+
+        $payment = DB::transaction(function () use ($payment, $status, $transactionId, $paymentMethod, $gatewayResponse, &$notificationContext): Payment {
             $payment->status = $status;
             $payment->transaction_id = $transactionId ?? $payment->transaction_id;
             $payment->payment_method = $paymentMethod ?? $payment->payment_method;
@@ -152,22 +155,65 @@ final class PaymentWebhookProcessor
                     $session = CheckoutSessionData::fromMetadata($payment->metadata ?? []);
                     $order = $this->fulfillment->fulfillFromPayment($payment, $user, $session);
 
-                    event(new PaymentApproved($payment->fresh(), $order));
-                    $user->notify(new PaymentApprovedNotification($payment->fresh()));
-                    $user->notify(new OrderConfirmedNotification($order));
+                    $notificationContext = [
+                        'type' => 'approved',
+                        'user' => $user,
+                        'order' => $order,
+                    ];
                 }
             }
 
             if (in_array($status, [PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired], true)) {
                 $payment->failed_at = now();
-                event(new PaymentDeclined($payment->fresh()));
-                $payment->user?->notify(new PaymentDeclinedNotification($payment->fresh()));
+
+                if ($payment->user !== null) {
+                    $notificationContext = [
+                        'type' => 'declined',
+                        'user' => $payment->user,
+                    ];
+                }
             }
 
             $payment->save();
 
             return $payment->fresh(['order']);
         });
+
+        $this->dispatchPaymentNotifications($payment, $notificationContext);
+
+        return $payment;
+    }
+
+    /**
+     * @param  array{type: string, user: User, order?: \App\Models\Order}|null  $context
+     */
+    private function dispatchPaymentNotifications(Payment $payment, ?array $context): void
+    {
+        if ($context === null) {
+            return;
+        }
+
+        try {
+            if ($context['type'] === 'approved' && isset($context['order'])) {
+                event(new PaymentApproved($payment, $context['order']));
+                $context['user']->notify(new PaymentApprovedNotification($payment));
+                $context['user']->notify(new OrderConfirmedNotification($context['order']));
+
+                return;
+            }
+
+            if ($context['type'] === 'declined') {
+                event(new PaymentDeclined($payment));
+                $context['user']->notify(new PaymentDeclinedNotification($payment));
+            }
+        } catch (\Throwable $e) {
+            Log::channel('payments')->warning('Payment notification failed', [
+                'payment_id' => $payment->id,
+                'reference' => $payment->reference,
+                'type' => $context['type'],
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
