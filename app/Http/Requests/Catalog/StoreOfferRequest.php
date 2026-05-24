@@ -6,11 +6,14 @@ namespace App\Http\Requests\Catalog;
 
 use App\Domain\Catalog\StockUnit;
 use App\Domain\Store\OfferType;
+use App\Http\Requests\Catalog\Concerns\ValidatesVolumeOffer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreOfferRequest extends FormRequest
 {
+    use ValidatesVolumeOffer;
+
     public function authorize(): bool
     {
         return true;
@@ -43,13 +46,27 @@ class StoreOfferRequest extends FormRequest
         }
 
         if ($type === OfferType::Volume) {
-            $rules['product_id'] = ['required', 'integer', 'exists:products,id'];
-            $rules['volume_min_quantity'] = ['required', 'numeric', 'min:0.01'];
-            $rules['volume_sale_unit'] = ['required', Rule::in(['kg', 'lb'])];
-            $rules['volume_offer_price_kg'] = ['required', 'numeric', 'min:0'];
-            $rules['volume_offer_price_lb'] = ['required', 'numeric', 'min:0'];
+            $rules = array_merge($rules, $this->volumeOfferRules());
         }
 
         return $rules;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function validated($key = null, $default = null): mixed
+    {
+        $data = parent::validated($key, $default);
+
+        if (! is_array($data)) {
+            return $data;
+        }
+
+        if (OfferType::tryFrom((string) ($data['type'] ?? '')) === OfferType::Volume) {
+            return $this->mergeVolumeOfferPrices($data);
+        }
+
+        return $data;
     }
 }

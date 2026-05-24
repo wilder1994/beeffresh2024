@@ -869,6 +869,44 @@
         border-bottom: 1px solid var(--bf-border-brand-subtle);
     }
 
+    .bf-offer-form-head {
+        @apply grid gap-4 items-stretch;
+    }
+
+    .bf-offer-form-head__fields {
+        @apply flex min-w-0 flex-col gap-3;
+    }
+
+    .bf-offer-form-head__description {
+        @apply flex min-h-0 flex-1 flex-col;
+    }
+
+    .bf-offer-form-head__textarea {
+        @apply min-h-[5.5rem] flex-1 resize-y;
+    }
+
+    .bf-offer-form-head__media {
+        @apply flex min-h-0 min-w-0 flex-col;
+    }
+
+    .bf-offer-form-head__upload {
+        @apply min-h-[9rem] flex-1;
+    }
+
+    @media (min-width: 768px) {
+        .bf-offer-form-head {
+            grid-template-columns: minmax(0, 1fr) minmax(12rem, 38%);
+        }
+
+        .bf-offer-form-head__textarea {
+            min-height: 6.5rem;
+        }
+
+        .bf-offer-form-head__upload {
+            min-height: 0;
+        }
+    }
+
     .bf-offer-pack-table {
         @apply overflow-x-auto -mx-1 px-1;
     }
@@ -905,6 +943,41 @@
         background-color: var(--bf-field-bg);
         border-color: var(--bf-border-brand-subtle);
         cursor: default;
+    }
+
+    .bf-offer-pack-pricing {
+        @apply overflow-x-auto -mx-1 px-1;
+    }
+
+    .bf-offer-pack-pricing__row,
+    .bf-offer-pack-pricing__row--head {
+        @apply grid gap-2 items-end;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        min-width: 36rem;
+    }
+
+    .bf-offer-pack-pricing__row--head {
+        @apply mb-2 py-1 text-[11px] font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+    }
+
+    .bf-offer-volume-table {
+        @apply overflow-x-auto -mx-1 px-1;
+    }
+
+    .bf-offer-volume-table__inner {
+        min-width: 32rem;
+    }
+
+    .bf-offer-volume-row,
+    .bf-offer-volume-row--head {
+        @apply grid gap-2 items-end;
+        grid-template-columns: minmax(0, 1fr) 6rem 5.5rem;
+    }
+
+    .bf-offer-volume-row--head {
+        @apply mb-2 py-1 text-[11px] font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
     }
 
     .bf-checkout-total-band {

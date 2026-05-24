@@ -34,6 +34,19 @@
             'price_lb' => (float) $product->price_per_lb,
         ],
     ])->all();
+
+    $volumeSaleUnit = old('volume_sale_unit', $offer?->volume_sale_unit?->value ?? 'lb');
+    $volumeMinQty = old('volume_min_quantity', $offer?->volume_min_quantity ?? ($volumeSaleUnit === 'lb' ? 3 : 1.5));
+    $volumeProductId = (string) old('product_id', $offer?->product_id ?? '');
+    $volumeOfferUnitPrice = old('volume_offer_unit_price');
+    if ($volumeOfferUnitPrice === null && $offer !== null) {
+        $volumeOfferUnitPrice = $volumeSaleUnit === 'lb'
+            ? $offer->volume_offer_price_lb
+            : $offer->volume_offer_price_kg;
+    }
+    if ($volumeOfferUnitPrice === null) {
+        $volumeOfferUnitPrice = old('volume_offer_price_lb') ?? old('volume_offer_price_kg') ?? '';
+    }
 @endphp
 
 <div
@@ -90,36 +103,86 @@
             }
             return 0;
         },
+        volumeProductId: @js($volumeProductId),
+        volumeMinQty: @js($volumeMinQty),
+        volumeUnit: @js($volumeSaleUnit),
+        volumeOfferPrice: @js($volumeOfferUnitPrice),
+        volumeMinQuantityMin() {
+            return this.volumeUnit === 'lb' ? 3 : 1.5;
+        },
+        volumeUnitSuffix() {
+            return this.volumeUnit === 'lb' ? 'lb' : 'kg';
+        },
+        volumeCatalogUnitPrice() {
+            if (! this.volumeProductId) {
+                return 0;
+            }
+            const prices = this.productPrices[this.volumeProductId];
+            if (! prices) {
+                return 0;
+            }
+            return this.volumeUnit === 'lb' ? Number(prices.price_lb) : Number(prices.price_kg);
+        },
+        volumeReferenceTotal() {
+            const qty = Number(this.volumeMinQty) || 0;
+            if (qty <= 0) {
+                return 0;
+            }
+            return Math.round(qty * this.volumeCatalogUnitPrice());
+        },
+        volumeOfferTotal() {
+            const qty = Number(this.volumeMinQty) || 0;
+            const price = Number(this.volumeOfferPrice) || 0;
+            if (qty <= 0 || price <= 0) {
+                return 0;
+            }
+            return Math.round(qty * price);
+        },
+        get volumeSavings() {
+            const reference = this.volumeReferenceTotal();
+            const offer = this.volumeOfferTotal();
+            if (reference > 0 && offer > 0 && offer < reference) {
+                return reference - offer;
+            }
+            return 0;
+        },
     }"
 >
-    <div>
-        <label class="bf-label" for="offer-type">Tipo</label>
-        <select id="offer-type" name="type" class="bf-select" x-model="type" required>
-            @foreach(OfferType::cases() as $case)
-                <option value="{{ $case->value }}">{{ $case->label() }}</option>
-            @endforeach
-        </select>
-    </div>
+    <div class="bf-offer-form-head">
+        <div class="bf-offer-form-head__fields">
+            <div>
+                <label class="bf-label" for="offer-type">Tipo</label>
+                <select id="offer-type" name="type" class="bf-select" x-model="type" required>
+                    @foreach(OfferType::cases() as $case)
+                        <option value="{{ $case->value }}">{{ $case->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-    <div>
-        <label class="bf-label" for="offer-name">Nombre</label>
-        <input id="offer-name" type="text" name="name" class="bf-input" value="{{ old('name', $offer?->name) }}" required>
-    </div>
+            <div>
+                <label class="bf-label" for="offer-name">Nombre</label>
+                <input id="offer-name" type="text" name="name" class="bf-input" value="{{ old('name', $offer?->name) }}" required>
+            </div>
 
-    <div>
-        <label class="bf-label" for="offer-description">Descripción</label>
-        <textarea id="offer-description" name="description" class="bf-textarea" rows="3">{{ old('description', $offer?->description) }}</textarea>
-    </div>
+            <div class="bf-offer-form-head__description">
+                <label class="bf-label" for="offer-description">Descripción</label>
+                <textarea id="offer-description" name="description" class="bf-textarea bf-offer-form-head__textarea" rows="3">{{ old('description', $offer?->description) }}</textarea>
+            </div>
+        </div>
 
-    <x-bf.image-upload-zone
-        input-id="offer-image-upload"
-        name="image"
-        :current-url="$offer?->imageUrl()"
-        :show-hint="false"
-    />
-    @unless($isEdit)
-        <p class="text-[11px] text-[var(--bf-muted)] -mt-2">Imagen obligatoria · JPG, PNG o WebP</p>
-    @endunless
+        <div class="bf-offer-form-head__media">
+            <x-bf.image-upload-zone
+                input-id="offer-image-upload"
+                name="image"
+                :current-url="$offer?->imageUrl()"
+                :show-hint="false"
+                class="bf-offer-form-head__upload"
+            />
+            @unless($isEdit)
+                <p class="text-[11px] text-[var(--bf-muted)] mt-1.5 shrink-0">Imagen obligatoria · JPG, PNG o WebP</p>
+            @endunless
+        </div>
+    </div>
 
     <div
         x-show="type === '{{ OfferType::Bundle->value }}'"
@@ -211,42 +274,52 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[var(--bf-border-brand-subtle)]">
-            <div>
-                <label class="bf-label" for="offer-reference-total">Valor real del pack</label>
-                <input
-                    id="offer-reference-total"
-                    type="text"
-                    class="bf-input mt-1 tabular-nums"
-                    readonly
-                    tabindex="-1"
-                    x-bind:value="'$' + formatMoney(referenceTotal())"
-                >
-                <p class="text-[11px] text-[var(--bf-muted)] mt-1 leading-relaxed">
-                    Suma al precio de catálogo (sin promos del producto). Se actualiza al cambiar productos, cantidades o unidades.
-                </p>
+        <div class="bf-offer-pack-pricing pt-2 border-t border-[var(--bf-border-brand-subtle)]">
+            <div class="bf-offer-pack-pricing__row bf-offer-pack-pricing__row--head">
+                <span>Valor real del pack</span>
+                <span>Precio del pack (COP)</span>
+                <span>Ahorro vs. valor real</span>
             </div>
-            <div>
-                <label class="bf-label" for="offer-price">Precio del pack (COP)</label>
-                <input
-                    id="offer-price"
-                    type="number"
-                    step="1"
-                    min="0"
-                    name="offer_price"
-                    class="bf-input mt-1"
-                    x-model="offerPrice"
-                    x-bind:disabled="type !== '{{ OfferType::Bundle->value }}'"
-                >
-                <p class="text-[11px] text-[var(--bf-muted)] mt-1">Precio final que verá el cliente en tienda.</p>
-                <p
-                    class="text-xs font-semibold text-[var(--bf-brand)] mt-2 tabular-nums"
-                    x-show="packSavings > 0"
-                    x-cloak
-                >
-                    Ahorro vs. valor real: $<span x-text="formatMoney(packSavings)"></span>
-                </p>
+            <div class="bf-offer-pack-pricing__row">
+                <div>
+                    <label class="sr-only" for="offer-reference-total">Valor real del pack</label>
+                    <input
+                        id="offer-reference-total"
+                        type="text"
+                        class="bf-input w-full tabular-nums"
+                        readonly
+                        tabindex="-1"
+                        x-bind:value="'$' + formatMoney(referenceTotal())"
+                    >
+                </div>
+                <div>
+                    <label class="sr-only" for="offer-price">Precio del pack (COP)</label>
+                    <input
+                        id="offer-price"
+                        type="number"
+                        step="1"
+                        min="0"
+                        name="offer_price"
+                        class="bf-input w-full tabular-nums"
+                        x-model="offerPrice"
+                        x-bind:disabled="type !== '{{ OfferType::Bundle->value }}'"
+                    >
+                </div>
+                <div>
+                    <label class="sr-only" for="offer-pack-savings">Ahorro vs. valor real</label>
+                    <input
+                        id="offer-pack-savings"
+                        type="text"
+                        class="bf-input w-full tabular-nums"
+                        readonly
+                        tabindex="-1"
+                        x-bind:value="packSavings > 0 ? '$' + formatMoney(packSavings) : '—'"
+                    >
+                </div>
             </div>
+            <p class="text-[11px] text-[var(--bf-muted)] mt-2 leading-relaxed">
+                Valor real = suma al precio de catálogo (sin promos del producto). Precio del pack = lo que verá el cliente. Ahorro = diferencia cuando el precio del pack es menor al valor real.
+            </p>
         </div>
     </div>
 
@@ -255,40 +328,108 @@
         x-cloak
         class="space-y-3 bf-form-section--nested bf-form-section p-4"
     >
-        <div>
-            <label class="bf-label" for="volume-product">Producto</label>
-            <select
-                id="volume-product"
-                name="product_id"
-                class="bf-select"
-                x-bind:disabled="type !== '{{ OfferType::Volume->value }}'"
-            >
-                <option value="">Seleccionar…</option>
-                @foreach($products as $product)
-                    <option value="{{ $product->id }}" @selected((int) old('product_id', $offer?->product_id) === $product->id)>{{ $product->name }}</option>
-                @endforeach
-            </select>
+        <h3 class="text-sm font-semibold text-[var(--bf-ink)]">Oferta por cantidad</h3>
+
+        <div class="bf-offer-volume-table">
+            <div class="bf-offer-volume-table__inner">
+                <div class="bf-offer-volume-row bf-offer-volume-row--head">
+                    <span>Producto</span>
+                    <span>Cantidad mínima</span>
+                    <span>Unidad mínima</span>
+                </div>
+                <div class="bf-offer-volume-row">
+                    <div>
+                        <label class="sr-only" for="volume-product">Producto</label>
+                        <select
+                            id="volume-product"
+                            class="bf-select w-full"
+                            x-model="volumeProductId"
+                            x-bind:name="type === '{{ OfferType::Volume->value }}' ? 'product_id' : null"
+                            x-bind:disabled="type !== '{{ OfferType::Volume->value }}'"
+                            required
+                        >
+                            <option value="">Seleccionar…</option>
+                            @foreach($products as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->sku }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="sr-only" for="volume-min">Cantidad mínima</label>
+                        <input
+                            id="volume-min"
+                            type="number"
+                            step="0.01"
+                            class="bf-input w-full"
+                            x-model.number="volumeMinQty"
+                            x-bind:min="volumeMinQuantityMin()"
+                            x-bind:name="type === '{{ OfferType::Volume->value }}' ? 'volume_min_quantity' : null"
+                            x-bind:disabled="type !== '{{ OfferType::Volume->value }}'"
+                            required
+                        >
+                    </div>
+                    <div>
+                        <label class="sr-only" for="volume-unit">Unidad mínima</label>
+                        <select
+                            id="volume-unit"
+                            class="bf-select w-full"
+                            x-model="volumeUnit"
+                            x-bind:name="type === '{{ OfferType::Volume->value }}' ? 'volume_sale_unit' : null"
+                            x-bind:disabled="type !== '{{ OfferType::Volume->value }}'"
+                        >
+                            <option value="kg">kg</option>
+                            <option value="lb">lb</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-                <label class="bf-label" for="volume-min">Cantidad mínima</label>
-                <input id="volume-min" type="number" step="0.01" min="0.01" name="volume_min_quantity" class="bf-input" value="{{ old('volume_min_quantity', $offer?->volume_min_quantity) }}" x-bind:disabled="type !== '{{ OfferType::Volume->value }}'">
+
+        <div class="bf-offer-pack-pricing bf-offer-volume-pricing pt-2 border-t border-[var(--bf-border-brand-subtle)]">
+            <div class="bf-offer-pack-pricing__row bf-offer-pack-pricing__row--head">
+                <span x-text="'Valor real / ' + volumeUnitSuffix()"></span>
+                <span x-text="'Precio oferta / ' + volumeUnitSuffix()"></span>
+                <span>Ahorro vs. valor real</span>
             </div>
-            <div>
-                <label class="bf-label" for="volume-unit">Unidad mínima</label>
-                <select id="volume-unit" name="volume_sale_unit" class="bf-select" x-bind:disabled="type !== '{{ OfferType::Volume->value }}'">
-                    <option value="kg" @selected(old('volume_sale_unit', $offer?->volume_sale_unit) === 'kg')>kg</option>
-                    <option value="lb" @selected(old('volume_sale_unit', $offer?->volume_sale_unit) === 'lb')>lb</option>
-                </select>
+            <div class="bf-offer-pack-pricing__row">
+                <div>
+                    <label class="sr-only" x-bind:for="'volume-reference-' + volumeUnitSuffix()">Valor real</label>
+                    <input
+                        type="text"
+                        class="bf-input w-full tabular-nums"
+                        readonly
+                        tabindex="-1"
+                        x-bind:value="volumeCatalogUnitPrice() > 0 ? '$' + formatMoney(volumeCatalogUnitPrice()) : '—'"
+                    >
+                </div>
+                <div>
+                    <label class="sr-only" x-bind:for="'volume-offer-price-' + volumeUnitSuffix()">Precio oferta</label>
+                    <input
+                        id="volume-offer-unit-price"
+                        type="number"
+                        step="1"
+                        min="0"
+                        class="bf-input w-full tabular-nums"
+                        x-model="volumeOfferPrice"
+                        x-bind:name="type === '{{ OfferType::Volume->value }}' ? 'volume_offer_unit_price' : null"
+                        x-bind:disabled="type !== '{{ OfferType::Volume->value }}'"
+                    >
+                </div>
+                <div>
+                    <label class="sr-only" for="volume-savings">Ahorro vs. valor real</label>
+                    <input
+                        id="volume-savings"
+                        type="text"
+                        class="bf-input w-full tabular-nums"
+                        readonly
+                        tabindex="-1"
+                        x-bind:value="volumeSavings > 0 ? '$' + formatMoney(volumeSavings) : '—'"
+                    >
+                </div>
             </div>
-            <div>
-                <label class="bf-label" for="volume-price-kg">Precio oferta / kg</label>
-                <input id="volume-price-kg" type="number" step="1" min="0" name="volume_offer_price_kg" class="bf-input" value="{{ old('volume_offer_price_kg', $offer?->volume_offer_price_kg) }}" x-bind:disabled="type !== '{{ OfferType::Volume->value }}'">
-            </div>
-            <div>
-                <label class="bf-label" for="volume-price-lb">Precio oferta / lb</label>
-                <input id="volume-price-lb" type="number" step="1" min="0" name="volume_offer_price_lb" class="bf-input" value="{{ old('volume_offer_price_lb', $offer?->volume_offer_price_lb) }}" x-bind:disabled="type !== '{{ OfferType::Volume->value }}'">
-            </div>
+            <p class="text-[11px] text-[var(--bf-muted)] mt-2 leading-relaxed">
+                Mínimo 3 lb (3 lb o 1,5 kg). El cliente debe comprar al menos esa cantidad en la unidad elegida para obtener el precio oferta. Valor real = precio de catálogo por unidad; ahorro = diferencia al comprar la cantidad mínima.
+            </p>
         </div>
     </div>
 
