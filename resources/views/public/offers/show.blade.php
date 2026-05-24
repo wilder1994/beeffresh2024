@@ -7,7 +7,9 @@
     <p class="mb-4"><a href="{{ route('home') }}" class="text-[var(--bf-brand)] hover:underline">← Volver al inicio</a></p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        <img src="{{ $offer->imageUrl() }}" alt="{{ $offer->name }}" class="w-full rounded-2xl object-cover ring-1 ring-black/5">
+        <div class="aspect-[4/3] overflow-hidden rounded-2xl ring-1 ring-black/5 bg-stone-100">
+            <img src="{{ $offer->imageUrl() }}" alt="{{ $offer->name }}" class="h-full w-full object-cover object-center">
+        </div>
 
         <div class="space-y-4">
             <span class="inline-flex text-xs font-semibold uppercase tracking-wide text-[var(--bf-brand)]">Pack</span>

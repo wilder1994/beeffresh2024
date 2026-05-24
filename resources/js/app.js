@@ -2,6 +2,7 @@ import './bootstrap';
 
 import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import registerAvatarEditor from './avatarEditor';
+import registerImageCropEditor from './imageCropEditor';
 import registerAddressPicker, { bootAddressPickerNodes } from './addressPicker';
 import { registerBfFeedback } from './bfFeedback';
 import { registerCartBadge } from './cartBadge';
@@ -42,6 +43,7 @@ window.bfCloseRegisterConfirm = function () {
 document.addEventListener('alpine:init', () => {
     registerBfFeedback(Alpine);
     registerAvatarEditor(Alpine);
+    registerImageCropEditor(Alpine);
     registerAddressPicker(Alpine);
 
     Alpine.data('staffLayout', () => ({
@@ -78,7 +80,7 @@ document.addEventListener('alpine:init', () => {
 
 /** Restos de crop-dialog con x-teleport antiguo (huérfanos en body). */
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('body > [aria-labelledby="bf-avatar-crop-title"]').forEach((el) => el.remove());
+    document.querySelectorAll('body > [aria-labelledby="bf-image-crop-title"], body > [aria-labelledby="bf-avatar-crop-title"]').forEach((el) => el.remove());
 });
 
 document.addEventListener('livewire:init', () => {

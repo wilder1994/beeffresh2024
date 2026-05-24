@@ -175,11 +175,12 @@
                 input-id="offer-image-upload"
                 name="image"
                 :current-url="$offer?->imageUrl()"
+                crop-profile="catalog"
                 :show-hint="false"
                 class="bf-offer-form-head__upload"
             />
             @unless($isEdit)
-                <p class="text-[11px] text-[var(--bf-muted)] mt-1.5 shrink-0">Imagen obligatoria · JPG, PNG o WebP</p>
+                <p class="text-[11px] text-[var(--bf-muted)] mt-1.5 shrink-0">Imagen obligatoria · 4:3 · se ajusta en el editor</p>
             @endunless
         </div>
     </div>

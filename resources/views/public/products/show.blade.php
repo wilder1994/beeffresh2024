@@ -10,7 +10,9 @@
         <h2 class="font-brand text-2xl md:text-3xl text-[var(--bf-ink)] mb-4">{{ $product->name }}</h2>
 
         @if($product->imageUrl())
-            <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="w-full max-w-md rounded-xl shadow mb-6 object-cover ring-1 ring-black/5">
+            <div class="w-full max-w-md aspect-[4/3] overflow-hidden rounded-xl shadow mb-6 ring-1 ring-black/5 bg-stone-100">
+                <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="h-full w-full object-cover object-center">
+            </div>
         @endif
 
         @if($product->description)

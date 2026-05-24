@@ -98,17 +98,19 @@
     }
 
     .bf-cinta-marquee {
-        --bf-cinta-item-width: 100vw;
+        --bf-cinta-item-width: clamp(10.5rem, 78vw, 15rem);
         position: relative;
         z-index: 0;
         overflow: hidden;
         background: var(--bf-brand);
         border-bottom: 1px solid rgb(0 0 0 / 0.08);
+        padding-block: 0.2rem;
     }
 
     .bf-cinta-marquee__viewport {
         overflow: hidden;
         width: 100%;
+        max-height: clamp(8rem, 22vh, 11rem);
     }
 
     .bf-cinta-marquee__track {
@@ -141,44 +143,53 @@
     .bf-cinta-marquee__item {
         flex: 0 0 var(--bf-cinta-item-width);
         width: var(--bf-cinta-item-width);
-        padding: 0.35rem 0.25rem;
+        padding: 0.2rem 0.15rem;
         box-sizing: border-box;
     }
 
     @media (min-width: 640px) {
         .bf-cinta-marquee {
-            --bf-cinta-item-width: 50vw;
+            --bf-cinta-item-width: clamp(10rem, 34vw, 13rem);
+            padding-block: 0.25rem;
         }
 
         .bf-cinta-marquee__item {
-            padding: 0.4rem 0.3rem;
+            padding: 0.25rem 0.2rem;
         }
     }
 
     @media (min-width: 1024px) {
         .bf-cinta-marquee {
-            --bf-cinta-item-width: 25vw;
+            --bf-cinta-item-width: clamp(10.5rem, 15vw, 12.75rem);
         }
 
         .bf-cinta-marquee__item {
-            padding: 0.45rem 0.35rem;
+            padding: 0.25rem 0.2rem;
+        }
+    }
+
+    @media (min-width: 1280px) {
+        .bf-cinta-marquee {
+            --bf-cinta-item-width: clamp(11rem, 13vw, 13rem);
         }
     }
 
     .bf-cinta-marquee__card {
         display: block;
         width: 100%;
-        aspect-ratio: 16 / 9;
-        border-radius: 0.5rem;
+        aspect-ratio: 4 / 3;
+        max-height: clamp(7rem, 18vh, 9.75rem);
+        margin-inline: auto;
+        border-radius: 0.375rem;
         overflow: hidden;
         border: 1px solid rgb(255 255 255 / 0.12);
-        box-shadow: 0 2px 12px rgb(0 0 0 / 0.12);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
         background: rgb(0 0 0 / 0.15);
     }
 
     @media (min-width: 640px) {
         .bf-cinta-marquee__card {
-            border-radius: 0.625rem;
+            border-radius: 0.5rem;
         }
     }
 
@@ -211,40 +222,40 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        gap: 0.15rem;
-        padding: 0.65rem 0.75rem;
-        background: linear-gradient(to top, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.15) 55%, transparent 100%);
+        gap: 0.05rem;
+        padding: 0.4rem 0.5rem;
+        background: linear-gradient(to top, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.12) 50%, transparent 100%);
         color: #fff;
         pointer-events: none;
     }
 
     .bf-cinta-tile__badge {
         align-self: flex-start;
-        font-size: 0.625rem;
+        font-size: 0.5625rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        padding: 0.15rem 0.45rem;
+        padding: 0.1rem 0.35rem;
         border-radius: 9999px;
         background: rgb(255 255 255 / 0.18);
         border: 1px solid rgb(255 255 255 / 0.25);
     }
 
     .bf-cinta-tile__title {
-        font-size: 0.8125rem;
+        font-size: 0.6875rem;
         font-weight: 600;
-        line-height: 1.25;
+        line-height: 1.2;
         text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
     }
 
     .bf-cinta-tile__price {
-        font-size: 0.75rem;
+        font-size: 0.6875rem;
         font-weight: 700;
         color: var(--bf-sun);
     }
 
     .bf-cinta-tile__stock {
-        font-size: 0.6875rem;
+        font-size: 0.625rem;
         font-weight: 600;
         color: #fecaca;
     }
@@ -365,7 +376,7 @@
         position: relative;
         width: 100%;
         max-width: 100%;
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 4 / 3;
         box-sizing: border-box;
     }
 
@@ -1032,30 +1043,74 @@
         background: rgba(255, 255, 255, 0.85);
     }
 
-    .bf-avatar-crop__stage {
+    .bf-avatar-crop__stage,
+    .bf-image-crop__stage {
         position: relative;
-        width: 280px;
-        height: 280px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .bf-avatar-crop__canvas {
-        display: block;
-        width: 280px;
-        height: 280px;
-        border-radius: 9999px;
+    .bf-image-crop__stage--rect {
+        width: min(100%, 360px);
+        aspect-ratio: var(--bf-crop-aspect, 4 / 3);
+        position: relative;
     }
 
-    .bf-avatar-crop__ring {
+    .bf-image-crop__stage--rect .bf-image-crop__canvas {
         position: absolute;
         inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .bf-image-crop__stage--circle,
+    .bf-avatar-crop__stage {
+        width: 280px;
+        height: 280px;
+        position: relative;
+    }
+
+    .bf-image-crop__stage--circle .bf-image-crop__canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .bf-avatar-crop__canvas,
+    .bf-image-crop__canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+    }
+
+    .bf-image-crop__stage--circle .bf-image-crop__canvas,
+    .bf-avatar-crop__canvas {
+        border-radius: 9999px;
+    }
+
+    .bf-avatar-crop__ring,
+    .bf-image-crop__frame {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .bf-image-crop__frame--rect {
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(28, 25, 23, 0.12);
+        border-radius: 0.375rem;
+    }
+
+    .bf-avatar-crop__ring,
+    .bf-image-crop__frame--circle {
         border-radius: 9999px;
         box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85), 0 0 0 1px rgba(28, 25, 23, 0.12);
-        pointer-events: none;
     }
 
     /* —— Home tienda —— */
     .bf-home-section {
-        @apply py-10 md:py-14;
+        @apply py-6 md:py-9;
     }
 
     .bf-home-section--cream {
@@ -1067,31 +1122,31 @@
     }
 
     .bf-home-section__inner {
-        @apply mx-auto max-w-7xl px-4;
+        @apply mx-auto max-w-6xl px-4;
     }
 
     .bf-home-section-head {
-        @apply mb-6 md:mb-8;
+        @apply mb-4 md:mb-5;
     }
 
     .bf-home-section-head__eyebrow {
-        @apply text-[11px] font-semibold uppercase tracking-[0.14em] mb-1.5;
+        @apply text-[10px] font-semibold uppercase tracking-[0.14em] mb-1;
         color: var(--bf-brand);
     }
 
     .bf-home-section-head__row {
-        @apply flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between;
+        @apply flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between;
     }
 
     .bf-home-section-head__title {
-        @apply text-2xl md:text-3xl leading-tight;
+        @apply text-xl md:text-2xl leading-tight;
         font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
         font-weight: 700;
         color: var(--bf-ink);
     }
 
     .bf-home-section-head__subtitle {
-        @apply mt-1.5 text-sm md:text-base max-w-2xl leading-relaxed;
+        @apply mt-1 text-sm max-w-2xl leading-relaxed;
         color: var(--bf-muted);
     }
 
@@ -1101,7 +1156,7 @@
     }
 
     .bf-home-products__grid {
-        @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5;
+        @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 md:gap-3.5;
     }
 
     .bf-home-product-card {
@@ -1141,11 +1196,11 @@
     }
 
     .bf-home-product-card__body {
-        @apply flex flex-1 flex-col gap-1 p-3 md:p-4;
+        @apply flex flex-1 flex-col gap-0.5 p-2.5 md:p-3;
     }
 
     .bf-home-product-card__title {
-        @apply text-sm md:text-base font-semibold leading-snug line-clamp-2;
+        @apply text-sm font-semibold leading-snug line-clamp-2;
         color: var(--bf-ink);
     }
 
@@ -1155,21 +1210,21 @@
     }
 
     .bf-home-product-card__prices {
-        @apply flex items-end gap-2 mt-auto pt-2;
+        @apply flex items-end gap-1.5 mt-auto pt-1.5;
     }
 
     .bf-home-product-card__ref {
-        @apply text-sm line-through tabular-nums;
+        @apply text-xs line-through tabular-nums;
         color: #9ca3af;
     }
 
     .bf-home-product-card__price {
-        @apply text-base md:text-lg font-bold tabular-nums;
+        @apply text-sm md:text-base font-bold tabular-nums;
         color: var(--bf-brand);
     }
 
     .bf-home-product-card__cta {
-        @apply text-xs font-semibold mt-2;
+        @apply text-[11px] font-semibold mt-1.5;
         color: var(--bf-brand);
     }
 
@@ -1234,12 +1289,12 @@
     }
 
     .bf-home-promo-card__media {
-        @apply relative h-full min-h-[11rem] overflow-hidden rounded-2xl;
+        @apply relative aspect-[4/3] overflow-hidden rounded-2xl;
         border: 1px solid var(--bf-border-brand-subtle);
     }
 
     .bf-home-promo-card--featured .bf-home-promo-card__media {
-        min-height: 100%;
+        min-height: 0;
     }
 
     .bf-home-promo-card__img,
@@ -1279,7 +1334,7 @@
     }
 
     .bf-home-cuts__grid {
-        @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5;
+        @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 md:gap-3.5;
     }
 
     .bf-home-cut-card {
@@ -1295,7 +1350,7 @@
     }
 
     .bf-home-cut-card__media {
-        @apply relative aspect-square overflow-hidden bg-stone-100;
+        @apply relative aspect-[4/3] overflow-hidden bg-stone-100;
     }
 
     .bf-home-cut-card__img {
@@ -1312,11 +1367,11 @@
     }
 
     .bf-home-cut-card__body {
-        @apply p-3 md:p-3.5;
+        @apply p-2.5 md:p-3;
     }
 
     .bf-home-cut-card__title {
-        @apply text-sm md:text-base font-semibold leading-snug;
+        @apply text-sm font-semibold leading-snug;
         color: var(--bf-ink);
     }
 
@@ -1407,30 +1462,30 @@
     }
 
     .bf-home-cta {
-        @apply py-10 md:py-12;
+        @apply py-7 md:py-9;
         background: var(--bf-surface-gradient);
         border-top: 1px solid var(--bf-border-brand-subtle);
     }
 
     .bf-home-cta__inner {
-        @apply mx-auto max-w-7xl px-4 text-center;
+        @apply mx-auto max-w-6xl px-4 text-center;
     }
 
     .bf-home-cta__panel {
-        @apply mx-auto max-w-2xl rounded-2xl px-6 py-8 md:px-10 md:py-10;
+        @apply mx-auto max-w-2xl rounded-2xl px-5 py-6 md:px-8 md:py-8;
         border: 1px solid var(--bf-border-brand-subtle);
         background: rgba(255, 255, 255, 0.72);
     }
 
     .bf-home-cta__title {
-        @apply text-xl md:text-2xl mb-2;
+        @apply text-lg md:text-xl mb-1.5;
         font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
         font-weight: 700;
         color: var(--bf-ink);
     }
 
     .bf-home-cta__text {
-        @apply text-sm md:text-base mb-5;
+        @apply text-sm mb-4;
         color: var(--bf-muted);
     }
 }

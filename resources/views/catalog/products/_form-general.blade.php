@@ -46,11 +46,12 @@
             input-id="product-image-upload"
             name="image"
             :current-url="$product?->imageUrl()"
+            crop-profile="catalog"
             :show-hint="false"
             class="h-full min-h-0"
         />
         @error('image')<p class="md:col-span-2 mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
     </div>
 
-    <p class="text-[11px] text-[var(--bf-muted)] -mt-1">JPG, PNG o WebP · recomendado cuadrada o 4:3 para catálogo</p>
+    <p class="text-[11px] text-[var(--bf-muted)] -mt-1">JPG, PNG o WebP · proporción 4:3 unificada (catálogo, home y cinta)</p>
 </section>

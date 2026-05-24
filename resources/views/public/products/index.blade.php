@@ -43,7 +43,9 @@
         @forelse($products as $product)
             <div class="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 flex flex-col overflow-hidden">
                 @if($product->imageUrl())
-                    <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="w-full h-40 object-cover">
+                    <div class="relative aspect-[4/3] overflow-hidden bg-stone-100">
+                        <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="h-full w-full object-cover object-center">
+                    </div>
                 @else
                     <div class="w-full h-40 bg-stone-100 flex items-center justify-center text-stone-400 text-sm">Sin imagen</div>
                 @endif
