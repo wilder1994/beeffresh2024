@@ -10,7 +10,6 @@ use App\Models\Offer;
 use App\Models\Product;
 use App\Services\Catalog\CartSessionService;
 use App\Services\Catalog\CartViewService;
-use App\Services\CheckoutService;
 use App\Services\Store\OfferAvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -159,37 +158,11 @@ class CarritoController extends Controller
         return redirect()->route('carrito.ver')->with('success', 'Producto eliminado del carrito.');
     }
 
-    public function finalizarCompra(CheckoutService $checkoutService): RedirectResponse
+    public function finalizarCompra(): RedirectResponse
     {
-        $user = auth()->user();
-        $carrito = session()->get('carrito', []);
-
-        if ($carrito === []) {
-            return redirect()->back()->with('error', 'El carrito está vacío.');
-        }
-
-        if (! $user->isCustomer()) {
-            return redirect()->back()->with('error', 'Solo las cuentas de cliente pueden finalizar compras en línea.');
-        }
-
-        if (! $user->hasCompleteDeliveryProfile()) {
-            return redirect()
-                ->back()
-                ->with('error', 'Completa en tu perfil el teléfono y la dirección de entrega (ciudad y provincia) antes de pedir a domicilio.')
-                ->with('open_profile_modal', true);
-        }
-
-        try {
-            $order = $checkoutService->finalizeCart($user, $carrito);
-        } catch (\Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
-
-        session()->forget('carrito');
-
         return redirect()
-            ->route('orders.tracking.show', $order)
-            ->with('success', 'Pedido #'.$order->id.' registrado. Puedes seguirlo aquí.');
+            ->route('checkout.show')
+            ->with('error', 'Usa el checkout seguro para completar tu pago en línea.');
     }
 
     /**

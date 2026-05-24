@@ -2084,4 +2084,39 @@
             min-height: 560px;
         }
     }
+
+    .bf-payment-trust {
+        @apply rounded-xl p-4 sm:p-5 space-y-4;
+        border: 1px solid color-mix(in srgb, var(--bf-brand) 22%, transparent);
+        background: linear-gradient(135deg, rgba(255,255,255,.92), color-mix(in srgb, var(--bf-cream) 40%, white));
+    }
+
+    .bf-payment-trust__head {
+        @apply flex items-start gap-3;
+    }
+
+    .bf-payment-methods {
+        @apply flex flex-wrap gap-2 list-none p-0 m-0;
+    }
+
+    .bf-payment-methods li {
+        @apply text-[10px] sm:text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-md;
+        background: rgba(255,255,255,.85);
+        border: 1px solid var(--bf-border-brand-subtle);
+        color: var(--bf-ink);
+    }
+
+    .bf-payment-loader {
+        @apply h-10 w-10 rounded-full border-2 border-[var(--bf-border-brand-subtle)] border-t-[var(--bf-brand)];
+        animation: bf-spin .8s linear infinite;
+    }
+
+    @keyframes bf-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .bf-payment-result__icon {
+        @apply inline-flex h-14 w-14 items-center justify-center rounded-full text-2xl font-bold;
+        background: color-mix(in srgb, currentColor 12%, white);
+    }
 }

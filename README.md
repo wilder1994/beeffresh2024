@@ -12,7 +12,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-19
+**Última actualización de esta documentación:** 2026-05-24
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -87,7 +87,7 @@ Desarrollo con recarga de assets: `npm run dev`.
 
 **Laragon (Windows):** si en PowerShell o Cursor no se reconocen `php`, `composer` o `npm`:
 
-- **PHP:** suele estar en `C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\` (ajusta la carpeta si Laragon instaló otra versión).
+- **PHP:** `C:\laragon\bin\php\php-8.2.29-Win32-vs16-x64\php.exe` (versión activa en `C:\laragon\usr\laragon.ini`).
 - **Composer:** `C:\laragon\bin\composer\composer.bat` (requiere que `php` esté en el `PATH` de esa sesión).
 - **Node / npm:** `C:\laragon\bin\nodejs\node-v18\` (p. ej. `& 'C:\laragon\bin\nodejs\node-v18\npm.cmd' run build`).
 
@@ -182,6 +182,8 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
 | Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`) |
 | Seguimiento cliente | `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
+| Pagos (admin) | `/admin/pagos` — transacciones, webhooks, intentos |
+| Checkout / pago | `POST /checkout/pagar` → widget Wompi; webhook `POST /webhooks/wompi` |
 | Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
 | Portal proveedor | `/portal-proveedor` (auth + rol supplier) |
 | Perfil Breeze | `/profile` |
@@ -193,8 +195,9 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Catálogo público:** `/productos-publicos` (rutas `products.public.*`). Cada tarjeta incluye selector **Kg / Lb** (default Kg), cantidad entera y precio según unidad (`x-store.product-purchase`, Alpine + `resources/js/storeCart.js`). Estilos compactos de la fila unidad/cantidad: `.bf-store-unit-toggle` y `.bf-store-qty-input` en `resources/css/app.css` (scoped a `[data-product-purchase]`).
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
-- Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`** (`sale_unit`, `quantity` decimal, `unit_price`, `subtotal`); descuento de stock vía `App\Services\CheckoutService`. Tras comprar, redirección al **seguimiento** del pedido.
-- **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → `picked_up` → `in_transit` → `delivered` (o `delivery_failed` → `returned_to_store` → reprogramación). Historial en `order_status_logs`; asignación automática de domiciliario (`App\Services\Orders\CourierAssignmentService`) al marcar listo; ubicación en `courier_locations`; pruebas de entrega en `delivery_proofs` (firma, foto/video). Servicios: `OrderWorkflowService`, `OrderOperationsQueryService`, `CourierLocationService`. UI: panel `/admin/pedidos` (métricas, tabs, tarjetas), mapa operativo, ticket POS, portal domiciliario, tracking con polling (`resources/js/operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`). Evento `OrderUpdated` (broadcast preparado). Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`.
+- Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
+- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`.
+- **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario, tracking. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 - Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.

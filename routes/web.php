@@ -20,6 +20,9 @@ use App\Http\Controllers\Catalog\PromotionOverviewController;
 use App\Http\Controllers\SupplierPortalController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Admin\PaymentAdminController;
+use App\Http\Controllers\Store\PaymentCheckoutController;
+use App\Http\Controllers\Webhooks\WompiWebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publico\OfferPublicController;
@@ -56,11 +59,22 @@ Route::middleware(['auth', 'role:supplier'])->prefix('portal-proveedor')->name('
     Route::get('/contacto', [SupplierPortalController::class, 'contact'])->name('contact');
 });
 
+Route::post('/webhooks/wompi', WompiWebhookController::class)->name('webhooks.wompi');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('/carrito/finalizar', [CarritoController::class, 'finalizarCompra'])->name('carrito.finalizar');
+    Route::post('/checkout/pagar', [PaymentCheckoutController::class, 'initiate'])->name('payments.initiate');
+
+    Route::prefix('pago')->name('payments.')->group(function () {
+        Route::get('/procesar/{payment}', [PaymentCheckoutController::class, 'process'])->name('process');
+        Route::get('/retorno/{payment}', [PaymentCheckoutController::class, 'return'])->name('return');
+        Route::get('/estado/{payment}', [PaymentCheckoutController::class, 'status'])->name('status');
+        Route::get('/exito/{payment}', [PaymentCheckoutController::class, 'success'])->name('success');
+        Route::get('/pendiente/{payment}', [PaymentCheckoutController::class, 'pending'])->name('pending');
+        Route::get('/fallido/{payment}', [PaymentCheckoutController::class, 'failed'])->name('failed');
+    });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -77,6 +91,13 @@ Route::middleware(['auth'])->group(function () {
         ->name('orders.tracking.show');
     Route::get('/mis-pedidos/{order}/seguimiento/feed', [OrderTrackingController::class, 'feed'])
         ->name('orders.tracking.feed');
+});
+
+Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->group(function () {
+    Route::prefix('pagos')->name('payments.')->group(function () {
+        Route::get('/', [PaymentAdminController::class, 'index'])->name('index');
+        Route::get('/{payment}', [PaymentAdminController::class, 'show'])->name('show');
+    });
 });
 
 Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('admin.')->prefix('admin')->group(function () {
