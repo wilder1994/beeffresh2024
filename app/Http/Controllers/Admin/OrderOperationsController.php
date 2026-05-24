@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\Orders\OrderUnassigned;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\CancelOrderRequest;
@@ -82,6 +83,7 @@ class OrderOperationsController extends Controller
             $message = 'Pedido listo y domiciliario asignado.';
         } catch (RuntimeException) {
             $message = 'Pedido listo. No hay domiciliario disponible en este momento.';
+            event(new OrderUnassigned($order->fresh(['user', 'courier'])));
         }
 
         return redirect()

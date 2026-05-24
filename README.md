@@ -12,7 +12,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-24
+**Última actualización de esta documentación:** 2026-05-25
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -77,7 +77,7 @@ php artisan migrate:fresh --seed
 
 Usuarios demo (`DemoUsersSeeder`): contraseña **`password`** (ver tabla en consola al sembrar). Catálogo: `CatalogSeeder`, `OfferSeeder`.
 
-4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`):
+4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`, `notificationBell.js`):
 
 ```bash
 npm install
@@ -85,6 +85,16 @@ npm run build
 ```
 
 Desarrollo con recarga de assets: `npm run dev`.
+
+5. **Notificaciones (colas):** en `.env` usa `QUEUE_CONNECTION=database` (requiere migración `jobs` y tablas de notificaciones). Plantillas email:
+
+```bash
+php artisan migrate
+php artisan db:seed --class=NotificationTemplateSeeder
+php artisan queue:work database --queue=notifications,notifications-email --tries=3
+```
+
+En local sin SMTP: `MAIL_MAILER=log`. Opcional: `NOTIFICATION_QUEUE`, `NOTIFICATION_EMAIL_QUEUE`, `NOTIFICATION_DELAYED_ORDER_MINUTES`. Scheduler (pedidos retrasados): `php artisan schedule:work` o cron con `notifications:check-delayed-orders` (cada hora). Arquitectura: `docs/NOTIFICATIONS.md`.
 
 **Laragon (Windows):** si en PowerShell o Cursor no se reconocen `php`, `composer` o `npm`:
 
@@ -196,6 +206,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
 | Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`) |
 | Seguimiento cliente | `/mis-pedidos` (historial, auth cliente), `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
+| Notificaciones | `/notificaciones` (centro interno), `/notificaciones/feed` (JSON campana), preferencias por usuario |
 | Pagos (admin) | `/admin/pagos` — transacciones, webhooks, intentos |
 | Checkout / pago | `POST /checkout/pagar` → widget Wompi; webhook `POST /webhooks/wompi` |
 | Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
@@ -213,6 +224,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` hace polling JSON (`GET /pago/estado/{uuid}` con `Accept: application/json`) vía `resources/js/paymentProcess.js`; si el callback trae `?id=` de Wompi o no llega webhook, el polling consulta la API por `transaction_id` o por **referencia** (`WompiGateway::findLatestTransactionByReference`). Al aprobar vacía la sesión `carrito` y actualiza el badge. Notificaciones por correo se envían **fuera** de la transacción del webhook (evita revertir el pedido si falla el mail en local). Logs de pagos: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`; en local sin SMTP use `MAIL_MAILER=log`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
 - **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Línea de tiempo con pasos **completados** y **pendientes** del flujo de entrega (`OrderTrackingTimelineBuilder`: Pendiente → … → Entregado). Polling cada 12 s (`resources/js/orderTracking.js`, feed JSON). Fechas en zona **`America/Bogota`**. Componente `x-store.tracking-timeline`.
+- **Notificaciones (núcleo):** arquitectura desacoplada en `App\Services\Notifications\` — `NotificationService`, canales (`internal`, `email`; stubs WhatsApp/push/SMS), eventos de dominio (`OrderPaid`, `OrderPreparing`, …), colas `notifications` / `notifications-email` (`QUEUE_CONNECTION=database`). Tablas: `notifications`, `notification_deliveries`, `notification_templates`, `notification_preferences`. UI: campana `<x-notifications.bell />`, listado `/notificaciones`. Métricas en dashboard admin. Documentación: `docs/NOTIFICATIONS.md`. Worker: `php artisan queue:work database --queue=notifications,notifications-email`. Tests: `tests/Feature/Notifications/NotificationSystemTest.php`.
 - **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
@@ -237,13 +249,13 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 
 ## Base de datos y migraciones
 
-Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles, catálogo (`products`, `offers`, `offer_items`), `orders` / `order_items`, operaciones (`order_status_logs`, `order_assignments`, `courier_locations`, `delivery_proofs`; columnas extra en `orders` y coordenadas de tienda en `company_profiles` — migración `2026_05_19_100000_order_operations`), etc.
+Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles, catálogo (`products`, `offers`, `offer_items`), `orders` / `order_items`, operaciones (`order_status_logs`, `order_assignments`, `courier_locations`, `delivery_proofs`; columnas extra en `orders` y coordenadas de tienda en `company_profiles` — migración `2026_05_19_100000_order_operations`), **notificaciones** (`notifications`, `notification_deliveries`, `notification_templates`, `notification_preferences` — `2026_05_25_120000_create_notification_system`), cola **`jobs`** (`2026_05_25_120001_create_jobs_table`), etc.
 
 Semilla opcional de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`. Contraseña: valor de `ADMIN_PASSWORD` en `.env` (por defecto `password`). Cuentas útiles para operaciones:
 

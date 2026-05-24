@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Orders;
 
+use App\Events\Orders\OrderAssigned;
 use App\Models\CompanyProfile;
 use App\Models\Order;
 use App\Models\OrderAssignment;
@@ -30,7 +31,9 @@ final class CourierAssignmentService
             throw new RuntimeException('No hay domiciliarios disponibles.');
         }
 
-        return DB::transaction(function () use ($order, $courier, $assignedBy): OrderAssignment {
+        $previousCourierId = $order->courier_id;
+
+        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId): OrderAssignment {
             $this->releaseActiveAssignments($order);
 
             $assignment = OrderAssignment::query()->create([
@@ -46,6 +49,10 @@ final class CourierAssignmentService
             $order->save();
 
             $this->markCourierBusy($courier);
+
+            $fresh = $order->fresh(['user', 'courier']);
+            $reassigned = $previousCourierId !== null && $previousCourierId !== $courier->id;
+            event(new OrderAssigned($fresh, $courier, $assignedBy, $reassigned));
 
             return $assignment;
         });
@@ -57,7 +64,9 @@ final class CourierAssignmentService
             throw new RuntimeException('El usuario seleccionado no es domiciliario.');
         }
 
-        return DB::transaction(function () use ($order, $courier, $assignedBy): OrderAssignment {
+        $previousCourierId = $order->courier_id;
+
+        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId): OrderAssignment {
             $this->releaseActiveAssignments($order);
 
             $assignment = OrderAssignment::query()->create([
@@ -73,6 +82,10 @@ final class CourierAssignmentService
             $order->save();
 
             $this->markCourierBusy($courier);
+
+            $reassigned = $previousCourierId !== null && $previousCourierId !== $courier->id;
+            $fresh = $order->fresh(['user', 'courier']);
+            event(new OrderAssigned($fresh, $courier, $assignedBy, $reassigned));
 
             return $assignment;
         });

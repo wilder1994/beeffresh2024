@@ -59,6 +59,31 @@
             </div>
         </div>
 
+        @php $nm = $notification_metrics ?? ['sent' => 0, 'failed' => 0, 'pending' => 0, 'avg_seconds' => null, 'by_channel' => []]; @endphp
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 mb-4 md:mb-6">
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Notif. enviadas (7d)</p>
+                <p class="text-xl sm:text-2xl font-bold text-emerald-700 mt-1 tabular-nums">{{ $nm['sent'] }}</p>
+            </div>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Fallidas / omitidas</p>
+                <p class="text-xl sm:text-2xl font-bold text-red-600 mt-1 tabular-nums">{{ $nm['failed'] }}</p>
+            </div>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Pendientes cola</p>
+                <p class="text-xl sm:text-2xl font-bold text-amber-700 mt-1 tabular-nums">{{ $nm['pending'] }}</p>
+            </div>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Tiempo prom. envío</p>
+                <p class="text-xl sm:text-2xl font-bold text-gray-900 mt-1 tabular-nums">{{ $nm['avg_seconds'] !== null ? $nm['avg_seconds'].'s' : '—' }}</p>
+            </div>
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5 col-span-2 lg:col-span-1">
+                <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide">Canal principal</p>
+                <p class="text-sm font-semibold text-gray-900 mt-2">{{ $nm['by_channel'][0]['label'] ?? '—' }}</p>
+                <p class="text-[10px] text-gray-500 mt-0.5">{{ $nm['by_channel'][0]['total'] ?? 0 }} envíos</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
             <div class="xl:col-span-2 bg-white rounded-2xl border border-amber-100/90 shadow-sm p-5 md:p-6">
                 <div class="flex items-center justify-between gap-2 mb-4">

@@ -54,7 +54,8 @@
                 <button type="button" x-on:click="openMobileMenu()" class="btn btn-square btn-sm bg-white/10 border-white/30 text-white shrink-0" aria-label="Abrir menú">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
-                <span class="font-semibold text-xs sm:text-sm truncate font-brand tracking-tight">BEEF FRESH · Panel</span>
+                <span class="font-semibold text-xs sm:text-sm truncate font-brand tracking-tight flex-1">BEEF FRESH · Panel</span>
+                <x-notifications.bell variant="dark" />
             </header>
 
             <main class="flex-grow flex flex-col min-w-0">

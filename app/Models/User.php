@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->hasMany(OrderAssignment::class, 'courier_id');
     }
 
+    public function inboxNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->latest();
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

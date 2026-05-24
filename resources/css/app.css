@@ -2184,4 +2184,51 @@
     .bf-payment-result--pending .bf-payment-result__icon {
         @apply text-amber-600;
     }
+
+    .bf-notification-badge {
+        box-shadow: 0 0 0 2px var(--bf-brand);
+    }
+
+    .bf-notification-dropdown {
+        animation: bf-notification-drop .18s ease-out;
+    }
+
+    @keyframes bf-notification-drop {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bf-notification-list {
+        @apply space-y-3;
+    }
+
+    .bf-notification-item {
+        @apply rounded-xl p-4 flex items-start justify-between gap-4 border;
+        border-color: var(--bf-border-brand-subtle);
+        background: var(--bf-card);
+    }
+
+    .bf-notification-item--unread {
+        border-color: color-mix(in srgb, var(--bf-brand) 35%, transparent);
+        background: color-mix(in srgb, var(--bf-cream) 55%, white);
+    }
+
+    .bf-notification-item__title {
+        @apply text-sm font-semibold;
+        color: var(--bf-ink);
+    }
+
+    .bf-notification-item__text {
+        @apply text-sm mt-1;
+        color: var(--bf-muted);
+    }
+
+    .bf-notification-item__meta {
+        @apply text-xs mt-2;
+        color: color-mix(in srgb, var(--bf-muted) 80%, transparent);
+    }
+
+    .bf-notification-item__actions {
+        @apply flex flex-col items-end gap-2 shrink-0;
+    }
 }

@@ -14,6 +14,10 @@ use InvalidArgumentException;
 
 final class OrderWorkflowService
 {
+    public function __construct(
+        private readonly OrderDomainEventDispatcher $domainEvents,
+    ) {}
+
     public function transition(
         Order $order,
         OrderStatus $toStatus,
@@ -48,6 +52,7 @@ final class OrderWorkflowService
             $fresh = $order->fresh(['user', 'courier', 'items']);
 
             event(new OrderUpdated($fresh));
+            $this->domainEvents->dispatchStatusTransition($fresh, $fromStatus, $toStatus, $actor, $note);
 
             return $fresh;
         });

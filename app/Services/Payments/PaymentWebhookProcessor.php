@@ -8,15 +8,14 @@ use App\DataTransferObjects\Payments\CheckoutSessionData;
 use App\Enums\PaymentAttemptType;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentWebhookStatus;
+use App\Events\Orders\OrderPaid;
 use App\Events\Payments\PaymentApproved;
 use App\Events\Payments\PaymentDeclined;
+use App\Events\Payments\PaymentWebhookFailed;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhook;
 use App\Models\User;
-use App\Notifications\Orders\OrderConfirmedNotification;
-use App\Notifications\Payments\PaymentApprovedNotification;
-use App\Notifications\Payments\PaymentDeclinedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -116,6 +115,12 @@ final class PaymentWebhookProcessor
                 'error' => $e->getMessage(),
             ]);
 
+            event(new PaymentWebhookFailed(
+                (string) data_get($payload, 'data.transaction.reference', 'unknown'),
+                $e->getMessage(),
+                $payload,
+            ));
+
             throw $e;
         }
 
@@ -196,15 +201,13 @@ final class PaymentWebhookProcessor
         try {
             if ($context['type'] === 'approved' && isset($context['order'])) {
                 event(new PaymentApproved($payment, $context['order']));
-                $context['user']->notify(new PaymentApprovedNotification($payment));
-                $context['user']->notify(new OrderConfirmedNotification($context['order']));
+                event(new OrderPaid($context['order'], $payment));
 
                 return;
             }
 
             if ($context['type'] === 'declined') {
                 event(new PaymentDeclined($payment));
-                $context['user']->notify(new PaymentDeclinedNotification($payment));
             }
         } catch (\Throwable $e) {
             Log::channel('payments')->warning('Payment notification failed', [

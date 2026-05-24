@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/js/orderTracking.js',
                 'resources/js/paymentStatus.js',
                 'resources/js/paymentProcess.js',
+                'resources/js/notificationBell.js',
             ],
             refresh: true,
         }),

@@ -11,11 +11,16 @@ use App\Models\Offer;
 use App\Models\Product;
 use App\Models\Receta;
 use App\Models\VideoReceta;
+use App\Services\Notifications\NotificationMetricsService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 
 final class AdminDashboardService
 {
+    public function __construct(
+        private readonly NotificationMetricsService $notificationMetrics,
+    ) {}
+
     /**
      * @return array{
      *   kpi: array{orders_today: int, revenue_today: float, revenue_month: float, pending: int, products_catalog: int},
@@ -24,7 +29,8 @@ final class AdminDashboardService
      *   max_day_count: int,
      *   recent_orders: Collection<int, Order>,
      *   low_stock: Collection<int, Product>,
-     *   alerts: list<array{type: string, message: string}>
+     *   alerts: list<array{type: string, message: string}>,
+     *   notification_metrics: array{sent: int, failed: int, pending: int, avg_seconds: float|null, by_channel: list<array{channel: string, label: string, total: int}>}
      * }
      */
     public function metrics(): array
@@ -106,6 +112,7 @@ final class AdminDashboardService
             'recent_orders' => $recentOrders,
             'low_stock' => $lowStock,
             'alerts' => $alerts,
+            'notification_metrics' => $this->notificationMetrics->dashboardSummary(),
         ];
     }
 }

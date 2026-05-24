@@ -33,6 +33,10 @@ use App\Services\Catalog\CartSessionService;
             />
 
             @auth
+                <x-notifications.bell variant="dark" />
+            @endauth
+
+            @auth
                 @php($navUser = auth()->user())
 
                 @if($navUser->isStaff())

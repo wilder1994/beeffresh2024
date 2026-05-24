@@ -80,6 +80,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::prefix('notificaciones')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'index'])->name('index');
+        Route::get('/feed', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'feed'])->name('feed');
+        Route::patch('/preferencias', [\App\Http\Controllers\Notifications\NotificationPreferenceController::class, 'update'])->name('preferences.update');
+        Route::patch('/marcar-todas', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'markAllRead'])->name('mark-all-read');
+        Route::patch('/{notification}/leida', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'markRead'])->name('read');
+    });
 });
 
 Route::get('/seguimiento/{tracking_token}', [OrderTrackingController::class, 'showByToken'])

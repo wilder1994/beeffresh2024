@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Domain\Users\RoleSlug;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Policies\NotificationPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\PaymentPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -21,6 +23,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         Order::class => OrderPolicy::class,
         Payment::class => PaymentPolicy::class,
+        Notification::class => NotificationPolicy::class,
     ];
 
     public function boot(): void

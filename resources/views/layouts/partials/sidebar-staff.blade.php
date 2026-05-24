@@ -230,6 +230,7 @@
                 <svg class="w-4 h-4 shrink-0 opacity-70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
             </label>
             <ul tabindex="0" class="dropdown-content menu bg-[#fffaf5] text-gray-900 rounded-box shadow-lg w-52 z-[100] border border-amber-100 mb-2 text-sm">
+                <li><a href="{{ route('notifications.index') }}">Notificaciones</a></li>
                 <li><x-profile.open-button tag="a" class="w-full text-left">Mi perfil</x-profile.open-button></li>
                 <li>
                     <form method="POST" action="{{ route('logout') }}">

@@ -22,6 +22,7 @@
         @if($user->isCustomer())
             <li><a href="{{ route('customer.orders.index') }}" class="block w-full rounded-lg px-3 py-2 hover:bg-stone-100 font-normal">Mis pedidos</a></li>
         @endif
+        <li><a href="{{ route('notifications.index') }}" class="block w-full rounded-lg px-3 py-2 hover:bg-stone-100 font-normal">Notificaciones</a></li>
         <li>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

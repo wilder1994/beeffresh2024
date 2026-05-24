@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             DemoUsersSeeder::class,
             CatalogSeeder::class,
             OfferSeeder::class,
+            NotificationTemplateSeeder::class,
         ]);
     }
 }
