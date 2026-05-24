@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataTransferObjects\Store;
 
-final readonly class CintaTile
+final class CintaTile
 {
     public function __construct(
         public string $url,

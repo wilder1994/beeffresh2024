@@ -86,6 +86,7 @@ class CheckoutController extends Controller
             }
 
             $precio = $this->cartSession->unitPrice($product, $saleUnit, $cantidad);
+            $quote = $this->cartSession->priceQuote($product, $saleUnit, $cantidad);
             $subtotal = $precio * $cantidad;
             $total += $subtotal;
             $itemCount += $cantidad;
@@ -96,6 +97,8 @@ class CheckoutController extends Controller
                 'cantidad' => $cantidad,
                 'sale_unit' => $saleUnit,
                 'subtotal' => $subtotal,
+                'pricing_tier' => $quote->tier,
+                'pricing_label' => $quote->pricingLabel(),
             ];
         }
 

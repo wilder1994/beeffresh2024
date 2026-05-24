@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Users\PermissionKey;
 use App\Domain\Users\RoleSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -82,6 +83,21 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function assignedOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'courier_id');
+    }
+
+    public function courierLocations(): HasMany
+    {
+        return $this->hasMany(CourierLocation::class)->latest('recorded_at');
+    }
+
+    public function courierAssignments(): HasMany
+    {
+        return $this->hasMany(OrderAssignment::class, 'courier_id');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
@@ -110,6 +126,28 @@ class User extends Authenticatable
     public function isSupplier(): bool
     {
         return $this->hasRole(RoleSlug::SUPPLIER);
+    }
+
+    public function isCourier(): bool
+    {
+        return $this->isEmployee()
+            && ($this->employeeProfile?->isDeliveryRole() ?? false);
+    }
+
+    public function isDispatcher(): bool
+    {
+        return $this->isEmployee()
+            && ($this->employeeProfile?->isDispatchRole() ?? false);
+    }
+
+    public function canAccessCourierModule(): bool
+    {
+        return $this->isCourier() && $this->can(PermissionKey::MODULE_COURIER);
+    }
+
+    public function canAccessOrderOperations(): bool
+    {
+        return $this->can(PermissionKey::MODULE_ORDERS);
     }
 
     /** Primer rol Spatie (una sola asignación prevista en UI). */
@@ -189,6 +227,8 @@ class User extends Authenticatable
             'shipping_postal_code' => $p?->postal_code,
             'shipping_country' => $p?->country ?? 'CO',
             'shipping_notes' => $p?->delivery_notes,
+            'shipping_latitude' => $p?->latitude,
+            'shipping_longitude' => $p?->longitude,
         ];
     }
 }

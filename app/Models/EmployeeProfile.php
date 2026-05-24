@@ -59,4 +59,9 @@ class EmployeeProfile extends Model
     {
         return $this->position?->isDelivery() ?? false;
     }
+
+    public function isDispatchRole(): bool
+    {
+        return $this->position?->isDispatch() ?? false;
+    }
 }

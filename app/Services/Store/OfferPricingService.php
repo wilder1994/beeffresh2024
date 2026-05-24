@@ -29,7 +29,7 @@ final class OfferPricingService
     public function offerTotal(Offer $offer): float
     {
         if ($offer->type === OfferType::Volume) {
-            $unit = StockUnit::tryFrom((string) $offer->volume_sale_unit) ?? StockUnit::Kg;
+            $unit = $this->volumeSaleUnit($offer);
             $minQty = (float) $offer->volume_min_quantity;
 
             return round($minQty * $this->volumeOfferUnitPrice($offer, $unit), 2);
@@ -54,6 +54,82 @@ final class OfferPricingService
         };
     }
 
+    public function volumeStorefrontSummary(Offer $offer): ?string
+    {
+        if ($offer->type !== OfferType::Volume) {
+            return null;
+        }
+
+        $unit = $this->volumeSaleUnit($offer);
+        $minQty = (float) $offer->volume_min_quantity;
+
+        if ($minQty <= 0) {
+            return null;
+        }
+
+        return $this->volumeSummaryText($minQty, $unit);
+    }
+
+    public function volumeSummaryText(float $minQty, StockUnit $unit): string
+    {
+        $minDisplay = $this->formatMinQuantityDisplay($minQty);
+
+        return "Precio especial al comprar {$minDisplay} {$unit->value} o más.";
+    }
+
+    /**
+     * Precios para tarjetas públicas (home, cinta). Volume → unitario; pack → total del pack.
+     *
+     * @return array{
+     *     reference: float,
+     *     offer: float,
+     *     unit_suffix: string|null,
+     *     volume_summary: string|null,
+     * }
+     */
+    public function storefrontCardPrices(Offer $offer): array
+    {
+        if ($offer->type === OfferType::Volume) {
+            $product = $offer->product;
+            if ($product === null) {
+                return [
+                    'reference' => 0.0,
+                    'offer' => 0.0,
+                    'unit_suffix' => null,
+                    'volume_summary' => null,
+                ];
+            }
+
+            $unit = $this->volumeSaleUnit($offer);
+
+            return [
+                'reference' => $this->referenceUnitPrice($product, $unit),
+                'offer' => $this->volumeOfferUnitPrice($offer, $unit),
+                'unit_suffix' => '/'.$unit->value,
+                'volume_summary' => $this->volumeStorefrontSummary($offer),
+            ];
+        }
+
+        return [
+            'reference' => $this->referenceTotal($offer),
+            'offer' => $this->offerTotal($offer),
+            'unit_suffix' => null,
+            'volume_summary' => null,
+        ];
+    }
+
+    public function storefrontPriceLabel(Offer $offer): string
+    {
+        $prices = $this->storefrontCardPrices($offer);
+        $formatted = '$'.number_format($prices['offer'], 0, ',', '.');
+
+        if ($prices['unit_suffix'] !== null) {
+            return $formatted.$prices['unit_suffix'];
+        }
+
+        return $formatted;
+    }
+
     private function volumeReferenceTotal(Offer $offer): float
     {
         $product = $offer->product;
@@ -61,10 +137,24 @@ final class OfferPricingService
             return 0.0;
         }
 
-        $unit = StockUnit::tryFrom((string) $offer->volume_sale_unit) ?? StockUnit::Kg;
+        $unit = $this->volumeSaleUnit($offer);
         $minQty = (float) $offer->volume_min_quantity;
 
         return round($minQty * $this->referenceUnitPrice($product, $unit), 2);
+    }
+
+    private function volumeSaleUnit(Offer $offer): StockUnit
+    {
+        return StockUnit::resolve($offer->volume_sale_unit);
+    }
+
+    private function formatMinQuantityDisplay(float $minQty): string
+    {
+        if (fmod($minQty, 1.0) === 0.0) {
+            return (string) (int) $minQty;
+        }
+
+        return rtrim(rtrim(number_format($minQty, 1, ',', '.'), '0'), ',');
     }
 
     /**

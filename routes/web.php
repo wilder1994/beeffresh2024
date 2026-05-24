@@ -3,7 +3,10 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\CompanyProfileController;
 use App\Http\Controllers\Admin\LogoController;
-use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\OrderOperationsController;
+use App\Http\Controllers\Admin\OrderTicketController;
+use App\Http\Controllers\Courier\CourierOrderController;
+use App\Http\Controllers\Store\OrderTrackingController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Catalog\CatalogController;
@@ -37,6 +40,12 @@ Route::post('/carrito/agregar-pack', [CarritoController::class, 'agregarOffer'])
     ->middleware('throttle:60,1')
     ->name('carrito.agregar-offer');
 Route::get('/carrito', [CarritoController::class, 'ver'])->name('carrito.ver');
+Route::patch('/carrito/linea', [CarritoController::class, 'actualizarLinea'])
+    ->middleware('throttle:60,1')
+    ->name('carrito.linea.actualizar');
+Route::delete('/carrito/linea', [CarritoController::class, 'eliminarLinea'])
+    ->middleware('throttle:60,1')
+    ->name('carrito.linea.eliminar');
 
 Route::get('/', HomeController::class)->name('home');
 
@@ -58,8 +67,42 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/seguimiento/{tracking_token}', [OrderTrackingController::class, 'showByToken'])
+    ->name('orders.tracking.guest');
+Route::get('/seguimiento/{tracking_token}/feed', [OrderTrackingController::class, 'feedByToken'])
+    ->name('orders.tracking.guest-feed');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mis-pedidos/{order}/seguimiento', [OrderTrackingController::class, 'show'])
+        ->name('orders.tracking.show');
+    Route::get('/mis-pedidos/{order}/seguimiento/feed', [OrderTrackingController::class, 'feed'])
+        ->name('orders.tracking.feed');
+});
+
 Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('admin.')->prefix('admin')->group(function () {
-    Route::get('/pedidos', [OrderController::class, 'index'])->name('pedidos.index');
+    Route::prefix('pedidos')->name('pedidos.')->group(function () {
+        Route::get('/', [OrderOperationsController::class, 'index'])->name('index');
+        Route::get('/mapa', [OrderOperationsController::class, 'map'])->name('map');
+        Route::get('/feed', [OrderOperationsController::class, 'feed'])->name('feed');
+        Route::get('/mapa/datos', [OrderOperationsController::class, 'mapData'])->name('map-data');
+        Route::get('/{order}/ticket', [OrderTicketController::class, 'show'])->name('ticket.show');
+        Route::post('/{order}/ticket/impreso', [OrderTicketController::class, 'markPrinted'])->name('ticket.mark-printed');
+        Route::post('/{order}/preparar', [OrderOperationsController::class, 'startPreparing'])->name('start-preparing');
+        Route::post('/{order}/listo', [OrderOperationsController::class, 'markReady'])->name('mark-ready');
+        Route::post('/{order}/cancelar', [OrderOperationsController::class, 'cancel'])->name('cancel');
+        Route::post('/{order}/reprogramar', [OrderOperationsController::class, 'redispatch'])->name('redispatch');
+        Route::get('/{order}', [OrderOperationsController::class, 'show'])->name('show');
+    });
+});
+
+Route::middleware(['auth', 'role:employee', 'courier'])->prefix('domiciliario')->name('courier.')->group(function () {
+    Route::get('/pedidos', [CourierOrderController::class, 'index'])->name('orders.index');
+    Route::post('/ubicacion', [CourierOrderController::class, 'updateLocation'])->name('location.update');
+    Route::get('/pedidos/{order}', [CourierOrderController::class, 'show'])->name('orders.show');
+    Route::post('/pedidos/{order}/recogido', [CourierOrderController::class, 'markPickedUp'])->name('orders.picked-up');
+    Route::post('/pedidos/{order}/en-camino', [CourierOrderController::class, 'markInTransit'])->name('orders.in-transit');
+    Route::post('/pedidos/{order}/entregado', [CourierOrderController::class, 'markDelivered'])->name('orders.delivered');
+    Route::post('/pedidos/{order}/fallido', [CourierOrderController::class, 'markFailed'])->name('orders.failed');
 });
 
 Route::middleware(['auth', 'role_or_permission:admin|module.settings'])->name('admin.')->prefix('admin')->group(function () {
@@ -89,10 +132,14 @@ Route::middleware(['auth', 'role_or_permission:admin|module.catalog'])->group(fu
             ->except(['show'])
             ->parameters(['productos' => 'product'])
             ->names('products');
-        Route::resource('combos', OfferController::class)
-            ->except(['show'])
-            ->parameters(['combos' => 'offer'])
-            ->names('offers');
+        Route::get('combos/nuevo', [OfferController::class, 'createBundle'])->name('offers.bundles.create');
+        Route::get('combos', [OfferController::class, 'bundles'])->name('offers.bundles');
+        Route::post('combos', [OfferController::class, 'store'])->name('offers.store');
+        Route::get('combos/{offer}/edit', [OfferController::class, 'edit'])->name('offers.edit');
+        Route::put('combos/{offer}', [OfferController::class, 'update'])->name('offers.update');
+        Route::delete('combos/{offer}', [OfferController::class, 'destroy'])->name('offers.destroy');
+        Route::get('escalas-volumen/nueva', [OfferController::class, 'createVolume'])->name('offers.volumes.create');
+        Route::get('escalas-volumen', [OfferController::class, 'volumes'])->name('offers.volumes');
         Route::get('tipos-carne', [MeatTypeController::class, 'index'])->name('meat-types.index');
         Route::post('tipos-carne', [MeatTypeController::class, 'store'])->name('meat-types.store');
         Route::put('tipos-carne/{meatType}', [MeatTypeController::class, 'update'])->name('meat-types.update');

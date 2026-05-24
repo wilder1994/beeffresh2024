@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Users\PermissionKey;
 use App\Domain\Users\RoleSlug;
 use App\Services\AdminDashboardService;
 use Illuminate\Contracts\View\View;
@@ -19,6 +20,9 @@ class DashboardController extends Controller
             $user->hasRole(RoleSlug::ADMIN) => view('dashboard', $adminDashboard->metrics()),
             $user->hasRole(RoleSlug::CUSTOMER) => redirect()->route('home'),
             $user->hasRole(RoleSlug::SUPPLIER) => redirect()->route('supplier.home'),
+            $user->hasRole(RoleSlug::EMPLOYEE) && $user->canAccessCourierModule() => redirect()->route('courier.orders.index'),
+            $user->hasRole(RoleSlug::EMPLOYEE) && $user->can(PermissionKey::MODULE_ORDERS) && $user->isDispatcher() => redirect()->route('admin.pedidos.index'),
+            $user->hasRole(RoleSlug::EMPLOYEE) && $user->can(PermissionKey::MODULE_ORDERS) => redirect()->route('admin.pedidos.index'),
             $user->hasRole(RoleSlug::EMPLOYEE) => view('dashboards.employee'),
             default => view('dashboards.employee'),
         };

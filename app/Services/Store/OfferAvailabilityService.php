@@ -79,7 +79,7 @@ final class OfferAvailabilityService
             return 0;
         }
 
-        $saleUnit = StockUnit::tryFrom((string) $offer->volume_sale_unit) ?? StockUnit::Kg;
+        $saleUnit = StockUnit::resolve($offer->volume_sale_unit);
         $requiredStock = $this->unitConverter->toStockUnits(
             $minQty,
             $saleUnit,

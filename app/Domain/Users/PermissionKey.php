@@ -25,6 +25,8 @@ final class PermissionKey
 
     public const MODULE_ORDERS = 'module.orders';
 
+    public const MODULE_COURIER = 'module.courier';
+
     public const MODULE_CATALOG = 'module.catalog';
 
     /** @return list<string> */
@@ -40,6 +42,7 @@ final class PermissionKey
             self::MODULE_INVENTORY,
             self::MODULE_REPORTS,
             self::MODULE_ORDERS,
+            self::MODULE_COURIER,
             self::MODULE_CATALOG,
         ];
     }
@@ -56,6 +59,7 @@ final class PermissionKey
             self::MODULE_INVENTORY => 'Inventario',
             self::MODULE_REPORTS => 'Reportes',
             self::MODULE_ORDERS => 'Pedidos',
+            self::MODULE_COURIER => 'Domiciliario',
             self::MODULE_CATALOG => 'Catálogo',
             default => $key,
         };

@@ -7,6 +7,7 @@ import registerAddressPicker, { bootAddressPickerNodes } from './addressPicker';
 import { registerBfFeedback } from './bfFeedback';
 import { registerCartBadge } from './cartBadge';
 import { registerStoreCart } from './storeCart';
+import { registerProductPurchaseAlpine } from './volumeScalePricing';
 
 window.Alpine = Alpine;
 window.Livewire = Livewire;
@@ -45,6 +46,7 @@ document.addEventListener('alpine:init', () => {
     registerAvatarEditor(Alpine);
     registerImageCropEditor(Alpine);
     registerAddressPicker(Alpine);
+    registerProductPurchaseAlpine(Alpine);
 
     Alpine.data('staffLayout', () => ({
         mobileMenuOpen: false,

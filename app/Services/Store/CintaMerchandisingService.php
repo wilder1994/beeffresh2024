@@ -69,9 +69,6 @@ final class CintaMerchandisingService
                 continue;
             }
 
-            $reference = $this->offerPricing->referenceTotal($offer);
-            $offerTotal = $this->offerPricing->offerTotal($offer);
-
             $tiles->push(new CintaTile(
                 url: $offer->isVolume() && $offer->product
                     ? route('products.public.show', $offer->product)
@@ -79,7 +76,7 @@ final class CintaMerchandisingService
                 imageUrl: $offer->imageUrl(),
                 title: $offer->name,
                 badge: $offer->isVolume() ? 'Por cantidad' : 'Pack',
-                priceLabel: '$'.number_format($offerTotal, 0, ',', '.'),
+                priceLabel: $this->offerPricing->storefrontPriceLabel($offer),
                 availabilityLabel: $this->availability->availabilityLabel($offer),
             ));
         }

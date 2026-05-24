@@ -107,5 +107,6 @@
 <x-bf.confirm-dialog />
 
 @livewireScriptConfig
+@stack('scripts')
 </body>
 </html>

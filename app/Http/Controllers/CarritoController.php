@@ -9,18 +9,19 @@ use App\Domain\Store\OfferType;
 use App\Models\Offer;
 use App\Models\Product;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\CartViewService;
 use App\Services\CheckoutService;
 use App\Services\Store\OfferAvailabilityService;
-use App\Services\Store\OfferPricingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CarritoController extends Controller
 {
     public function __construct(
         private readonly CartSessionService $cartSession,
+        private readonly CartViewService $cartView,
         private readonly OfferAvailabilityService $offerAvailability,
-        private readonly OfferPricingService $offerPricing,
     ) {}
 
     public function agregar(Request $request)
@@ -44,21 +45,19 @@ class CarritoController extends Controller
         }
 
         $unitPrice = $this->cartSession->unitPrice($product, $saleUnit, $newQty);
+        $quote = $this->cartSession->priceQuote($product, $saleUnit, $newQty);
 
-        if (isset($carrito[$lineKey])) {
-            $carrito[$lineKey]['cantidad'] = $newQty;
-            $carrito[$lineKey]['precio'] = $unitPrice;
-        } else {
-            $carrito[$lineKey] = [
-                'type' => 'product',
-                'product_id' => $id,
-                'sale_unit' => $saleUnit->value,
-                'nombre' => $product->name,
-                'precio' => $unitPrice,
-                'imagen' => $product->image,
-                'cantidad' => $cantidad,
-            ];
-        }
+        $carrito[$lineKey] = [
+            'type' => 'product',
+            'product_id' => $id,
+            'sale_unit' => $saleUnit->value,
+            'nombre' => $product->name,
+            'precio' => $unitPrice,
+            'imagen' => $product->image,
+            'cantidad' => $newQty,
+            'pricing_tier' => $quote->tier,
+            'pricing_label' => $quote->pricingLabel(),
+        ];
 
         session()->put('carrito', $carrito);
 
@@ -96,13 +95,11 @@ class CarritoController extends Controller
             return $this->cartErrorResponse($request, $carrito, 'No hay suficientes packs disponibles.');
         }
 
-        $unitPrice = (float) $offer->offer_price;
-
         $carrito[$lineKey] = [
             'type' => 'offer',
             'offer_id' => $offerId,
             'nombre' => $offer->name,
-            'precio' => $unitPrice,
+            'precio' => (float) $offer->offer_price,
             'imagen' => $offer->image,
             'cantidad' => $newQty,
             'sale_unit' => StockUnit::Pack->value,
@@ -120,78 +117,46 @@ class CarritoController extends Controller
         return redirect()->back()->with('success', 'Pack agregado al carrito.');
     }
 
-    public function ver()
+    public function ver(): View
     {
-        $carritoSession = session()->get('carrito', []);
-        $productIds = $this->cartSession->productIds($carritoSession);
-        $offerIds = $this->cartSession->offerIds($carritoSession);
+        $summary = $this->cartView->summarize(session()->get('carrito', []));
 
-        $products = Product::query()->whereIn('id', $productIds)->get()->keyBy('id');
-        $offers = Offer::query()->whereIn('id', $offerIds)->get()->keyBy('id');
+        return view('carrito.ver', [
+            'lineas' => $summary['lineas'],
+            'total' => $summary['total'],
+            'itemCount' => $summary['itemCount'],
+        ]);
+    }
 
-        $lineas = [];
-        $total = 0;
-        $itemCount = 0;
+    public function actualizarLinea(Request $request): RedirectResponse
+    {
+        $lineKey = (string) $request->input('line_key', '');
+        $carrito = session()->get('carrito', []);
 
-        foreach ($carritoSession as $lineKey => $item) {
-            if (! is_array($item) || ! isset($item['cantidad'])) {
-                continue;
-            }
-
-            if ($this->cartSession->isOfferLine($lineKey)) {
-                $offerId = $this->cartSession->parseOfferLineKey($lineKey);
-                $offer = $offers->get($offerId);
-                if ($offer === null) {
-                    continue;
-                }
-
-                $cantidad = (float) $item['cantidad'];
-                $precio = (float) $offer->offer_price;
-                $subtotal = $precio * $cantidad;
-
-                $lineas[] = [
-                    'tipo' => 'offer',
-                    'nombre' => $offer->name,
-                    'precio' => $precio,
-                    'cantidad' => $cantidad,
-                    'sale_unit' => StockUnit::Pack,
-                    'subtotal' => $subtotal,
-                    'imagen_url' => $offer->imageUrl(),
-                ];
-
-                $total += $subtotal;
-                $itemCount += $cantidad;
-
-                continue;
-            }
-
-            [$productId, $saleUnit] = $this->cartSession->parseProductLineKey($lineKey);
-            $product = $products->get($productId);
-
-            if ($product === null) {
-                continue;
-            }
-
-            $cantidad = (float) $item['cantidad'];
-            $precio = $this->cartSession->unitPrice($product, $saleUnit, $cantidad);
-            $subtotal = $precio * $cantidad;
-
-            $lineas[] = [
-                'tipo' => 'product',
-                'product_id' => $product->id,
-                'nombre' => $product->name,
-                'precio' => $precio,
-                'cantidad' => $cantidad,
-                'sale_unit' => $saleUnit,
-                'subtotal' => $subtotal,
-                'imagen_url' => $product->imageUrl(),
-            ];
-
-            $total += $subtotal;
-            $itemCount += $cantidad;
+        if ($lineKey === '' || ! isset($carrito[$lineKey])) {
+            return redirect()->route('carrito.ver')->with('error', 'La línea del carrito ya no existe.');
         }
 
-        return view('carrito.ver', compact('lineas', 'total', 'itemCount'));
+        if ($this->cartSession->isOfferLine($lineKey)) {
+            return $this->updateOfferLine($request, $carrito, $lineKey);
+        }
+
+        return $this->updateProductLine($request, $carrito, $lineKey);
+    }
+
+    public function eliminarLinea(Request $request): RedirectResponse
+    {
+        $lineKey = (string) $request->input('line_key', '');
+        $carrito = session()->get('carrito', []);
+
+        if ($lineKey === '' || ! isset($carrito[$lineKey])) {
+            return redirect()->route('carrito.ver')->with('error', 'La línea del carrito ya no existe.');
+        }
+
+        unset($carrito[$lineKey]);
+        session()->put('carrito', $carrito);
+
+        return redirect()->route('carrito.ver')->with('success', 'Producto eliminado del carrito.');
     }
 
     public function finalizarCompra(CheckoutService $checkoutService): RedirectResponse
@@ -223,8 +188,73 @@ class CarritoController extends Controller
         session()->forget('carrito');
 
         return redirect()
-            ->route('home')
-            ->with('success', 'Pedido #'.$order->id.' registrado correctamente.');
+            ->route('orders.tracking.show', $order)
+            ->with('success', 'Pedido #'.$order->id.' registrado. Puedes seguirlo aquí.');
+    }
+
+    /**
+     * @param  array<string|int, array<string, mixed>>  $carrito
+     */
+    private function updateProductLine(Request $request, array $carrito, string $lineKey): RedirectResponse
+    {
+        [$productId, $saleUnit] = $this->cartSession->parseProductLineKey($lineKey);
+        $product = Product::query()->find($productId);
+
+        if ($product === null) {
+            unset($carrito[$lineKey]);
+            session()->put('carrito', $carrito);
+
+            return redirect()->route('carrito.ver')->with('error', 'El producto ya no está disponible.');
+        }
+
+        $cantidad = $this->cartSession->normalizeQuantity($request->input('cantidad', 1));
+        $stockNeeded = $this->cartSession->stockRequired($product, $cantidad, $saleUnit);
+
+        if ((float) $product->stock < $stockNeeded) {
+            return redirect()->route('carrito.ver')->with('error', 'Stock insuficiente para esta cantidad.');
+        }
+
+        $quote = $this->cartSession->priceQuote($product, $saleUnit, $cantidad);
+
+        $carrito[$lineKey]['cantidad'] = $cantidad;
+        $carrito[$lineKey]['precio'] = $quote->unitPrice;
+        $carrito[$lineKey]['pricing_tier'] = $quote->tier;
+        $carrito[$lineKey]['pricing_label'] = $quote->pricingLabel();
+        $carrito[$lineKey]['nombre'] = $product->name;
+
+        session()->put('carrito', $carrito);
+
+        return redirect()->route('carrito.ver')->with('success', 'Cantidad actualizada.');
+    }
+
+    /**
+     * @param  array<string|int, array<string, mixed>>  $carrito
+     */
+    private function updateOfferLine(Request $request, array $carrito, string $lineKey): RedirectResponse
+    {
+        $offerId = $this->cartSession->parseOfferLineKey($lineKey);
+        $offer = Offer::query()->with(['items.product'])->find($offerId);
+
+        if ($offer === null || ! $offer->isBundle()) {
+            unset($carrito[$lineKey]);
+            session()->put('carrito', $carrito);
+
+            return redirect()->route('carrito.ver')->with('error', 'El pack ya no está disponible.');
+        }
+
+        $cantidad = max(1, (int) $request->input('cantidad', 1));
+
+        if ($this->offerAvailability->availableUnits($offer) < $cantidad) {
+            return redirect()->route('carrito.ver')->with('error', 'No hay suficientes packs disponibles.');
+        }
+
+        $carrito[$lineKey]['cantidad'] = $cantidad;
+        $carrito[$lineKey]['precio'] = (float) $offer->offer_price;
+        $carrito[$lineKey]['nombre'] = $offer->name;
+
+        session()->put('carrito', $carrito);
+
+        return redirect()->route('carrito.ver')->with('success', 'Cantidad actualizada.');
     }
 
     /**

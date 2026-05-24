@@ -49,6 +49,11 @@
                     <div class="bf-checkout-receipt__row" role="row">
                         <div class="min-w-0" role="cell">
                             <p class="font-medium text-[var(--bf-ink)] leading-snug">{{ $linea['nombre'] }}</p>
+                            @if(!empty($linea['pricing_label']))
+                                <p class="text-[11px] font-semibold mt-0.5 {{ ($linea['pricing_tier'] ?? '') === 'volume' ? 'text-emerald-700' : 'text-[var(--bf-muted)]' }}">
+                                    {{ $linea['pricing_label'] }}
+                                </p>
+                            @endif
                             <p class="text-xs text-[var(--bf-muted)] mt-0.5 tabular-nums">${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }}</p>
                         </div>
                         <span class="text-center tabular-nums text-[var(--bf-muted)]" role="cell">{{ $qtyDisplay }} {{ $unitLabel }}</span>

@@ -570,6 +570,260 @@
         z-index: 2;
     }
 
+    /* Catálogo — listados de ofertas */
+    .bf-catalog-stats {
+        @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-4;
+    }
+
+    .bf-catalog-stat {
+        @apply rounded-xl border px-4 py-3;
+        border-color: rgba(123, 48, 27, 0.18);
+        background: rgb(255 255 255 / 0.72);
+    }
+
+    .bf-catalog-stat__value {
+        @apply block text-2xl font-bold leading-none;
+        color: var(--bf-ink);
+    }
+
+    .bf-catalog-stat__label {
+        @apply mt-1 block text-xs font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+    }
+
+    .bf-catalog-stat--success .bf-catalog-stat__value {
+        color: rgb(4 120 87);
+    }
+
+    .bf-catalog-stat--warn .bf-catalog-stat__value {
+        color: rgb(180 83 9);
+    }
+
+    .bf-catalog-stat--muted .bf-catalog-stat__value {
+        color: rgb(120 113 108);
+    }
+
+    .bf-catalog-empty {
+        @apply rounded-xl border px-6 py-12 text-center;
+        border-color: rgba(123, 48, 27, 0.18);
+        background: var(--bf-surface-gradient);
+    }
+
+    .bf-catalog-empty__title {
+        @apply text-lg font-semibold;
+        color: var(--bf-ink);
+    }
+
+    .bf-catalog-empty__text {
+        @apply mt-2 text-sm;
+        color: var(--bf-muted);
+    }
+
+    .bf-offer-cell {
+        @apply flex items-center gap-3 min-w-0;
+    }
+
+    .bf-offer-cell__thumb {
+        @apply h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-black/5;
+    }
+
+    .bf-offer-cell__title {
+        @apply font-medium leading-snug truncate text-[13px];
+        color: var(--bf-ink);
+    }
+
+    .bf-offer-cell__meta {
+        @apply text-[11px] mt-0.5 truncate;
+        color: var(--bf-muted);
+    }
+
+    .bf-catalog-th--primary {
+        text-align: left;
+    }
+
+    .bf-catalog-th--num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .bf-catalog-th--center {
+        text-align: center;
+    }
+
+    .bf-catalog-th--actions {
+        width: 5rem;
+    }
+
+    .bf-catalog-num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .bf-catalog-center {
+        text-align: center;
+    }
+
+    .bf-catalog-muted-dash {
+        @apply text-sm;
+        color: rgb(168 162 158);
+    }
+
+    .bf-catalog-price-stack {
+        @apply inline-flex flex-col items-end gap-0.5;
+    }
+
+    .bf-catalog-price-stack__ref {
+        @apply text-xs line-through;
+        color: rgb(120 113 108);
+    }
+
+    .bf-catalog-price-stack__main {
+        @apply text-sm font-bold;
+        color: var(--bf-brand);
+    }
+
+    .bf-catalog-savings {
+        @apply inline-block text-sm font-semibold tabular-nums;
+        color: rgb(4 120 87);
+    }
+
+    .bf-catalog-condition {
+        @apply text-sm font-medium;
+        color: var(--bf-ink);
+    }
+
+    .bf-catalog-price-primary {
+        @apply inline-flex flex-col items-end gap-0.5;
+    }
+
+    .bf-catalog-scale-price {
+        @apply text-sm font-semibold;
+        color: rgb(4 120 87);
+    }
+
+    .bf-catalog-alt-price {
+        @apply text-[11px] tabular-nums;
+        color: rgb(120 113 108);
+    }
+
+    .bf-catalog-ref-stack {
+        @apply inline-flex flex-col items-end gap-0.5;
+    }
+
+    .bf-catalog-ref-price {
+        @apply text-sm;
+        color: rgb(87 83 78);
+    }
+
+    .bf-catalog-ref-meta {
+        @apply text-[11px];
+        color: rgb(120 113 108);
+    }
+
+    .bf-catalog-stock-value {
+        @apply inline-flex items-baseline justify-end gap-1.5 text-sm font-medium;
+    }
+
+    .bf-catalog-stock-value--low {
+        color: rgb(180 83 9);
+    }
+
+    .bf-catalog-stock-value--out {
+        color: rgb(185 28 28);
+    }
+
+    .bf-catalog-stock-value__hint {
+        @apply text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .bf-catalog-discount {
+        @apply inline-block text-sm font-semibold tabular-nums;
+        color: rgb(4 120 87);
+    }
+
+    .bf-catalog-qty-chip {
+        @apply text-sm font-medium tabular-nums;
+        color: var(--bf-ink);
+    }
+
+    .bf-catalog-pill {
+        @apply inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold;
+    }
+
+    .bf-catalog-pill--active {
+        background: rgb(236 253 245);
+        color: rgb(4 120 87);
+    }
+
+    .bf-catalog-pill--inactive {
+        background: rgb(245 245 244);
+        color: rgb(120 113 108);
+    }
+
+    .bf-catalog-stock {
+        @apply inline-flex flex-col text-sm font-medium;
+    }
+
+    .bf-catalog-stock--low {
+        color: rgb(180 83 9);
+    }
+
+    .bf-catalog-stock--out {
+        color: rgb(185 28 28);
+    }
+
+    .bf-catalog-stock__hint {
+        @apply text-[10px] font-semibold uppercase tracking-wide;
+    }
+
+    .bf-offer-cell__thumb--empty {
+        @apply bg-stone-100;
+    }
+
+    .bf-catalog-actions {
+        @apply inline-flex items-center justify-end gap-1;
+    }
+
+    .bf-catalog-action {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border transition;
+        border-color: rgba(123, 48, 27, 0.16);
+        background: rgb(255 255 255 / 0.85);
+        color: var(--bf-ink);
+    }
+
+    .bf-catalog-action:hover {
+        border-color: var(--bf-brand);
+        color: var(--bf-brand);
+    }
+
+    .bf-catalog-action--danger:hover {
+        border-color: rgb(248 113 113);
+        background: rgb(254 242 242);
+        color: rgb(185 28 28);
+    }
+
+    .bf-catalog-action__icon {
+        @apply h-4 w-4;
+    }
+
+    .bf-table--catalog-offers :where(tbody td) {
+        @apply py-4 align-middle;
+    }
+
+    .bf-table--catalog-offers :where(tbody td, thead th) {
+        @apply px-4;
+    }
+
+    .bf-table--catalog-offers :where(tbody tr) {
+        border-bottom: 1px solid rgba(123, 48, 27, 0.1);
+    }
+
+    .bf-table--catalog-offers :where(tbody td) {
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
+    }
+
     .bf-account-shell {
         @apply rounded-xl shadow-sm p-4 sm:p-5 md:p-6;
         border: 1px solid var(--bf-border-brand);
@@ -693,6 +947,215 @@
     [data-product-purchase] .bf-store-qty-input::-webkit-inner-spin-button {
         -webkit-appearance: none;
         margin: 0;
+    }
+
+    /* Carrito — tabla continua */
+    .bf-cart-panel {
+        @apply overflow-hidden rounded-xl border shadow-sm;
+        border-color: var(--bf-border-brand-subtle);
+        background-color: rgb(255 255 255 / 0.95);
+    }
+
+    .bf-cart-table__head {
+        grid-template-columns: minmax(0, 1fr) 5.5rem 9rem 7.5rem;
+        @apply gap-4 border-b px-5 py-3 text-[11px] font-semibold uppercase tracking-wide;
+        border-color: var(--bf-border-brand-subtle);
+        color: var(--bf-muted);
+        background-color: rgb(250 250 249 / 0.8);
+    }
+
+    .bf-cart-table__body {
+        @apply divide-y;
+        border-color: var(--bf-border-brand-subtle);
+    }
+
+    .bf-cart-table__row {
+        @apply grid gap-4 px-4 py-4;
+        grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 768px) {
+        .bf-cart-table__row {
+            grid-template-columns: minmax(0, 1fr) 5.5rem 9rem 7.5rem;
+            @apply items-center px-5;
+        }
+    }
+
+    .bf-cart-table__cell--qty {
+        @apply flex flex-col gap-1.5 md:items-center;
+    }
+
+    .bf-cart-table__cell--total {
+        @apply md:flex md:justify-end;
+    }
+
+    .bf-cart-table__mobile-label {
+        @apply text-[11px] font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+    }
+
+    .bf-cart-product {
+        @apply flex items-start gap-3;
+    }
+
+    .bf-cart-product__media {
+        @apply h-[4.5rem] w-[4.5rem] overflow-hidden rounded-lg ring-1 ring-black/5;
+    }
+
+    .bf-cart-product__media--empty {
+        @apply flex items-center justify-center bg-stone-100 text-[10px] text-stone-400;
+    }
+
+    .bf-cart-product__img {
+        @apply h-full w-full object-cover;
+    }
+
+    .bf-cart-product__title-row {
+        @apply flex flex-wrap items-start gap-x-2 gap-y-1;
+    }
+
+    .bf-cart-product__title {
+        @apply font-semibold leading-snug;
+        color: var(--bf-ink);
+    }
+
+    .bf-cart-unit-badge {
+        @apply inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide;
+        background-color: rgb(245 245 244);
+        color: var(--bf-muted);
+        border: 1px solid var(--bf-border-brand-subtle);
+    }
+
+    .bf-cart-promo-badge {
+        @apply mt-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold;
+        background-color: rgb(254 242 242);
+        color: rgb(185 28 28);
+    }
+
+    .bf-cart-promo-badge--volume {
+        background-color: rgb(236 253 245);
+        color: rgb(4 120 87);
+    }
+
+    .bf-cart-product__meta {
+        @apply mt-1 text-sm;
+        color: var(--bf-muted);
+    }
+
+    .bf-cart-price-unit {
+        @apply block text-sm font-medium text-right;
+        color: var(--bf-ink);
+    }
+
+    .bf-cart-price-suffix {
+        @apply block text-[11px] text-right;
+        color: var(--bf-muted);
+    }
+
+    .bf-cart-total-cell {
+        @apply flex w-full items-center justify-between gap-3 md:w-auto md:justify-end;
+    }
+
+    .bf-cart-total-cell__amount {
+        @apply flex flex-col gap-0.5 md:items-end;
+    }
+
+    .bf-cart-subtotal {
+        @apply text-base font-bold md:text-sm md:font-semibold;
+        color: var(--bf-brand);
+    }
+
+    /* Stepper unificado */
+    .bf-cart-qty-wrap {
+        @apply inline-flex items-center gap-2;
+    }
+
+    .bf-cart-qty {
+        @apply inline-flex items-stretch overflow-hidden rounded-lg border;
+        border-color: var(--bf-border-brand-subtle);
+        background-color: rgb(255 255 255 / 0.9);
+    }
+
+    .bf-cart-qty__form {
+        @apply m-0 flex;
+    }
+
+    .bf-cart-qty__form--input {
+        @apply border-x;
+        border-color: var(--bf-border-brand-subtle);
+    }
+
+    .bf-cart-qty__btn {
+        @apply flex h-9 w-9 items-center justify-center text-base font-bold transition
+            disabled:cursor-not-allowed disabled:opacity-35;
+        color: var(--bf-ink);
+        background-color: transparent;
+    }
+
+    .bf-cart-qty__btn:not(:disabled):hover {
+        background-color: rgb(254 242 242 / 0.6);
+        color: var(--bf-brand);
+    }
+
+    .bf-cart-qty__input {
+        @apply h-9 w-11 border-0 bg-transparent text-center text-sm font-semibold tabular-nums
+            focus:outline-none focus:ring-0;
+        color: var(--bf-ink);
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .bf-cart-qty__input::-webkit-outer-spin-button,
+    .bf-cart-qty__input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .bf-cart-qty__unit {
+        @apply text-xs font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+    }
+
+    /* Eliminar — icono basura */
+    .bf-cart-remove-form {
+        @apply m-0 shrink-0;
+    }
+
+    .bf-cart-remove {
+        @apply flex h-9 w-9 items-center justify-center rounded-lg border transition;
+        border-color: rgb(254 202 202);
+        background-color: rgb(254 242 242 / 0.5);
+        color: rgb(220 38 38);
+    }
+
+    .bf-cart-remove:hover {
+        border-color: rgb(248 113 113);
+        background-color: rgb(254 226 226);
+        color: rgb(185 28 28);
+    }
+
+    .bf-cart-remove__icon {
+        @apply h-4 w-4;
+    }
+
+    /* Resumen lateral */
+    .bf-cart-summary-line {
+        @apply flex items-start justify-between gap-3 text-xs;
+    }
+
+    .bf-cart-summary-line__name {
+        @apply min-w-0 leading-snug;
+        color: var(--bf-ink);
+    }
+
+    .bf-cart-summary-line__qty {
+        @apply font-normal;
+        color: var(--bf-muted);
+    }
+
+    .bf-cart-summary-line__amount {
+        @apply shrink-0 font-medium;
+        color: var(--bf-ink);
     }
 
     .bf-select {
@@ -1487,5 +1950,138 @@
     .bf-home-cta__text {
         @apply text-sm mb-4;
         color: var(--bf-muted);
+    }
+
+    /* —— Operaciones / despacho —— */
+    .bf-ops-metric {
+        @apply flex flex-col gap-0.5 rounded-xl px-3 py-3 sm:px-4 sm:py-4 transition border bg-white/70;
+        border-color: var(--bf-border-brand-subtle);
+    }
+
+    .bf-ops-metric:hover {
+        @apply shadow-sm;
+        border-color: var(--bf-border-brand);
+    }
+
+    .bf-ops-metric--active {
+        border-color: var(--bf-brand);
+        background: color-mix(in srgb, var(--bf-brand) 6%, white);
+    }
+
+    .bf-ops-metric__value {
+        @apply text-2xl font-bold;
+        color: var(--bf-ink);
+    }
+
+    .bf-ops-metric__label {
+        @apply text-[11px] font-semibold uppercase tracking-wide;
+        color: var(--bf-muted);
+    }
+
+    .bf-ops-metric--warn { border-left: 3px solid #eab308; }
+    .bf-ops-metric--info { border-left: 3px solid #3b82f6; }
+    .bf-ops-metric--indigo { border-left: 3px solid #6366f1; }
+    .bf-ops-metric--cyan { border-left: 3px solid #06b6d4; }
+    .bf-ops-metric--success { border-left: 3px solid #22c55e; }
+    .bf-ops-metric--danger { border-left: 3px solid #ef4444; }
+
+    .bf-ops-tab {
+        @apply inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold transition;
+        color: var(--bf-muted);
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.55);
+    }
+
+    .bf-ops-tab:hover {
+        color: var(--bf-ink);
+        border-color: var(--bf-border-brand);
+    }
+
+    .bf-ops-tab--active {
+        background: var(--bf-brand);
+        border-color: var(--bf-brand);
+        color: #fff;
+    }
+
+    .bf-ops-order-card {
+        @apply rounded-xl p-4 transition;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.72);
+    }
+
+    .bf-ops-order-card:hover {
+        @apply shadow-md;
+        border-color: var(--bf-border-brand);
+        transform: translateY(-1px);
+    }
+
+    .bf-ops-order-card__head {
+        @apply flex items-start justify-between gap-3;
+    }
+
+    .bf-ops-order-card__id {
+        @apply text-xs font-bold uppercase tracking-wide;
+        color: var(--bf-brand);
+    }
+
+    .bf-ops-order-card__customer {
+        @apply text-sm font-semibold mt-0.5;
+        color: var(--bf-ink);
+    }
+
+    .bf-ops-order-card__meta {
+        @apply grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs;
+    }
+
+    .bf-ops-order-card__meta dt {
+        color: var(--bf-muted);
+    }
+
+    .bf-ops-order-card__meta dd {
+        @apply font-medium;
+        color: var(--bf-ink);
+    }
+
+    .bf-ops-panel {
+        @apply rounded-xl p-4 sm:p-5;
+        border: 1px solid var(--bf-border-brand-subtle);
+        background: rgba(255, 255, 255, 0.72);
+    }
+
+    .bf-ops-panel__title {
+        @apply text-sm font-semibold uppercase tracking-wide mb-3;
+        color: var(--bf-muted);
+    }
+
+    .bf-ops-empty {
+        @apply rounded-xl px-6 py-12 text-center text-sm;
+        border: 1px dashed var(--bf-border-brand-subtle);
+        color: var(--bf-muted);
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    .bf-ops-timeline {
+        @apply relative space-y-4 pl-4;
+        border-left: 2px solid var(--bf-border-brand-subtle);
+    }
+
+    .bf-ops-timeline__item {
+        @apply relative pl-4;
+    }
+
+    .bf-ops-timeline__dot {
+        @apply absolute -left-[1.35rem] top-1.5 h-2.5 w-2.5 rounded-full;
+        background: var(--bf-brand);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--bf-brand) 18%, white);
+    }
+
+    .bf-ops-map-canvas {
+        min-height: 420px;
+    }
+
+    @media (min-width: 768px) {
+        .bf-ops-map-canvas {
+            min-height: 560px;
+        }
     }
 }

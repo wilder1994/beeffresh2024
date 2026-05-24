@@ -1,36 +1,39 @@
-@props(['product'])
+@props(['product', 'canAdd' => true])
 
 @php
-    $priceKg = $product->effectivePriceKg();
-    $priceLb = $product->effectivePriceLb();
-    $baseKg = (float) $product->price_per_kg;
-    $baseLb = (float) $product->price_per_lb;
+    use App\Services\Store\VolumeScaleService;
+
+    $volumeScale = app(VolumeScaleService::class);
+    $volumeConfig = $volumeScale->purchaseConfig($product);
+    $onPromo = $product->isOnPromotion();
+    $catalogKg = (float) $product->price_per_kg;
+    $catalogLb = (float) $product->price_per_lb;
+    $standardKg = $product->effectivePriceKg();
+    $standardLb = $product->effectivePriceLb();
+
+    $purchaseInitial = [
+        'defaultUnit' => 'kg',
+        'defaultQty' => 1,
+        'volumeConfig' => $volumeConfig,
+        'catalogKg' => $catalogKg,
+        'catalogLb' => $catalogLb,
+        'standardKg' => $standardKg,
+        'standardLb' => $standardLb,
+        'onPromo' => $onPromo,
+    ];
 @endphp
 
 <div
-    class="mt-2 space-y-2"
+    class="mt-2 space-y-3"
     data-product-purchase
-    x-data="{
-        unit: 'kg',
-        qty: 1,
-        priceKg: {{ json_encode($priceKg) }},
-        priceLb: {{ json_encode($priceLb) }},
-        onPromo: @js($product->isOnPromotion()),
-        baseKg: {{ json_encode($baseKg) }},
-        baseLb: {{ json_encode($baseLb) }},
-        get unitPrice() {
-            return this.unit === 'kg' ? Number(this.priceKg) : Number(this.priceLb);
-        },
-        get unitLabel() {
-            return this.unit === 'kg' ? 'kg' : 'lb';
-        },
-        formatMoney(value) {
-            return Math.round(Number(value)).toLocaleString('es-CO');
-        }
-    }"
+    x-data="productPurchase(@js($purchaseInitial))"
     :data-sale-unit="unit"
     :data-cart-qty="qty"
 >
+    @if($volumeConfig)
+        <p class="text-xs font-medium text-[var(--bf-brand)] leading-snug" x-text="volumeConfig.summary"></p>
+    @endif
+
     <div class="flex items-center justify-between gap-2">
         <div class="bf-store-unit-toggle">
             <button
@@ -63,23 +66,40 @@
         </div>
     </div>
 
-    <div class="text-sm leading-tight">
-        <template x-if="onPromo && unit === 'kg'">
-            <p class="line-through text-gray-400 tabular-nums text-xs">$<span x-text="formatMoney(baseKg)"></span>/kg</p>
+    <div class="rounded-lg border border-[var(--bf-border-brand-subtle)] bg-white/70 px-3 py-2.5 space-y-1.5">
+        <p
+            class="text-xs font-semibold"
+            :class="quote.volumeActive ? 'text-[var(--bf-brand)]' : 'text-[var(--bf-muted)]'"
+            x-text="quote.pricingLabel"
+        ></p>
+
+        <div class="text-sm leading-tight">
+            <template x-if="quote.showStrikethrough">
+                <p class="line-through text-gray-400 tabular-nums text-xs">
+                    $<span x-text="formatMoney(quote.strikethroughPrice)"></span>/<span x-text="unitLabel"></span>
+                </p>
+            </template>
+            <p class="text-[var(--bf-brand)] font-bold tabular-nums text-base">
+                $<span x-text="formatMoney(quote.unitPrice)"></span>/<span x-text="unitLabel"></span>
+            </p>
+        </div>
+
+        <template x-if="quote.feedbackMessage">
+            <p
+                class="text-xs font-medium leading-snug"
+                :class="quote.volumeActive ? 'text-emerald-700' : 'text-amber-800'"
+                x-text="quote.feedbackMessage"
+            ></p>
         </template>
-        <template x-if="onPromo && unit === 'lb'">
-            <p class="line-through text-gray-400 tabular-nums text-xs">$<span x-text="formatMoney(baseLb)"></span>/lb</p>
-        </template>
-        <p class="text-red-600 font-medium tabular-nums">
-            $<span x-text="formatMoney(unitPrice)"></span>/<span x-text="unitLabel"></span>
-        </p>
     </div>
 
-    <button
-        type="button"
-        class="agregar-carrito w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
-        data-id="{{ $product->id }}"
-    >
-        Agregar al carrito
-    </button>
+    @if($canAdd)
+        <button
+            type="button"
+            class="agregar-carrito w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+            data-id="{{ $product->id }}"
+        >
+            Agregar al carrito
+        </button>
+    @endif
 </div>

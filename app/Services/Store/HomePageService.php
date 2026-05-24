@@ -30,7 +30,7 @@ final class HomePageService
      * @return array{
      *     cintaTiles: Collection,
      *     promoProducts: Collection<int, array{product: Product, unit: StockUnit, unit_price: float, reference_price: float}>,
-     *     offers: Collection<int, array{offer: Offer, reference_total: float, offer_total: float, available: int, label: string}>,
+     *     offers: Collection<int, array{offer: Offer, reference_price: float, offer_price: float, unit_suffix: string|null, volume_summary: string|null, available: int, label: string}>,
      *     featuredProducts: Collection<int, array{product: Product, unit: StockUnit, unit_price: float}>,
      *     meatCuts: Collection,
      *     videos: Collection
@@ -78,7 +78,7 @@ final class HomePageService
     }
 
     /**
-     * @return Collection<int, array{offer: Offer, reference_total: float, offer_total: float, available: int, label: string}>
+     * @return Collection<int, array{offer: Offer, reference_price: float, offer_price: float, unit_suffix: string|null, volume_summary: string|null, available: int, label: string}>
      */
     private function homeOffers(): Collection
     {
@@ -93,13 +93,19 @@ final class HomePageService
             ->get()
             ->filter(fn (Offer $offer) => $this->offerAvailability->isVisibleOnStorefront($offer))
             ->take(8)
-            ->map(fn (Offer $offer) => [
-                'offer' => $offer,
-                'reference_total' => $this->offerPricing->referenceTotal($offer),
-                'offer_total' => $this->offerPricing->offerTotal($offer),
-                'available' => $this->offerAvailability->availableUnits($offer),
-                'label' => $this->offerAvailability->availabilityLabel($offer),
-            ])
+            ->map(function (Offer $offer): array {
+                $prices = $this->offerPricing->storefrontCardPrices($offer);
+
+                return [
+                    'offer' => $offer,
+                    'reference_price' => $prices['reference'],
+                    'offer_price' => $prices['offer'],
+                    'unit_suffix' => $prices['unit_suffix'],
+                    'volume_summary' => $prices['volume_summary'],
+                    'available' => $this->offerAvailability->availableUnits($offer),
+                    'label' => $this->offerAvailability->availabilityLabel($offer),
+                ];
+            })
             ->values();
     }
 

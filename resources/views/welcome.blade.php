@@ -8,9 +8,7 @@
     @if($promoProducts->isNotEmpty())
         <x-store.home-section tone="cream">
             <x-store.home-section-head
-                eyebrow="Ofertas"
                 title="Promociones del mes"
-                subtitle="Precios especiales en carnes seleccionadas."
                 :link-url="route('products.public.index', ['promo' => 1])"
                 link-label="Ver catálogo →"
             />
@@ -34,16 +32,16 @@
     @if($offers->isNotEmpty())
         <x-store.home-section tone="white">
             <x-store.home-section-head
-                eyebrow="Combos"
                 title="Combos y packs"
-                subtitle="Arma tu pedido con precio especial. Disponibilidad según stock."
             />
             <div class="bf-home-products__grid">
                 @foreach($offers as $row)
                     <x-store.home-offer-card
                         :offer="$row['offer']"
-                        :reference-total="$row['reference_total']"
-                        :offer-total="$row['offer_total']"
+                        :reference-price="$row['reference_price']"
+                        :offer-price="$row['offer_price']"
+                        :unit-suffix="$row['unit_suffix']"
+                        :volume-summary="$row['volume_summary']"
                         :available="$row['available']"
                         :label="$row['label']"
                     />
@@ -55,9 +53,7 @@
     @if($featuredProducts->isNotEmpty())
         <x-store.home-section tone="cream">
             <x-store.home-section-head
-                eyebrow="Favoritos"
                 title="Los más pedidos"
-                subtitle="Selección BEEF FRESH."
                 :link-url="route('products.public.index')"
                 link-label="Ver catálogo →"
             />
@@ -80,9 +76,7 @@
     @if($meatCuts->isNotEmpty())
         <x-store.home-section tone="white">
             <x-store.home-section-head
-                eyebrow="Catálogo"
                 title="Tipos de corte"
-                subtitle="Explora por corte y encuentra la pieza ideal."
                 :link-url="route('products.public.index')"
                 link-label="Ver todo el catálogo →"
             />

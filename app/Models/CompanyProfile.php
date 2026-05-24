@@ -22,6 +22,13 @@ class CompanyProfile extends Model
         'social_whatsapp',
         'social_tiktok',
         'social_youtube',
+        'store_latitude',
+        'store_longitude',
+    ];
+
+    protected $casts = [
+        'store_latitude' => 'decimal:7',
+        'store_longitude' => 'decimal:7',
     ];
 
     public static function singleton(): self

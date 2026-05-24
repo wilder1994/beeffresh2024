@@ -19,6 +19,7 @@ class PositionSeeder extends Seeder
             ['name' => 'Inventario', 'slug' => 'inventario', 'description' => 'Stock y almacén.'],
             ['name' => 'Producción', 'slug' => 'produccion', 'description' => 'Preparación y corte.'],
             ['name' => 'Domiciliario', 'slug' => Position::SLUG_DELIVERY, 'description' => 'Entregas a domicilio.'],
+            ['name' => 'Despachador', 'slug' => Position::SLUG_DISPATCH, 'description' => 'Asignación y seguimiento de entregas.'],
         ];
 
         foreach ($rows as $row) {

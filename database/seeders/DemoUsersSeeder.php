@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Users\PermissionKey;
 use App\Domain\Users\RoleSlug;
 use App\Models\CustomerProfile;
 use App\Models\EmployeeProfile;
@@ -73,12 +74,40 @@ class DemoUsersSeeder extends Seeder
                     'emergency_contact' => 'Laura Muñoz',
                     'emergency_phone' => '3009003344',
                     'home_address' => 'Carrera 50 # 45-12, Medellín',
+                    'home_city' => 'Medellín',
+                    'home_state' => 'Antioquia',
+                    'home_country' => 'CO',
+                    'home_latitude' => 6.25184,
+                    'home_longitude' => -75.56359,
                     'vehicle_type' => 'Motocicleta',
                     'plate_number' => 'ABC123',
                     'driver_license' => 'LIC-998877',
                     'license_expiration' => '2027-06-30',
                     'assigned_zone' => 'Medellín norte',
                     'average_rating' => 4.85,
+                    'permissions' => [PermissionKey::MODULE_COURIER],
+                ],
+                [
+                    'email' => 'despachador1@demo.beeffresh.test',
+                    'first_name' => 'Sandra',
+                    'last_name' => 'Restrepo',
+                    'phone' => '3175550203',
+                    'document_type' => 'CC',
+                    'document_number' => '1034567890',
+                    'position_slug' => Position::SLUG_DISPATCH,
+                    'hire_date' => '2021-05-10',
+                    'salary' => 2500000,
+                    'eps' => 'Compensar EPS',
+                    'arl' => 'Sura ARL',
+                    'emergency_contact' => 'Carlos Restrepo',
+                    'emergency_phone' => '3017004455',
+                    'home_address' => 'Calle 44 # 70-15, Medellín',
+                    'home_city' => 'Medellín',
+                    'home_state' => 'Antioquia',
+                    'home_country' => 'CO',
+                    'home_latitude' => 6.24496,
+                    'home_longitude' => -75.58902,
+                    'permissions' => [PermissionKey::MODULE_ORDERS],
                 ],
             ],
             RoleSlug::CUSTOMER => [
@@ -98,6 +127,8 @@ class DemoUsersSeeder extends Seeder
                     'delivery_notes' => 'Dejar en recepción. Tocar timbre 401.',
                     'loyalty_points' => 120,
                     'balance' => 25000,
+                    'latitude' => 4.669595,
+                    'longitude' => -74.055717,
                 ],
                 [
                     'email' => 'cliente2@demo.beeffresh.test',
@@ -115,6 +146,8 @@ class DemoUsersSeeder extends Seeder
                     'delivery_notes' => 'Llamar al llegar.',
                     'loyalty_points' => 45,
                     'balance' => 0,
+                    'latitude' => 6.208869,
+                    'longitude' => -75.567983,
                 ],
             ],
             RoleSlug::SUPPLIER => [
@@ -199,6 +232,10 @@ class DemoUsersSeeder extends Seeder
 
         $user->syncRoles([$role]);
 
+        if ($role === RoleSlug::EMPLOYEE && ! empty($row['permissions']) && is_array($row['permissions'])) {
+            $user->syncPermissions($row['permissions']);
+        }
+
         match ($role) {
             RoleSlug::CUSTOMER => $this->seedCustomerProfile($user, $row),
             RoleSlug::EMPLOYEE => $this->seedEmployeeProfile($user, $row),
@@ -226,6 +263,8 @@ class DemoUsersSeeder extends Seeder
                 'balance' => (float) ($row['balance'] ?? 0),
                 'postal_code' => $row['postal_code'] ?? null,
                 'country' => 'CO',
+                'latitude' => $row['latitude'] ?? null,
+                'longitude' => $row['longitude'] ?? null,
             ]
         );
     }
@@ -250,6 +289,12 @@ class DemoUsersSeeder extends Seeder
                 'emergency_contact' => $row['emergency_contact'] ?? 'Contacto emergencia',
                 'emergency_phone' => $row['emergency_phone'] ?? '3000000000',
                 'home_address' => $row['home_address'] ?? 'Bogotá, Colombia',
+                'home_neighborhood' => $row['home_neighborhood'] ?? null,
+                'home_city' => $row['home_city'] ?? null,
+                'home_state' => $row['home_state'] ?? null,
+                'home_country' => $row['home_country'] ?? 'CO',
+                'home_latitude' => $row['home_latitude'] ?? null,
+                'home_longitude' => $row['home_longitude'] ?? null,
                 'notes' => $row['notes'] ?? null,
                 'vehicle_type' => $row['vehicle_type'] ?? null,
                 'plate_number' => $row['plate_number'] ?? null,

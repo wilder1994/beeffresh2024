@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Catalog\StockUnit;
 use App\Domain\Store\OfferType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,6 +33,7 @@ class Offer extends Model
 
     protected $casts = [
         'type' => OfferType::class,
+        'volume_sale_unit' => StockUnit::class,
         'offer_price' => 'decimal:2',
         'volume_min_quantity' => 'decimal:2',
         'volume_offer_price_kg' => 'decimal:2',

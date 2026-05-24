@@ -33,78 +33,50 @@
         </div>
     @else
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <section class="lg:col-span-2 space-y-4" aria-label="Productos en el carrito">
-                <div class="hidden md:grid grid-cols-[minmax(0,1fr)_6rem_5rem_7rem] gap-4 px-4 text-xs font-semibold uppercase tracking-wide text-[var(--bf-muted)]">
-                    <span>Producto</span>
-                    <span class="text-right">Precio</span>
-                    <span class="text-center">Cant.</span>
-                    <span class="text-right">Subtotal</span>
+            <section class="lg:col-span-2" aria-label="Productos en el carrito">
+                <div class="bf-cart-panel">
+                    <div class="bf-cart-table__head hidden md:grid" aria-hidden="true">
+                        <span>Producto</span>
+                        <span class="text-right">Precio</span>
+                        <span class="text-center">Cantidad</span>
+                        <span class="text-right">Subtotal</span>
+                    </div>
+
+                    <div class="bf-cart-table__body">
+                        @foreach($lineas as $linea)
+                            <x-store.cart-line-row :linea="$linea" />
+                        @endforeach
+                    </div>
                 </div>
-
-                @foreach($lineas as $linea)
-                    <article class="bg-white rounded-xl border border-[var(--bf-border-brand-subtle)] shadow-sm overflow-hidden">
-                        <div class="p-4 flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_6rem_5rem_7rem] md:items-center md:gap-4">
-                            <div class="flex items-center gap-4 min-w-0">
-                                @if($linea['imagen_url'])
-                                    <img
-                                        src="{{ $linea['imagen_url'] }}"
-                                        alt="{{ $linea['nombre'] }}"
-                                        class="h-20 w-20 shrink-0 rounded-lg object-cover ring-1 ring-black/5"
-                                    >
-                                @else
-                                    <div class="h-20 w-20 shrink-0 rounded-lg bg-stone-100 flex items-center justify-center text-xs text-stone-400 ring-1 ring-black/5">
-                                        Sin imagen
-                                    </div>
-                                @endif
-
-                                <div class="min-w-0">
-                                    <h2 class="font-semibold text-[var(--bf-ink)] leading-snug">{{ $linea['nombre'] }}</h2>
-                                    @php
-                                        $unitLabel = $linea['sale_unit'] instanceof \App\Domain\Catalog\StockUnit
-                                            ? $linea['sale_unit']->value
-                                            : (string) $linea['sale_unit'];
-                                        $qty = (float) $linea['cantidad'];
-                                        $isPack = $unitLabel === 'pack';
-                                        $qtyDisplay = $isPack
-                                            ? (string) (int) $qty
-                                            : (fmod($qty, 1.0) === 0.0 ? (string) (int) $qty : number_format($qty, 1, ',', '.'));
-                                    @endphp
-                                    <p class="text-sm text-[var(--bf-muted)] mt-0.5 md:hidden">
-                                        @if($isPack)
-                                            ${{ number_format($linea['precio'], 0, ',', '.') }}/pack · {{ $qtyDisplay }} {{ $qty === 1.0 ? 'pack' : 'packs' }}
-                                        @else
-                                            ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }} · {{ $qtyDisplay }} {{ $unitLabel }}
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-
-                            <p class="hidden md:block text-sm text-[var(--bf-muted)] text-right tabular-nums">
-                                @if($isPack)
-                                    ${{ number_format($linea['precio'], 0, ',', '.') }}/pack
-                                @else
-                                    ${{ number_format($linea['precio'], 0, ',', '.') }}/{{ $unitLabel }}
-                                @endif
-                            </p>
-
-                            <p class="hidden md:block text-sm font-medium text-[var(--bf-ink)] text-center tabular-nums">
-                                {{ $qtyDisplay }} @if($isPack){{ $qty === 1.0 ? 'pack' : 'packs' }}@else{{ $unitLabel }}@endif
-                            </p>
-
-                            <p class="text-base font-semibold text-[var(--bf-brand)] md:text-right tabular-nums">
-                                <span class="md:hidden text-sm font-normal text-[var(--bf-muted)] mr-2">Subtotal</span>
-                                ${{ number_format($linea['subtotal'], 0, ',', '.') }}
-                            </p>
-                        </div>
-                    </article>
-                @endforeach
             </section>
 
             <aside class="lg:sticky lg:top-24">
                 <div class="bf-store-panel p-6 space-y-5">
                     <h2 class="text-lg font-semibold text-[var(--bf-ink)]">Resumen del pedido</h2>
 
-                    <dl class="space-y-3 text-sm">
+                    <ul class="bf-cart-summary-lines space-y-2" aria-label="Desglose por línea">
+                        @foreach($lineas as $linea)
+                            @php
+                                $unitLabel = $linea['sale_unit'] instanceof \App\Domain\Catalog\StockUnit
+                                    ? $linea['sale_unit']->value
+                                    : (string) $linea['sale_unit'];
+                                $qty = (float) $linea['cantidad'];
+                                $isPack = $unitLabel === 'pack';
+                                $qtyDisplay = $isPack
+                                    ? (string) (int) $qty
+                                    : (fmod($qty, 1.0) === 0.0 ? (string) (int) $qty : number_format($qty, 1, ',', '.'));
+                            @endphp
+                            <li class="bf-cart-summary-line">
+                                <span class="bf-cart-summary-line__name">
+                                    {{ $linea['nombre'] }}
+                                    <span class="bf-cart-summary-line__qty">· {{ $qtyDisplay }} {{ $isPack ? ($qty === 1.0 ? 'pack' : 'packs') : $unitLabel }}</span>
+                                </span>
+                                <span class="bf-cart-summary-line__amount tabular-nums">${{ number_format($linea['subtotal'], 0, ',', '.') }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <dl class="space-y-3 text-sm pt-3 border-t border-[var(--bf-border-brand-subtle)]">
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-[var(--bf-muted)]">Productos ({{ $itemCount }})</dt>
                             <dd class="font-medium text-[var(--bf-ink)] tabular-nums">${{ number_format($total, 0, ',', '.') }}</dd>
@@ -116,7 +88,7 @@
                     </dl>
 
                     <p class="text-xs text-[var(--bf-muted)] leading-relaxed">
-                        Precios según la unidad elegida (kg, lb o pack). El total final se confirma en el siguiente paso.
+                        Ajusta cantidades arriba; los precios se recalculan según promos y ofertas por volumen.
                     </p>
 
                     @guest

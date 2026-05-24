@@ -18,4 +18,17 @@ enum StockUnit: string
             self::Pack => 'Pack',
         };
     }
+
+    public static function resolve(mixed $value, self $default = self::Kg): self
+    {
+        if ($value instanceof self) {
+            return $value === self::Pack ? $default : $value;
+        }
+
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
+        return self::tryFrom((string) $value) ?? $default;
+    }
 }

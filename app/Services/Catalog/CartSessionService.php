@@ -82,6 +82,11 @@ final class CartSessionService
         return $this->bestPrice->bestUnitPrice($product, $saleUnit, $quantity);
     }
 
+    public function priceQuote(Product $product, StockUnit $saleUnit, float $quantity): \App\DataTransferObjects\Store\ProductPriceQuote
+    {
+        return $this->bestPrice->quote($product, $saleUnit, $quantity);
+    }
+
     public function stockRequired(Product $product, float $saleQuantity, StockUnit $saleUnit): float
     {
         return $this->unitConverter->toStockUnits(

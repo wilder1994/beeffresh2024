@@ -1,8 +1,11 @@
-@props(['offer' => null, 'products'])
+@props(['offer' => null, 'products', 'defaultType' => null, 'lockType' => false])
 
 @php
     use App\Domain\Store\OfferType;
     $isEdit = $offer !== null;
+    $resolvedDefaultType = $defaultType instanceof OfferType
+        ? $defaultType
+        : ($defaultType !== null ? OfferType::from($defaultType) : OfferType::Bundle);
 
     $rawItems = old('items');
     if (! is_array($rawItems) || $rawItems === []) {
@@ -32,6 +35,9 @@
         (string) $product->id => [
             'price_kg' => (float) $product->price_per_kg,
             'price_lb' => (float) $product->price_per_lb,
+            'promo_kg' => $product->isOnPromotion() ? (float) $product->effectivePriceKg() : null,
+            'promo_lb' => $product->isOnPromotion() ? (float) $product->effectivePriceLb() : null,
+            'on_promo' => $product->isOnPromotion(),
         ],
     ])->all();
 
@@ -52,7 +58,7 @@
 <div
     class="space-y-4"
     x-data="{
-        type: @js(old('type', $offer?->type?->value ?? OfferType::Bundle->value)),
+        type: @js(old('type', $offer?->type?->value ?? $resolvedDefaultType->value)),
         items: @js($bundleItems),
         itemSeq: @js($bundleItemSeq),
         productPrices: @js($productPrices),
@@ -121,7 +127,14 @@
             if (! prices) {
                 return 0;
             }
-            return this.volumeUnit === 'lb' ? Number(prices.price_lb) : Number(prices.price_kg);
+            if (this.volumeUnit === 'lb') {
+                return prices.on_promo && prices.promo_lb != null
+                    ? Number(prices.promo_lb)
+                    : Number(prices.price_lb);
+            }
+            return prices.on_promo && prices.promo_kg != null
+                ? Number(prices.promo_kg)
+                : Number(prices.price_kg);
         },
         volumeReferenceTotal() {
             const qty = Number(this.volumeMinQty) || 0;
@@ -152,11 +165,18 @@
         <div class="bf-offer-form-head__fields">
             <div>
                 <label class="bf-label" for="offer-type">Tipo</label>
-                <select id="offer-type" name="type" class="bf-select" x-model="type" required>
-                    @foreach(OfferType::cases() as $case)
-                        <option value="{{ $case->value }}">{{ $case->label() }}</option>
-                    @endforeach
-                </select>
+                @if($lockType || $isEdit)
+                    <input type="hidden" name="type" value="{{ old('type', $offer?->type?->value ?? $resolvedDefaultType->value) }}">
+                    <p id="offer-type" class="bf-input bg-stone-50 text-gray-800 cursor-default">
+                        {{ ($offer?->type ?? $resolvedDefaultType)->label() }}
+                    </p>
+                @else
+                    <select id="offer-type" name="type" class="bf-select" x-model="type" required>
+                        @foreach(OfferType::cases() as $case)
+                            <option value="{{ $case->value }}">{{ $case->label() }}</option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
 
             <div>
@@ -166,7 +186,17 @@
 
             <div class="bf-offer-form-head__description">
                 <label class="bf-label" for="offer-description">Descripción</label>
-                <textarea id="offer-description" name="description" class="bf-textarea bf-offer-form-head__textarea" rows="3">{{ old('description', $offer?->description) }}</textarea>
+                <textarea
+                    id="offer-description"
+                    name="description"
+                    class="bf-textarea bf-offer-form-head__textarea"
+                    rows="3"
+                    x-bind:disabled="type === '{{ OfferType::Volume->value }}'"
+                    x-bind:placeholder="type === '{{ OfferType::Volume->value }}' ? 'Se genera automáticamente según cantidad y unidad mínima.' : ''"
+                >{{ old('description', $offer?->description) }}</textarea>
+                <p class="text-[11px] text-[var(--bf-muted)] mt-1" x-show="type === '{{ OfferType::Volume->value }}'" x-cloak>
+                    En ofertas por cantidad, la descripción pública se genera al guardar según la unidad y cantidad mínima.
+                </p>
             </div>
         </div>
 
@@ -429,7 +459,7 @@
                 </div>
             </div>
             <p class="text-[11px] text-[var(--bf-muted)] mt-2 leading-relaxed">
-                Mínimo 3 lb (3 lb o 1,5 kg). El cliente debe comprar al menos esa cantidad en la unidad elegida para obtener el precio oferta. Valor real = precio de catálogo por unidad; ahorro = diferencia al comprar la cantidad mínima.
+                Mínimo 3 lb (3 lb o 1,5 kg). El precio por escala debe ser menor que la promoción individual activa o, si no hay promo, que el precio de catálogo. Ahorro = diferencia al comprar la cantidad mínima.
             </p>
         </div>
     </div>

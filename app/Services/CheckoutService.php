@@ -7,12 +7,14 @@ namespace App\Services;
 use App\Domain\Catalog\StockUnit;
 use App\Domain\Store\OfferType;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Models\Offer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Orders\OrderWorkflowService;
 use App\Services\Store\OfferAvailabilityService;
 use App\Services\Store\OfferPricingService;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ class CheckoutService
         private readonly CartSessionService $cartSession,
         private readonly OfferAvailabilityService $offerAvailability,
         private readonly OfferPricingService $offerPricing,
+        private readonly OrderWorkflowService $orderWorkflow,
     ) {}
 
     /**
@@ -138,6 +141,8 @@ class CheckoutService
                     'shipping_postal_code',
                     'shipping_country',
                     'shipping_notes',
+                    'shipping_latitude',
+                    'shipping_longitude',
                 ], null);
             $shipping['shipping_recipient_name'] = $shipping['shipping_recipient_name'] ?? $user->name;
 
@@ -145,7 +150,11 @@ class CheckoutService
                 'user_id' => $user->id,
                 'total' => number_format($total, 2, '.', ''),
                 'status' => OrderStatus::Pending,
+                'payment_method' => PaymentMethod::OnlineSimulated,
+                'tracking_token' => Order::generateTrackingToken(),
             ], $shipping));
+
+            $this->orderWorkflow->logInitialStatus($order, $user);
 
             foreach ($lines as $line) {
                 if ($line['type'] === 'offer') {

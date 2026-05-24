@@ -7,6 +7,10 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/operationsPolling.js',
+                'resources/js/operationsMap.js',
+                'resources/js/courierOps.js',
+                'resources/js/orderTracking.js',
             ],
             refresh: true,
         }),

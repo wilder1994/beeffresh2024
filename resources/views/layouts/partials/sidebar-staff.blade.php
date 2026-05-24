@@ -9,6 +9,7 @@
         : asset('logos/logo.jpeg');
     $isAdmin = auth()->user()->isAdmin();
     $canOrders = auth()->user()->can(PermissionKey::MODULE_ORDERS);
+    $canCourier = auth()->user()->canAccessCourierModule();
     $canCatalog = auth()->user()->can(PermissionKey::MODULE_CATALOG);
     $canUsers = auth()->user()->can(PermissionKey::MODULE_USERS);
     $canSettings = auth()->user()->can(PermissionKey::MODULE_SETTINGS);
@@ -17,7 +18,8 @@
     $navIdle = 'border-transparent text-white/90 hover:bg-white/10';
     $navOn = 'border-[var(--bf-gold)] bg-white/15 text-white';
     $operacionesHijoActivo = ($canOrders && request()->routeIs('admin.pedidos.*'))
-        || ($canCatalog && request()->routeIs('catalog.*'));
+        || ($canCatalog && request()->routeIs('catalog.*'))
+        || ($canCourier && request()->routeIs('courier.*'));
     $usuariosNavUser = request()->route('user');
     $usuariosNavUser = $usuariosNavUser instanceof User ? $usuariosNavUser : null;
     $audienceQuery = request()->query('audience');
@@ -75,7 +77,7 @@
             Inicio
         </a>
 
-        @if($canOrders || $canCatalog)
+        @if($canOrders || $canCatalog || $canCourier)
             <div class="space-y-0.5 pt-1" x-data="{ operacionesOpen: {{ $operacionesHijoActivo ? 'true' : 'false' }} }" role="group" aria-label="Operaciones">
                 <button
                     type="button"
@@ -94,9 +96,19 @@
                 </button>
                 <div x-show="operacionesOpen" x-transition class="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-white/15 space-y-0.5 pb-0.5">
                     @if($canOrders)
-                    <a href="{{ route('admin.pedidos.index') }}" @class([$navActive, request()->routeIs('admin.pedidos.*') ? $navOn : $navIdle])>
+                    <a href="{{ route('admin.pedidos.index') }}" @class([$navActive, request()->routeIs('admin.pedidos.index', 'admin.pedidos.show', 'admin.pedidos.ticket.*') ? $navOn : $navIdle])>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                         Pedidos
+                    </a>
+                    <a href="{{ route('admin.pedidos.map') }}" @class([$navActive, request()->routeIs('admin.pedidos.map') ? $navOn : $navIdle])>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                        Mapa operativo
+                    </a>
+                    @endif
+                    @if($canCourier)
+                    <a href="{{ route('courier.orders.index') }}" @class([$navActive, request()->routeIs('courier.*') ? $navOn : $navIdle])>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg>
+                        Mis entregas
                     </a>
                     @endif
                     @if($canCatalog)

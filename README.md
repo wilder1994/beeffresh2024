@@ -1,6 +1,6 @@
 # Beeffresh
 
-Plataforma web para digitalizar la gestión de una carnicería: **tienda pública** (inicio, catálogo, carrito, checkout con pedidos en base de datos), **contenidos** (videos, recetas, promociones, cortes), **panel de administración** con métricas (KPIs, alertas, stock) y **acceso por roles y permisos** ([Laravel Breeze](https://laravel.com/docs/breeze), **Livewire**, **Spatie Permission**, Sanctum para API).
+Plataforma web para digitalizar la gestión de una carnicería: **tienda pública** (inicio, catálogo, carrito, checkout con pedidos en base de datos), **operaciones de despacho y entrega** (despachador, domiciliario, tracking), **contenidos** (videos, recetas, promociones, cortes), **panel de administración** con métricas (KPIs, alertas, stock) y **acceso por roles y permisos** ([Laravel Breeze](https://laravel.com/docs/breeze), **Livewire**, **Spatie Permission**, Sanctum para API).
 
 **Repositorio:** [github.com/wilder1994/beeffresh2024](https://github.com/wilder1994/beeffresh2024)
 
@@ -12,11 +12,11 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-18
+**Última actualización de esta documentación:** 2026-05-19
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
-**Catálogo comercial (admin):** módulo en `/catalogo` con pestañas: Productos, Tipos de carne, Cortes, Promociones, **Combos y packs**, Precios e Inventario. Tablas `meat_types`, `meat_cuts`, `products`, `offers`, `offer_items`; servicios en `App\Services\Catalog\` y `App\Services\Store\`. Semillas `CatalogSeeder` y `OfferSeeder`.
+**Catálogo comercial (admin):** módulo en `/catalogo` con pestañas: Productos, Tipos de carne, Cortes, Promociones, **Combos y packs** (`/catalogo/combos`), **Escalas por volumen** (`/catalogo/escalas-volumen`), Precios e Inventario. Tablas `meat_types`, `meat_cuts`, `products`, `offers`, `offer_items`; servicios en `App\Services\Catalog\` y `App\Services\Store\`. Semillas `CatalogSeeder` y `OfferSeeder`.
 
 **Combos y packs (`offers`):** dos tipos — **bundle** (pack: **mínimo 2 productos** con cantidades, precio fijo del pack; stock = mínimo de unidades posibles) y **volume** (un producto, cantidad mínima **≥ 3 lb** — 3 lb o 1,5 kg —, precio unitario especial en la unidad elegida). Validación en `StoreOfferRequest` / `UpdateOfferRequest`: trait `ValidatesVolumeOffer` (`app/Http/Requests/Catalog/Concerns/`), reglas de mínimo en `App\Support\VolumeOfferConstraints`; el formulario envía un solo `volume_offer_unit_price` y se mapea a `volume_offer_price_kg` o `_lb` al validar. Formulario admin en `resources/views/catalog/offers/_form.blade.php`: cabecera en **dos columnas** (tipo, nombre y descripción a la izquierda; imagen a la derecha, `.bf-offer-form-head`); **pack** con 2 filas iniciales, filas dinámicas Alpine (`x-for` + `_id` único), valor real por línea y fila de precios (valor real del pack | precio del pack | ahorro, `.bf-offer-pack-pricing`); **volume** con fila producto/cantidad/unidad y fila de precios dinámica por unidad (`.bf-offer-volume-*`). Estilos en `app.css`. En carrito y checkout gana el mejor precio entre precio real, promo del producto y oferta por volumen. CRUD en `/catalogo/combos`. Vista pública de packs: `/combos/{slug}`.
 
@@ -34,7 +34,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes (WhatsApp, TikTok, Instagram, Facebook, X) en **`/admin/empresa`**. Iconos reutilizables: `x-store.social-icons`.
 
-**Tras login:** clientes van a **`/`** (inicio), no a `/dashboard` (`App\Support\PostLoginRedirect`). Proveedores a `/portal-proveedor`; personal interno a `/dashboard`.
+**Tras login:** clientes → **`/`**; proveedores → `/portal-proveedor`; **domiciliarios** (`module.courier`) → `/domiciliario/pedidos`; **despachadores** y empleados con `module.orders` → `/admin/pedidos`; resto del personal → `/dashboard` (`App\Support\PostLoginRedirect`, `DashboardController`).
 
 **Ingreso y registro (tienda):** solo los **clientes** pueden registrarse por su cuenta. En la navbar, **Ingresar** despliega Cliente / Empleado / Proveedor (`/login?tipo=cliente|empleado|proveedor`, lógica en `App\Support\AuthLoginAudience`). **Registrarse** abre modales en la tienda: confirmación («te registras como cliente») y formulario completo (`RegisterCustomerRequest`: datos personales, cuenta y domicilio de entrega → `users` + `customer_profiles`). `GET /register` redirige a `/?registro=confirm`. Empleados y proveedores reciben credenciales del administrador. JS: `window.bfOpenRegisterConfirm()` / `bfOpenRegisterClient()` en `resources/js/app.js`; vistas `resources/views/components/auth/*`.
 
@@ -44,7 +44,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Migraciones:** `users` mantiene datos de cuenta (nombre, documento, teléfono, email, avatar `users.avatar`, estado). Perfiles en tablas `employee_profiles`, `customer_profiles`, `supplier_profiles`; roles y permisos con **Spatie** (`roles`, `permissions`, tablas pivot). Config publicada: `config/permission.php`. En desarrollo, ante un esquema desalineado: `php artisan migrate:fresh --seed`. En producción ya desplegada conviene migraciones incrementales; este repo define el esquema base para instalaciones nuevas.
 
-El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** (colapsable en escritorio, panel lateral en móvil con overlay); invitados y clientes en ese layout conservan la **barra superior** clásica. Los administradores tienen **Operaciones** (pedidos, catálogo), **Usuarios** (Todos, Clientes, Empresa, Proveedores) y **Ajustes** como acordeones (clic en el título abre o cierra). Cada bloque se despliega abierto si la ruta actual pertenece a ese grupo.
+El **personal interno** (roles empresa en `layouts.app`) usa **sidebar** (colapsable en escritorio, panel lateral en móvil con overlay). **Operaciones** agrupa pedidos, mapa operativo, catálogo (según permisos) y **Mis entregas** (domiciliarios). **Usuarios** y **Ajustes** son acordeones; cada bloque se despliega abierto si la ruta actual pertenece a ese grupo.
 
 ## Requisitos
 
@@ -76,7 +76,7 @@ php artisan migrate
 php artisan db:seed
 ```
 
-4. Assets:
+4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`):
 
 ```bash
 npm install
@@ -131,14 +131,23 @@ Acceso: `/login`.
 
 ## Roles y permisos (Spatie)
 
-Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`. Constantes en `App\Domain\Users\RoleSlug`. Los permisos de módulo para empleados viven en `App\Domain\Users\PermissionKey` (p. ej. `module.catalog`, `module.orders`); se sembraron con `RolePermissionSeeder`. El **administrador** pasa todas las comprobaciones `can()` vía `Gate::before` en `AuthServiceProvider`.
+Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`. Constantes en `App\Domain\Users\RoleSlug`. Los permisos de módulo para empleados viven en `App\Domain\Users\PermissionKey`; se sembraron con `RolePermissionSeeder`. El **administrador** pasa todas las comprobaciones `can()` vía `Gate::before` en `AuthServiceProvider`.
+
+| Permiso | Uso |
+|---------|-----|
+| `module.catalog` | CRUD catálogo, videos, recetas |
+| `module.orders` | Centro de operaciones `/admin/pedidos` |
+| `module.courier` | Portal domiciliario `/domiciliario/pedidos` |
+| `module.users` / `module.settings` | Usuarios, cargos, contenido empresa |
 
 | Rol | Uso |
 |-----|-----|
 | `customer` | **Único rol con registro público**; formulario modal con domicilio completo; tras login → inicio `/` |
 | `admin` | Panel completo, usuarios, pedidos, CRUD catálogo, API mutaciones |
-| `employee` | Personal interno; **cargo** en `employee_profiles` → `positions` (p. ej. domiciliario) |
+| `employee` | Personal interno; **cargo** en `employee_profiles` → `positions` (`despachador`, `domiciliario`, etc.) + permisos Spatie directos |
 | `supplier` | Portal `/portal-proveedor`; datos comerciales en `supplier_profiles` |
+
+**Cargos operativos** (tabla `positions`, no roles Spatie): slug `despachador` (alistamiento y despacho; permiso `module.orders`) y slug `domiciliario` (entregas; permiso `module.courier`). Políticas en `App\Policies\OrderPolicy`.
 
 Middleware `role:*`, `permission:*` y `role_or_permission:*` (alias en `app/Http/Kernel.php`). Crear cuentas desde consola:
 
@@ -170,7 +179,9 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
 | Dashboard | `/dashboard` (admin/empleado con KPIs; **clientes** usan inicio `/` tras login) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
-| Pedidos (admin) | `/admin/pedidos` |
+| Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
+| Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`) |
+| Seguimiento cliente | `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
 | Usuarios (admin) | `/admin/users`, Livewire create/edit; `/admin/positions` (cargos) |
 | Portal proveedor | `/portal-proveedor` (auth + rol supplier) |
 | Perfil Breeze | `/profile` |
@@ -182,8 +193,9 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Catálogo público:** `/productos-publicos` (rutas `products.public.*`). Cada tarjeta incluye selector **Kg / Lb** (default Kg), cantidad entera y precio según unidad (`x-store.product-purchase`, Alpine + `resources/js/storeCart.js`). Estilos compactos de la fila unidad/cantidad: `.bf-store-unit-toggle` y `.bf-store-qty-input` en `resources/css/app.css` (scoped a `[data-product-purchase]`).
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
-- Confirmación: tablas **`orders`** (snapshot `shipping_*`) y **`order_items`** (`sale_unit`, `quantity` decimal, `unit_price`, `subtotal`); descuento de stock vía `App\Services\CheckoutService`.
-- Panel admin: listado en `/admin/pedidos` (columna resumen de entrega); dashboard admin muestra KPIs, pedidos recientes, stock bajo y volumen de pedidos (`App\Services\AdminDashboardService`).
+- Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`** (`sale_unit`, `quantity` decimal, `unit_price`, `subtotal`); descuento de stock vía `App\Services\CheckoutService`. Tras comprar, redirección al **seguimiento** del pedido.
+- **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → `picked_up` → `in_transit` → `delivered` (o `delivery_failed` → `returned_to_store` → reprogramación). Historial en `order_status_logs`; asignación automática de domiciliario (`App\Services\Orders\CourierAssignmentService`) al marcar listo; ubicación en `courier_locations`; pruebas de entrega en `delivery_proofs` (firma, foto/video). Servicios: `OrderWorkflowService`, `OrderOperationsQueryService`, `CourierLocationService`. UI: panel `/admin/pedidos` (métricas, tabs, tarjetas), mapa operativo, ticket POS, portal domiciliario, tracking con polling (`resources/js/operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`). Evento `OrderUpdated` (broadcast preparado). Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`.
+- Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 - Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.
 
@@ -203,15 +215,24 @@ Los tests de características usan `RefreshDatabase`. `tests/TestCase.php` ejecu
 
 ```bash
 php artisan test
+php artisan test --filter=OrderOperationsFlowTest
 ```
+
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 
 ## Base de datos y migraciones
 
-Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles, catálogo (`products`, `offers`, `offer_items`), `orders` / `order_items`, etc.
+Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles, catálogo (`products`, `offers`, `offer_items`), `orders` / `order_items`, operaciones (`order_status_logs`, `order_assignments`, `courier_locations`, `delivery_proofs`; columnas extra en `orders` y coordenadas de tienda en `company_profiles` — migración `2026_05_19_100000_order_operations`), etc.
 
-Semilla opcional de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`.
+Semilla opcional de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`. Contraseña: valor de `ADMIN_PASSWORD` en `.env` (por defecto `password`). Cuentas útiles para operaciones:
+
+| Rol / cargo | Correo demo |
+|-------------|-------------|
+| Despachador | `despachador1@demo.beeffresh.test` |
+| Domiciliario | `empleado2@demo.beeffresh.test` |
+| Cliente (con coords) | `cliente2@demo.beeffresh.test` |
 
 ### Comando destructivo (solo si lo necesitas a sabiendas)
 

@@ -11,6 +11,10 @@ final class VolumeOfferConstraints
 
     public const POUNDS_PER_KG = 2.0;
 
+    public const KG_TO_LB = 2.0;
+
+    public const LB_TO_KG = 0.5;
+
     public static function equivalentPounds(float $quantity, string $unit): float
     {
         return $unit === 'lb' ? $quantity : $quantity * self::POUNDS_PER_KG;

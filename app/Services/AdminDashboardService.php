@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Domain\Store\OfferType;
 use App\Models\Offer;
 use App\Models\Product;
 use App\Models\Receta;
@@ -18,7 +19,7 @@ final class AdminDashboardService
     /**
      * @return array{
      *   kpi: array{orders_today: int, revenue_today: float, revenue_month: float, pending: int, products_catalog: int},
-     *   catalog_counts: array{productos: int, videos: int, recetas: int, combos: int},
+     *   catalog_counts: array{productos: int, videos: int, recetas: int, combos: int, escalas: int},
      *   orders_by_day: list<array{label: string, short: string, count: int}>,
      *   max_day_count: int,
      *   recent_orders: Collection<int, Order>,
@@ -35,14 +36,14 @@ final class AdminDashboardService
         $pendingCount = Order::query()->where('status', OrderStatus::Pending)->count();
 
         $revenueMonth = (float) Order::query()
-            ->where('status', OrderStatus::Paid)
-            ->whereYear('created_at', $now->year)
-            ->whereMonth('created_at', $now->month)
+            ->where('status', OrderStatus::Delivered)
+            ->whereYear('delivered_at', $now->year)
+            ->whereMonth('delivered_at', $now->month)
             ->sum('total');
 
         $revenueToday = (float) Order::query()
-            ->where('status', OrderStatus::Paid)
-            ->whereDate('created_at', $now->toDateString())
+            ->where('status', OrderStatus::Delivered)
+            ->whereDate('delivered_at', $now->toDateString())
             ->sum('total');
 
         $ordersByDay = [];
@@ -97,7 +98,8 @@ final class AdminDashboardService
                 'productos' => Product::query()->count(),
                 'videos' => VideoReceta::query()->count(),
                 'recetas' => Receta::query()->count(),
-                'combos' => Offer::query()->count(),
+                'combos' => Offer::query()->where('type', OfferType::Bundle)->count(),
+                'escalas' => Offer::query()->where('type', OfferType::Volume)->count(),
             ],
             'orders_by_day' => $ordersByDay,
             'max_day_count' => $maxDayCount,

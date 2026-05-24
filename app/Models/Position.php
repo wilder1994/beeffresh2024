@@ -11,6 +11,8 @@ class Position extends Model
 {
     public const SLUG_DELIVERY = 'domiciliario';
 
+    public const SLUG_DISPATCH = 'despachador';
+
     protected $fillable = [
         'name',
         'slug',
@@ -26,6 +28,11 @@ class Position extends Model
     public function isDelivery(): bool
     {
         return $this->slug === self::SLUG_DELIVERY;
+    }
+
+    public function isDispatch(): bool
+    {
+        return $this->slug === self::SLUG_DISPATCH;
     }
 
     public function isActive(): bool

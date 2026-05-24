@@ -49,18 +49,19 @@ class OfferSeeder extends Seeder
         }
 
         $volumeProduct = $products->skip(2)->first() ?? $products->first();
+        $volumePriceLb = round((float) $volumeProduct->price_per_lb * 0.88, 2);
 
         Offer::query()->create([
             'type' => OfferType::Volume,
             'name' => 'Ahorro por volumen · '.$volumeProduct->name,
             'slug' => 'ahorro-volumen-'.Str::slug($volumeProduct->name),
-            'description' => 'Precio especial al comprar 3 kg o más.',
+            'description' => 'Precio especial al comprar 3 lb o más.',
             'image' => $this->storeImage(),
             'product_id' => $volumeProduct->id,
             'volume_min_quantity' => 3,
-            'volume_sale_unit' => StockUnit::Kg->value,
-            'volume_offer_price_kg' => round((float) $volumeProduct->price_per_kg * 0.88, 2),
-            'volume_offer_price_lb' => round((float) $volumeProduct->price_per_lb * 0.88, 2),
+            'volume_sale_unit' => StockUnit::Lb->value,
+            'volume_offer_price_lb' => $volumePriceLb,
+            'volume_offer_price_kg' => null,
             'is_active' => true,
             'show_on_cinta' => false,
             'show_on_home' => true,
