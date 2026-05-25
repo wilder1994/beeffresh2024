@@ -20,8 +20,8 @@ final class NotificationRecipientResolver
     {
         return User::query()
             ->where(function ($query): void {
-                $query->whereHas('roles', fn ($role) => $role->where('name', RoleSlug::ADMIN))
-                    ->orWhereHas('permissions', fn ($perm) => $perm->where('name', PermissionKey::MODULE_ORDERS));
+                $query->role(RoleSlug::ADMIN)
+                    ->orWhere->permission(PermissionKey::MODULE_ORDERS);
             })
             ->get()
             ->unique('id')

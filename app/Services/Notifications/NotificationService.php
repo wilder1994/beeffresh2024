@@ -58,9 +58,8 @@ final class NotificationService
 
     public function dispatch(CreateNotificationData $data): void
     {
-        $content = $this->contentBuilder->build($data->type, $data->payload);
-
         foreach ($data->recipientCollection() as $user) {
+            $content = $this->contentBuilder->build($data->type, $data->payload, $user);
             $this->dispatchToUser($user, $data, $content);
         }
     }

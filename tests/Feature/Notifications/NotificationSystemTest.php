@@ -147,6 +147,44 @@ class NotificationSystemTest extends TestCase
         ]);
     }
 
+    public function test_payment_confirmed_notifies_operations_staff(): void
+    {
+        Queue::fake();
+
+        $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();
+        $dispatcher = User::query()->where('email', 'despachador1@demo.beeffresh.test')->firstOrFail();
+        $order = $this->makeOrder($customer);
+
+        app(NotificationService::class)->notifyType(
+            NotificationType::PaymentConfirmed,
+            [
+                'order' => $order,
+                'order_id' => $order->id,
+                'customer_name' => $customer->name,
+                'status_label' => $order->status->label(),
+                'amount' => number_format((float) $order->total, 0, ',', '.'),
+            ],
+        );
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $customer->id,
+            'type' => NotificationType::PaymentConfirmed->value,
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $dispatcher->id,
+            'type' => NotificationType::PaymentConfirmed->value,
+        ]);
+
+        $staffNotification = Notification::query()
+            ->where('user_id', $dispatcher->id)
+            ->where('type', NotificationType::PaymentConfirmed)
+            ->firstOrFail();
+
+        $this->assertStringContainsString('Cliente:', $staffNotification->body);
+        $this->assertSame(route('admin.pedidos.show', $order), $staffNotification->payload['action_url'] ?? null);
+    }
+
     public function test_failed_delivery_job_marks_failed_after_retries(): void
     {
         Mail::shouldReceive('send')->andThrow(new \RuntimeException('SMTP down'));
@@ -193,6 +231,45 @@ class NotificationSystemTest extends TestCase
             ->assertRedirect();
 
         Event::assertDispatched(OrderPreparing::class);
+    }
+
+    public function test_mark_all_read_redirects_to_index(): void
+    {
+        $dispatcher = User::query()->where('email', 'despachador1@demo.beeffresh.test')->firstOrFail();
+
+        Notification::query()->create([
+            'user_id' => $dispatcher->id,
+            'type' => NotificationType::OrderPreparing,
+            'title' => 'Pedido en preparación',
+            'body' => 'Pedido #22 en preparación',
+            'payload' => [],
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->patch(route('notifications.mark-all-read'))
+            ->assertRedirect(route('notifications.index'))
+            ->assertSessionHas('status');
+
+        $this->assertSame(0, Notification::query()->where('user_id', $dispatcher->id)->whereNull('read_at')->count());
+    }
+
+    public function test_mark_all_read_accepts_json(): void
+    {
+        $dispatcher = User::query()->where('email', 'despachador1@demo.beeffresh.test')->firstOrFail();
+
+        Notification::query()->create([
+            'user_id' => $dispatcher->id,
+            'type' => NotificationType::OrderPreparing,
+            'title' => 'Pedido en preparación',
+            'body' => 'Pedido #22 en preparación',
+            'payload' => [],
+        ]);
+
+        $this->actingAs($dispatcher)
+            ->patchJson(route('notifications.mark-all-read'))
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('unread_count', 0);
     }
 
     private function makeOrder(User $customer): Order

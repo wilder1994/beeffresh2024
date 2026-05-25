@@ -54,7 +54,7 @@
                     <li>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</a>
+                            <button type="submit" class="w-full text-left">Cerrar sesión</button>
                         </form>
                     </li>
                 </ul>

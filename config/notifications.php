@@ -27,19 +27,19 @@ return [
     'types' => [
         NotificationType::OrderReceived->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
-            'audiences' => ['customer'],
+            'audiences' => ['customer', 'operations'],
         ],
         NotificationType::PaymentConfirmed->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
-            'audiences' => ['customer'],
+            'audiences' => ['customer', 'operations'],
         ],
         NotificationType::OrderPreparing->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
-            'audiences' => ['customer'],
+            'audiences' => ['customer', 'operations'],
         ],
         NotificationType::OrderReadyForDelivery->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
-            'audiences' => ['customer'],
+            'audiences' => ['customer', 'operations'],
         ],
         NotificationType::OrderAssigned->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
@@ -177,6 +177,49 @@ return [
             'title' => 'Entrega fallida · Pedido #{order_id}',
             'body' => 'Registraste una entrega fallida para el pedido #{order_id}.',
             'action_label' => 'Ver pedidos',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contenido para operaciones (admin / despacho) — mismo tipo, distinto tono
+    |--------------------------------------------------------------------------
+    */
+    'content_operations' => [
+        NotificationType::OrderReceived->value => [
+            'title' => 'Nuevo pedido #{order_id}',
+            'body' => 'Pedido recibido de {customer_name}. Pendiente de confirmación de pago.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::PaymentConfirmed->value => [
+            'title' => 'Pago confirmado · Pedido #{order_id}',
+            'body' => 'Pago aprobado por ${amount}. Cliente: {customer_name}.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::OrderPreparing->value => [
+            'title' => 'Pedido #{order_id} en preparación',
+            'body' => 'El pedido de {customer_name} está en preparación en tienda.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::OrderReadyForDelivery->value => [
+            'title' => 'Pedido #{order_id} listo para entrega',
+            'body' => 'El pedido de {customer_name} está listo. Asigna domiciliario si aplica.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::OrderPickedUp->value => [
+            'title' => 'Pedido #{order_id} recogido',
+            'body' => 'El domiciliario recogió el pedido #{order_id} en tienda.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::OrderFailed->value => [
+            'title' => 'Entrega fallida · Pedido #{order_id}',
+            'body' => 'No se completó la entrega del pedido #{order_id}. Revisa operaciones.',
+            'action_label' => 'Ver pedido',
+        ],
+        NotificationType::PaymentDeclined->value => [
+            'title' => 'Pago rechazado · Pedido #{order_id}',
+            'body' => 'Pago rechazado para el pedido #{order_id} ({reference}).',
+            'action_label' => 'Ver pedido',
         ],
     ],
 

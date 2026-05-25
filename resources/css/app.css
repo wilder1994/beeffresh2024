@@ -2185,8 +2185,56 @@
         @apply text-amber-600;
     }
 
+    .bf-notification-bell {
+        @apply inline-flex items-center justify-center cursor-pointer transition-colors duration-200;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    .bf-notification-bell--default {
+        @apply p-1.5 rounded-lg;
+    }
+
+    .bf-notification-bell--compact {
+        @apply p-1 rounded-md;
+    }
+
+    .bf-notification-bell--dark:hover,
+    .bf-notification-bell--dark:focus-visible {
+        background: rgba(255, 255, 255, 0.07);
+    }
+
+    .bf-notification-bell--light:hover,
+    .bf-notification-bell--light:focus-visible {
+        background: rgba(123, 48, 27, 0.06);
+    }
+
+    .bf-notification-bell__icon {
+        display: block;
+        filter:
+            drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45))
+            drop-shadow(0 0 5px rgba(240, 180, 41, 0.28));
+        transition: filter 0.2s ease;
+    }
+
+    .bf-notification-bell:hover .bf-notification-bell__icon,
+    .bf-notification-bell:focus-visible .bf-notification-bell__icon {
+        filter:
+            drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 8px rgba(255, 201, 77, 0.42));
+    }
+
     .bf-notification-badge {
-        box-shadow: 0 0 0 2px var(--bf-brand);
+        box-shadow: 0 0 0 2px var(--bf-rust-deep);
+    }
+
+    .bf-notification-bell summary {
+        overflow: visible;
+    }
+
+    [data-notification-bell] details[open] .bf-notification-dropdown {
+        @apply z-[260];
     }
 
     .bf-notification-dropdown {
@@ -2230,5 +2278,40 @@
 
     .bf-notification-item__actions {
         @apply flex flex-col items-end gap-2 shrink-0;
+    }
+
+    .bf-sidebar-account {
+        @apply overflow-visible;
+    }
+
+    .bf-sidebar-account__shell {
+        @apply rounded-xl p-2 sm:p-2.5 overflow-visible;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.12));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .bf-sidebar-account__main {
+        @apply flex items-center gap-2 sm:gap-2.5 min-w-0 overflow-visible;
+    }
+
+    .bf-sidebar-account__avatar {
+        @apply rounded-full ring-2 ring-white/25 overflow-hidden;
+    }
+
+    .bf-sidebar-account__trigger {
+        @apply flex flex-col min-w-0 flex-1 cursor-pointer rounded-lg px-2 py-1.5 text-left transition;
+    }
+
+    .bf-sidebar-account__trigger:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .bf-sidebar-account__name {
+        @apply block text-xs sm:text-sm font-semibold text-white leading-tight;
+    }
+
+    .bf-sidebar-account__meta {
+        @apply block text-[10px] sm:text-[11px] text-white/55 mt-0.5;
     }
 }

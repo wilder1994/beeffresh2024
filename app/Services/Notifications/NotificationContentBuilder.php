@@ -8,15 +8,24 @@ use App\DataTransferObjects\Notifications\NotificationContent;
 use App\Enums\Notifications\NotificationType;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
 
 final class NotificationContentBuilder
 {
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function build(NotificationType $type, array $payload): NotificationContent
+    public function build(NotificationType $type, array $payload, ?User $recipient = null): NotificationContent
     {
         $template = config('notifications.content.'.$type->value, []);
+
+        if ($recipient !== null && $recipient->isStaff()) {
+            $operationsTemplate = config('notifications.content_operations.'.$type->value, []);
+            if ($operationsTemplate !== []) {
+                $template = array_merge($template, $operationsTemplate);
+            }
+        }
+
         $replacements = $this->replacements($payload);
 
         $title = $this->interpolate((string) ($template['title'] ?? $type->label()), $replacements);
@@ -29,7 +38,7 @@ final class NotificationContentBuilder
             type: $type,
             title: $title,
             body: $body,
-            actionUrl: $this->resolveActionUrl($type, $payload),
+            actionUrl: $this->resolveActionUrl($type, $payload, $recipient),
             actionLabel: $actionLabel,
             payload: $payload,
         );
@@ -65,12 +74,30 @@ final class NotificationContentBuilder
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function resolveActionUrl(NotificationType $type, array $payload): ?string
+    private function resolveActionUrl(NotificationType $type, array $payload, ?User $recipient = null): ?string
     {
         $order = $payload['order'] ?? null;
         $payment = $payload['payment'] ?? null;
 
         if ($order instanceof Order) {
+            if ($recipient !== null && $recipient->isStaff() && ! $recipient->isCourier()) {
+                return match ($type) {
+                    NotificationType::OrderAssigned,
+                    NotificationType::OrderReassigned,
+                    NotificationType::DeliveryFailedCourier => route('courier.orders.show', $order),
+                    default => route('admin.pedidos.show', $order),
+                };
+            }
+
+            if ($recipient !== null && $recipient->isCourier()) {
+                return match ($type) {
+                    NotificationType::OrderAssigned,
+                    NotificationType::OrderReassigned,
+                    NotificationType::DeliveryFailedCourier => route('courier.orders.show', $order),
+                    default => route('courier.orders.show', $order),
+                };
+            }
+
             return match ($type) {
                 NotificationType::OrderAssigned,
                 NotificationType::OrderReassigned,

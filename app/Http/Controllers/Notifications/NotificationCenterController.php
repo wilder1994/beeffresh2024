@@ -74,10 +74,16 @@ class NotificationCenterController extends Controller
 
         $count = $this->repository->markAllAsRead($user);
 
-        if ($request->wantsJson()) {
-            return response()->json(['ok' => true, 'marked' => $count]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'marked' => $count,
+                'unread_count' => 0,
+            ]);
         }
 
-        return back()->with('status', 'Notificaciones marcadas como leídas.');
+        return redirect()
+            ->route('notifications.index')
+            ->with('status', 'Notificaciones marcadas como leídas.');
     }
 }

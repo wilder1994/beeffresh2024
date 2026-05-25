@@ -15,6 +15,7 @@
         </div>
         <form method="POST" action="{{ route('notifications.mark-all-read') }}">
             @csrf
+            @method('PATCH')
             <button type="submit" class="bf-btn-ghost text-sm">Marcar todas como leídas</button>
         </form>
     </div>

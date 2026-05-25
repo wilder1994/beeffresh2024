@@ -215,30 +215,7 @@
         @endif
     </nav>
 
-    <div class="p-2 sm:p-3 border-t border-white/10 bg-black/20 shrink-0">
-        <div class="dropdown dropdown-top dropdown-end w-full">
-            <label tabindex="0" class="flex items-center gap-2 sm:gap-3 px-2 py-2 rounded-lg cursor-pointer hover:bg-white/10 w-full min-w-0">
-                <div class="avatar shrink-0">
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full ring ring-white/30 overflow-hidden">
-                        <x-user-avatar :user="auth()->user()" size="h-9 w-9" />
-                    </div>
-                </div>
-                <div class="flex-1 min-w-0 text-left">
-                    <span class="block text-xs sm:text-sm font-semibold truncate">{{ auth()->user()->name }}</span>
-                    <span class="text-[10px] sm:text-[11px] text-white/60">Cuenta</span>
-                </div>
-                <svg class="w-4 h-4 shrink-0 opacity-70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
-            </label>
-            <ul tabindex="0" class="dropdown-content menu bg-[#fffaf5] text-gray-900 rounded-box shadow-lg w-52 z-[100] border border-amber-100 mb-2 text-sm">
-                <li><a href="{{ route('notifications.index') }}">Notificaciones</a></li>
-                <li><x-profile.open-button tag="a" class="w-full text-left">Mi perfil</x-profile.open-button></li>
-                <li>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <a href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">Cerrar sesión</a>
-                    </form>
-                </li>
-            </ul>
-        </div>
+    <div class="p-2 sm:p-3 border-t border-white/10 bg-black/20 shrink-0 overflow-visible">
+        <x-staff.sidebar-account />
     </div>
 </div>

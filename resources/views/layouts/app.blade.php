@@ -38,7 +38,7 @@
         </button>
 
         <aside
-            class="fixed inset-y-0 left-0 z-40 flex flex-col bg-[var(--bf-rust-deep)] text-white w-[min(17rem,calc(100vw-1rem))] sm:w-[17rem] border-r border-black/20 shadow-xl transition-transform duration-300 ease-out min-h-screen overflow-hidden"
+            class="fixed inset-y-0 left-0 z-40 flex flex-col bg-[var(--bf-rust-deep)] text-white w-[min(17rem,calc(100vw-1rem))] sm:w-[17rem] border-r border-black/20 shadow-xl transition-transform duration-300 ease-out min-h-screen"
             x-bind:class="[ mobileMenuOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full', sidebarCollapsed ? 'lg:-translate-x-full' : 'lg:translate-x-0' ]"
             role="navigation"
             aria-label="Menú principal"

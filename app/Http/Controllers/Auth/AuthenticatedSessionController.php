@@ -35,6 +35,18 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
+     * Pantalla intermedia con token CSRF fresco (evita 419 al abrir /logout vía GET).
+     */
+    public function confirmLogout(): View|RedirectResponse
+    {
+        if (! Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        return view('auth.logout');
+    }
+
+    /**
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
