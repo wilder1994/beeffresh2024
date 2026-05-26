@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Users\PermissionKey;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
@@ -35,6 +36,12 @@ Broadcast::channel('operations.orders', function (User $user): bool {
 
 Broadcast::channel('operations.dashboard', function (User $user): bool {
     return $user->canAccessOrderOperations() || $user->isDispatcher() || $user->isAdmin();
+});
+
+Broadcast::channel('operations.inventory', function (User $user): bool {
+    return $user->can(PermissionKey::MODULE_INVENTORY)
+        || $user->canAccessOrderOperations()
+        || $user->isDispatcher();
 });
 
 Broadcast::channel('couriers.{courierId}', function (User $user, int $courierId): bool {

@@ -11,34 +11,32 @@ export function bfInitRealtimeStatusIndicator() {
 
     const render = () => {
         const status = bfRealtimeStore.getStatus();
+        const mode = status.mode ?? 'fallback';
+
         nodes.forEach((node) => {
             const dot = node.querySelector('[data-bf-realtime-dot]');
             const label = node.querySelector('[data-bf-realtime-label]');
 
-            node.dataset.state = status.reconnecting
-                ? 'reconnecting'
-                : status.connected
-                  ? 'connected'
-                  : status.echoEnabled
-                    ? 'disconnected'
-                    : 'fallback';
+            node.dataset.state = mode;
 
             if (label) {
                 if (status.reconnecting) {
                     label.textContent = 'Reconectando…';
-                } else if (status.connected) {
-                    label.textContent = 'Conectado en tiempo real';
+                } else if (mode === 'live') {
+                    label.textContent = 'Operación en tiempo real';
+                } else if (mode === 'degraded') {
+                    label.textContent = 'Sincronización diferida (cola ocupada)';
                 } else if (!status.echoEnabled) {
-                    label.textContent = 'Sin conexión realtime (modo fallback)';
+                    label.textContent = 'Modo respaldo (polling)';
                 } else {
-                    label.textContent = 'Sin conexión realtime (modo fallback)';
+                    label.textContent = 'Modo respaldo (polling)';
                 }
             }
 
             if (dot) {
-                dot.classList.toggle('bf-realtime-dot--live', status.connected);
-                dot.classList.toggle('bf-realtime-dot--warn', status.reconnecting);
-                dot.classList.toggle('bf-realtime-dot--off', !status.connected && !status.reconnecting);
+                dot.classList.toggle('bf-realtime-dot--live', mode === 'live');
+                dot.classList.toggle('bf-realtime-dot--warn', mode === 'degraded' || status.reconnecting);
+                dot.classList.toggle('bf-realtime-dot--off', mode === 'fallback');
             }
         });
     };

@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Services\Catalog\CartSessionService;
 use App\Services\Catalog\CartViewService;
 use App\Services\Store\OfferAvailabilityService;
+use App\Support\Realtime\ProductStockPayload;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -124,6 +126,60 @@ class CarritoController extends Controller
             'lineas' => $summary['lineas'],
             'total' => $summary['total'],
             'itemCount' => $summary['itemCount'],
+        ]);
+    }
+
+    public function validar(): JsonResponse
+    {
+        $summary = $this->cartView->summarize(session()->get('carrito', []));
+        $lines = [];
+
+        foreach ($summary['lineas'] as $linea) {
+            if (($linea['tipo'] ?? '') === 'product' && isset($linea['product_id'])) {
+                $product = Product::query()->find((int) $linea['product_id']);
+
+                if ($product === null) {
+                    $lines[] = [
+                        'product_id' => (int) $linea['product_id'],
+                        'line_key' => $linea['line_key'],
+                        'can_purchase' => false,
+                        'availability_label' => 'No disponible',
+                    ];
+
+                    continue;
+                }
+
+                $lines[] = [
+                    'product_id' => $product->id,
+                    'line_key' => $linea['line_key'],
+                    'can_purchase' => $product->isPurchasable(),
+                    'availability_label' => ProductStockPayload::availabilityLabel($product),
+                ];
+
+                continue;
+            }
+
+            if (($linea['tipo'] ?? '') === 'offer') {
+                $offerId = $this->cartSession->parseOfferLineKey((string) $linea['line_key']);
+                $offer = Offer::query()->with(['items.product'])->find($offerId);
+                $available = $offer !== null
+                    && $this->offerAvailability->availableUnits($offer) >= (int) $linea['cantidad'];
+
+                $lines[] = [
+                    'line_key' => $linea['line_key'],
+                    'offer_id' => $offerId,
+                    'can_purchase' => $available,
+                    'availability_label' => $available ? 'Disponible' : 'Agotado',
+                ];
+            }
+        }
+
+        $hasInvalid = collect($lines)->contains(fn (array $row): bool => ! ($row['can_purchase'] ?? false));
+
+        return response()->json([
+            'lines' => $lines,
+            'has_invalid' => $hasInvalid,
+            'checkout_allowed' => ! $hasInvalid && $lines !== [],
         ]);
     }
 

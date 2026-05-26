@@ -2,7 +2,57 @@
 
 **Última actualización:** 2026-05-24
 
-## Fase 1 — Realtime operacional (activa)
+## Fase 1.5 — Estabilización operacional (activa)
+
+| Módulo | WebSocket | Polling fallback |
+|--------|-----------|------------------|
+| Grid operaciones + pedido nuevo | `order.updated` (post-fulfill + courier) → insert/parche | 15s |
+| Métricas ops + dashboard KPI pendientes | `operations.metrics.updated` | 15s (indirecto vía feed) |
+| Inventario admin | `product.stock.updated` → filas `[data-inventory-product-id]` | — |
+| Tienda (guest) | `product.availability.updated` en canal público `store.catalog` (sin stock numérico) | — |
+| Campana / pago | Sin cambios Fase 1 | 30s / 2.5s |
+
+### Servicios broadcast (único punto de emisión)
+
+- `App\Services\Realtime\StockBroadcastService`
+- `App\Services\Realtime\OrderBroadcastService`
+- `App\Services\Realtime\OperationsMetricsBroadcastService`
+
+Usan `DB::afterCommit` cuando hay transacción abierta (equivalente a *after commit* en esta versión de Laravel).
+
+### Eventos nuevos
+
+| Evento | Alias | Canales |
+|--------|-------|---------|
+| `ProductStockUpdated` | `product.stock.updated` | `operations.inventory`, `operations.dashboard` |
+| `ProductAvailabilityUpdated` | `product.availability.updated` | `store.catalog` (público) |
+| `OperationsMetricsUpdated` | `operations.metrics.updated` | `operations.dashboard`, `operations.orders` |
+
+`OrderUpdated` añade canal `operations.dashboard`.
+
+### Eventos DOM nuevos
+
+- `bf:ops-metrics-updated`
+- `bf:product-stock-updated`
+- `bf:product-availability-updated`
+
+### Fase 1.5-STABILIZATION (2026-05-24)
+
+| STAB | Implementación |
+|------|----------------|
+| markReady | `OrderWorkflowService::transitionSilent()` + `CourierAssignmentService` sin broadcast + un `OrderBroadcastService::dispatch()` |
+| Métricas | `BroadcastOperationsMetricsJob` (`ShouldBeUnique`, ventana 2s) + `RealtimeMetricsContext` evita duplicar stock+order en la misma request |
+| DOM ops | `opsInsertGuards.js` (locks + TTL 5s), polling no inserta tarjetas nuevas, inserts solo `data-ops-page="1"` |
+| Health | `GET /admin/realtime/health`, `healthMonitor.js` (60s), `realtimeStore` modos live/degraded/fallback |
+| Reconnect | `bfResyncOperationsAfterReconnect()` — feed + parche sin reload |
+| Dashboard | `[data-dashboard-low-stock-*]`, template `#bf-low-stock-row-tpl`, `stockUi.js` |
+| Carrito | `GET /carrito/validar`, `cartValidate.js` (deshabilita checkout si agotado) |
+| Campana | `localStorage` key `bf:notifications:unread` + evento `storage` entre pestañas |
+| Ruido | Canales map/tracking huérfanos en noop; sin `bf:dashboard-order-updated` duplicado |
+
+**Respuesta health (staff):** `websocket_connected` (false en servidor; el cliente usa estado Echo), `queue_healthy`, `pending_jobs`, `oldest_pending_seconds`, `mode`, `fallback_mode`.
+
+## Fase 1 — Realtime operacional
 
 | Módulo | WebSocket | Polling fallback |
 |--------|-----------|------------------|
@@ -59,8 +109,8 @@ app.js → bootstrapBfRealtime() → Echo (Reverb)
 | Módulo | Polling (activo) | WebSocket (Fase 0) |
 |--------|-------------------|---------------------|
 | Operaciones pedidos | `operationsPolling.js` (15s parche DOM) | Parche tarjeta vía `bf:order-updated` |
-| Mapa operativo | `operationsMap.js` (15s) | Listener `bf:map-order-updated` |
-| Tracking pedido | `orderTracking.js` (12s) | Solo auth users en `orders.{id}` |
+| Mapa operativo | `operationsMap.js` (15s) | Polling only (WS map desactivado en STAB) |
+| Tracking pedido | `orderTracking.js` (12s) | Polling only (WS tracking desactivado en STAB) |
 | Campana notificaciones | `notificationBell.js` (30s) | Badge + dropdown + toast instantáneo |
 | Pago Wompi | `paymentProcess.js` (2.5s) | Redirect/UI instantáneo en `payment.status.updated` |
 | Courier GPS | `courierOps.js` (45s POST) | Canal `couriers.{id}` autorizado, sin UI aún |

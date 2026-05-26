@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\CompanyProfileController;
 use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderOperationsController;
+use App\Http\Controllers\Admin\RealtimeHealthController;
 use App\Http\Controllers\Admin\OrderTicketController;
 use App\Http\Controllers\Courier\CourierOrderController;
 use App\Http\Controllers\Store\CustomerOrderController;
@@ -44,6 +45,7 @@ Route::post('/carrito/agregar-pack', [CarritoController::class, 'agregarOffer'])
     ->middleware('throttle:60,1')
     ->name('carrito.agregar-offer');
 Route::get('/carrito', [CarritoController::class, 'ver'])->name('carrito.ver');
+Route::get('/carrito/validar', [CarritoController::class, 'validar'])->name('carrito.validar');
 Route::patch('/carrito/linea', [CarritoController::class, 'actualizarLinea'])
     ->middleware('throttle:60,1')
     ->name('carrito.linea.actualizar');
@@ -111,6 +113,8 @@ Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->grou
 });
 
 Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('admin.')->prefix('admin')->group(function () {
+    Route::get('/realtime/health', RealtimeHealthController::class)->name('realtime.health');
+
     Route::prefix('pedidos')->name('pedidos.')->group(function () {
         Route::get('/', [OrderOperationsController::class, 'index'])->name('index');
         Route::get('/mapa', [OrderOperationsController::class, 'map'])->name('map');

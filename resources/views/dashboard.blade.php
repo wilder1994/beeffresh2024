@@ -43,9 +43,9 @@
                 <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Pedidos hoy</p>
                 <p class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mt-0.5 sm:mt-1 tabular-nums">{{ $kpi['orders_today'] }}</p>
             </div>
-            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
+            <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5" data-dashboard-metric data-metric-key="pending">
                 <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Pendientes</p>
-                <p class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--bf-red)] mt-0.5 sm:mt-1 tabular-nums">{{ $kpi['pending'] }}</p>
+                <p class="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--bf-red)] mt-0.5 sm:mt-1 tabular-nums" data-dashboard-metric-value>{{ $kpi['pending'] }}</p>
             </div>
             <div class="bg-white rounded-xl md:rounded-2xl border border-amber-100/90 shadow-sm p-3 sm:p-4 md:p-5">
                 <p class="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide leading-tight">Ingresos hoy</p>
@@ -168,8 +168,11 @@
             </div>
 
             <div class="bg-white rounded-2xl border border-amber-100/90 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">Seguimiento · stock bajo</h2>
+                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        Seguimiento · stock bajo
+                        <span class="ml-1 text-sm font-normal text-gray-500">(<span data-dashboard-low-stock-count>{{ $low_stock->count() }}</span>)</span>
+                    </h2>
                     <a href="{{ route('catalog.inventory.index', ['low_only' => 1]) }}" class="text-sm text-[var(--bf-red)] font-medium hover:underline">Gestionar</a>
                 </div>
                 <div class="bf-table-panel bf-table-panel--flush max-h-72 overflow-y-auto overflow-x-auto">
@@ -180,14 +183,14 @@
                                 <th class="text-right">Stock</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody data-dashboard-low-stock-body>
                             @forelse($low_stock as $p)
-                                <tr>
-                                    <td class="text-sm max-w-[200px] truncate">{{ $p->name }}</td>
-                                    <td class="text-right font-semibold tabular-nums {{ (float) $p->stock <= (float) $p->min_stock ? 'text-red-600' : 'text-amber-700' }}">{{ number_format((float) $p->stock, 1, ',', '.') }}</td>
+                                <tr data-dashboard-low-stock-product-id="{{ $p->id }}">
+                                    <td class="text-sm max-w-[200px] truncate" data-dashboard-low-stock-name>{{ $p->name }}</td>
+                                    <td class="text-right font-semibold tabular-nums {{ (float) $p->stock <= (float) $p->min_stock ? 'text-red-600' : 'text-amber-700' }}" data-dashboard-low-stock-value>{{ number_format((float) $p->stock, 1, ',', '.') }}</td>
                                 </tr>
                             @empty
-                                <tr>
+                                <tr data-dashboard-low-stock-empty>
                                     <td colspan="2" class="text-center py-8 text-gray-500 text-sm">Ningún producto por debajo del umbral configurado.</td>
                                 </tr>
                             @endforelse
@@ -195,6 +198,12 @@
                     </table>
                 </div>
             </div>
+            <template id="bf-low-stock-row-tpl">
+                <tr>
+                    <td class="text-sm max-w-[200px] truncate" data-dashboard-low-stock-name></td>
+                    <td class="text-right font-semibold tabular-nums text-amber-700" data-dashboard-low-stock-value></td>
+                </tr>
+            </template>
         </div>
     </div>
 @endsection

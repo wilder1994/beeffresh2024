@@ -131,6 +131,30 @@ class BroadcastingAuthorizationTest extends TestCase
             ->assertOk();
     }
 
+    public function test_staff_with_inventory_can_authorize_operations_inventory_channel(): void
+    {
+        $admin = User::query()->where('email', 'admin1@demo.beeffresh.test')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->post('/broadcasting/auth', [
+                'socket_id' => '1.1',
+                'channel_name' => 'private-operations.inventory',
+            ])
+            ->assertOk();
+    }
+
+    public function test_customer_cannot_authorize_operations_inventory_channel(): void
+    {
+        $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();
+
+        $this->actingAs($customer)
+            ->post('/broadcasting/auth', [
+                'socket_id' => '1.1',
+                'channel_name' => 'private-operations.inventory',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_customer_can_authorize_own_payment_channel(): void
     {
         $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();

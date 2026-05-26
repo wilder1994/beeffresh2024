@@ -1,6 +1,6 @@
 /**
- * Store central BF-Realtime (Fase 1).
- * @typedef {'notification'|'order'|'payment'|'connection'} RealtimeEventKind
+ * Store central BF-Realtime (Fase 1.5).
+ * @typedef {'notification'|'order'|'payment'|'metrics'|'stock'|'availability'|'connection'} RealtimeEventKind
  */
 
 /** @type {boolean} */
@@ -9,13 +9,22 @@ let connected = false;
 let reconnecting = false;
 /** @type {boolean} */
 let echoEnabled = false;
+/** @type {boolean} */
+let queueHealthy = true;
+/** @type {string} */
+let serverMode = 'live';
 /** @type {unknown} */
 let lastError = null;
+/** @type {string|null} */
+let lastBusinessEventAt = null;
 /** @type {Record<string, string|null>} */
 const lastEventAt = {
     notification: null,
     order: null,
     payment: null,
+    metrics: null,
+    stock: null,
+    availability: null,
     connection: null,
 };
 /** @type {Record<string, number>} */
@@ -23,6 +32,9 @@ const listenerMetrics = {
     notification: 0,
     order: 0,
     payment: 0,
+    metrics: 0,
+    stock: 0,
+    availability: 0,
 };
 
 function stamp(kind) {
@@ -31,6 +43,22 @@ function stamp(kind) {
 
 function dispatch(name, detail = {}) {
     window.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
+}
+
+function computeClientMode() {
+    if (!echoEnabled || !connected) {
+        return 'fallback';
+    }
+
+    if (!queueHealthy || serverMode === 'fallback') {
+        return 'fallback';
+    }
+
+    if (serverMode === 'degraded') {
+        return 'degraded';
+    }
+
+    return 'live';
 }
 
 export const bfRealtimeStore = {
@@ -52,24 +80,54 @@ export const bfRealtimeStore = {
         return reconnecting;
     },
 
-    isFallbackMode() {
-        if (!echoEnabled) {
-            return true;
-        }
+    isQueueHealthy() {
+        return queueHealthy;
+    },
 
-        return !connected;
+    getMode() {
+        return computeClientMode();
+    },
+
+    isFallbackMode() {
+        return computeClientMode() === 'fallback';
+    },
+
+    isLiveMode() {
+        return computeClientMode() === 'live';
     },
 
     getLastError() {
         return lastError;
     },
 
+    getLastBusinessEventAt() {
+        return lastBusinessEventAt;
+    },
+
+    /** @param {RealtimeEventKind} kind */
     getLastEventAt(kind) {
         return lastEventAt[kind] ?? null;
     },
 
     getListenerMetrics() {
         return { ...listenerMetrics };
+    },
+
+    /**
+     * @param {{ queue_healthy?: boolean, mode?: string, fallback_mode?: boolean }} payload
+     */
+    applyHealthPayload(payload) {
+        if (typeof payload.queue_healthy === 'boolean') {
+            queueHealthy = payload.queue_healthy;
+        }
+
+        if (typeof payload.mode === 'string') {
+            serverMode = payload.mode;
+        } else if (payload.fallback_mode === true) {
+            serverMode = 'fallback';
+        }
+
+        this.emitStatus();
     },
 
     /** @param {RealtimeEventKind} kind */
@@ -114,10 +172,15 @@ export const bfRealtimeStore = {
         this.emitStatus();
     },
 
-    /** @param {RealtimeEventKind} kind @param {unknown} payload */
+    /** @param {RealtimeEventKind} kind @param {unknown} [payload] */
     recordEvent(kind, payload) {
         stamp(kind);
         bfRealtimeLogEvent(kind, payload);
+    },
+
+    recordBusinessEvent(kind) {
+        lastBusinessEventAt = new Date().toISOString();
+        this.recordEvent(kind);
     },
 
     getStatus() {
@@ -125,8 +188,12 @@ export const bfRealtimeStore = {
             connected,
             reconnecting,
             echoEnabled,
+            queueHealthy,
+            mode: computeClientMode(),
+            serverMode,
             fallbackMode: this.isFallbackMode(),
             lastError,
+            lastBusinessEventAt,
             lastEventAt: { ...lastEventAt },
             listeners: { ...listenerMetrics },
         };

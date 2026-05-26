@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Orders;
 
 use App\Enums\OrderStatus;
-use App\Events\OrderUpdated;
 use App\Models\Order;
 use App\Models\OrderStatusLog;
 use App\Models\User;
+use App\Services\Realtime\OrderBroadcastService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -16,6 +16,7 @@ final class OrderWorkflowService
 {
     public function __construct(
         private readonly OrderDomainEventDispatcher $domainEvents,
+        private readonly OrderBroadcastService $orderBroadcast,
     ) {}
 
     public function transition(
@@ -23,6 +24,7 @@ final class OrderWorkflowService
         OrderStatus $toStatus,
         ?User $actor = null,
         ?string $note = null,
+        bool $broadcast = true,
     ): Order {
         $fromStatus = $order->status;
 
@@ -36,7 +38,7 @@ final class OrderWorkflowService
             );
         }
 
-        return DB::transaction(function () use ($order, $fromStatus, $toStatus, $actor, $note): Order {
+        return DB::transaction(function () use ($order, $fromStatus, $toStatus, $actor, $note, $broadcast): Order {
             $order->status = $toStatus;
             $this->applyStatusTimestamps($order, $toStatus);
             $order->save();
@@ -51,11 +53,23 @@ final class OrderWorkflowService
 
             $fresh = $order->fresh(['user', 'courier', 'items']);
 
-            event(new OrderUpdated($fresh));
+            if ($broadcast) {
+                $this->orderBroadcast->dispatch($fresh);
+            }
+
             $this->domainEvents->dispatchStatusTransition($fresh, $fromStatus, $toStatus, $actor, $note);
 
             return $fresh;
         });
+    }
+
+    public function transitionSilent(
+        Order $order,
+        OrderStatus $toStatus,
+        ?User $actor = null,
+        ?string $note = null,
+    ): Order {
+        return $this->transition($order, $toStatus, $actor, $note, broadcast: false);
     }
 
     public function logInitialStatus(Order $order, ?User $actor = null, ?string $note = null): OrderStatusLog

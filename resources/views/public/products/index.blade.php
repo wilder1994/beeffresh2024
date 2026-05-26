@@ -41,7 +41,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         @forelse($products as $product)
-            <div class="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 flex flex-col overflow-hidden">
+            <div class="bg-white rounded-xl shadow hover:shadow-lg transition duration-300 flex flex-col overflow-hidden" data-store-product-id="{{ $product->id }}">
                 @if($product->imageUrl())
                     <div class="relative aspect-[4/3] overflow-hidden bg-stone-100">
                         <img src="{{ $product->imageUrl() }}" alt="{{ $product->name }}" class="h-full w-full object-cover object-center">
@@ -62,7 +62,7 @@
                     @if($product->isPurchasable())
                         <x-store.product-purchase :product="$product" />
                     @else
-                        <p class="text-sm text-gray-500 mt-2">No disponible</p>
+                        <p class="text-sm text-gray-500 mt-2" data-store-unavailable-msg data-store-availability-label>Agotado</p>
                     @endif
                 </div>
             </div>

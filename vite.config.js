@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/paymentStatus.js',
                 'resources/js/paymentProcess.js',
                 'resources/js/notificationBell.js',
+                'resources/js/cartValidate.js',
             ],
             refresh: true,
         }),

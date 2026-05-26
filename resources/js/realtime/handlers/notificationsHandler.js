@@ -38,6 +38,21 @@ export function bfHandleNotificationCreated(payload) {
             ? payload.unread_count
             : null;
 
+    if (unreadCount !== null) {
+        try {
+            localStorage.setItem('bf:notifications:unread', String(Math.max(0, unreadCount)));
+        } catch {
+            // ignore
+        }
+
+        window.dispatchEvent(
+            new CustomEvent('bf:notification-unread-sync', {
+                detail: { unread_count: unreadCount },
+                bubbles: true,
+            }),
+        );
+    }
+
     bellRoots.forEach((root) => {
         if (unreadCount !== null) {
             bfRenderNotificationBadge(root.querySelector('[data-notification-count]'), unreadCount);

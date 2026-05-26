@@ -1,11 +1,13 @@
 /**
- * Operaciones pedidos — Fase 1: parche DOM + websocket; polling fallback sin reload.
+ * Operaciones pedidos — Fase 1.5: parche DOM + websocket; polling fallback sin reload.
  */
 import {
     bfHandleOrderUpdated,
     bfInitOperationsGridHandler,
     bfPatchOrdersFromFeed,
 } from './realtime/handlers/operationsHandler.js';
+import { bfFindOrderCard } from './realtime/utils/orderOpsUi.js';
+import { bfShouldSkipOrderInsert, bfWasOrderRecentlyInserted } from './realtime/utils/opsInsertGuards.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.querySelector('[data-ops-polling]');
@@ -44,8 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (lastSignature !== '' && signature !== lastSignature) {
                 for (const order of orders) {
-                    await bfHandleOrderUpdated(order);
+                    const existing = bfFindOrderCard(order.id);
+                    if (existing) {
+                        await bfHandleOrderUpdated(order, { allowInsert: false });
+                        continue;
+                    }
+
+                    if (bfWasOrderRecentlyInserted(order.id) || bfShouldSkipOrderInsert(order.id)) {
+                        continue;
+                    }
+
+                    // Polling no inserta tarjetas nuevas; solo parchea existentes.
                 }
+
                 bfPatchOrdersFromFeed(orders);
             }
 

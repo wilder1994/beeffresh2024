@@ -30,14 +30,19 @@
                 </thead>
                 <tbody>
                     @foreach($products as $index => $product)
-                        <tr @class(['bg-red-50/60' => $product->isLowStock()])>
+                        <tr
+                            data-inventory-product-id="{{ $product->id }}"
+                            data-inventory-low-stock="{{ $product->isLowStock() ? '1' : '0' }}"
+                            data-inventory-out-of-stock="{{ $product->isPurchasable() ? '0' : '1' }}"
+                            @class(['bg-red-50/60' => $product->isLowStock()])
+                        >
                             <td>
                                 {{ $product->name }}
                                 <span class="text-xs text-gray-500">({{ $product->stock_unit->value }})</span>
                                 <input type="hidden" name="stock[{{ $index }}][id]" value="{{ $product->id }}">
                             </td>
                             <td>
-                                <input type="number" step="0.01" min="0" name="stock[{{ $index }}][stock]" class="bf-input max-w-[8rem]" value="{{ $product->stock }}" required>
+                                <input type="number" step="0.01" min="0" name="stock[{{ $index }}][stock]" data-inventory-stock-input class="bf-input max-w-[8rem]" value="{{ $product->stock }}" required>
                             </td>
                             <td>
                                 <input type="number" step="0.01" min="0" name="stock[{{ $index }}][min_stock]" class="bf-input max-w-[8rem]" value="{{ $product->min_stock }}" required>

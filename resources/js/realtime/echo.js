@@ -1,10 +1,13 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { bfResyncOperationsAfterReconnect } from './healthMonitor.js';
 import { bfRealtimeStore } from './stores/realtimeStore.js';
 import { bfRealtimeLog } from './utils/logger.js';
 
 /** @type {Echo|null} */
 let echoInstance = null;
+/** @type {boolean} */
+let hasConnectedOnce = false;
 
 /**
  * @returns {Echo|null}
@@ -42,6 +45,12 @@ export function createBfEcho() {
         connection.bind('connected', () => {
             bfRealtimeStore.setConnected(true);
             bfRealtimeLog('info', 'Connected');
+
+            if (hasConnectedOnce) {
+                bfResyncOperationsAfterReconnect();
+            }
+
+            hasConnectedOnce = true;
         });
 
         connection.bind('connecting', () => {

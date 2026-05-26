@@ -6,6 +6,8 @@ namespace App\Services\Orders;
 
 use App\Events\Orders\OrderAssigned;
 use App\Models\CompanyProfile;
+use App\Services\Realtime\OperationsMetricsBroadcastService;
+use App\Services\Realtime\OrderBroadcastService;
 use App\Models\Order;
 use App\Models\OrderAssignment;
 use App\Models\User;
@@ -16,7 +18,12 @@ use RuntimeException;
 
 final class CourierAssignmentService
 {
-    public function assignNearestAvailable(Order $order, ?User $assignedBy = null): OrderAssignment
+    public function __construct(
+        private readonly OrderBroadcastService $orderBroadcast,
+        private readonly OperationsMetricsBroadcastService $metricsBroadcast,
+    ) {}
+
+    public function assignNearestAvailable(Order $order, ?User $assignedBy = null, bool $emitBroadcast = true): OrderAssignment
     {
         if ($order->shipping_latitude === null || $order->shipping_longitude === null) {
             throw new RuntimeException('El pedido no tiene coordenadas de entrega.');
@@ -33,7 +40,7 @@ final class CourierAssignmentService
 
         $previousCourierId = $order->courier_id;
 
-        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId): OrderAssignment {
+        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId, $emitBroadcast): OrderAssignment {
             $this->releaseActiveAssignments($order);
 
             $assignment = OrderAssignment::query()->create([
@@ -50,15 +57,19 @@ final class CourierAssignmentService
 
             $this->markCourierBusy($courier);
 
-            $fresh = $order->fresh(['user', 'courier']);
+            $fresh = $order->fresh(['user', 'courier', 'items']);
             $reassigned = $previousCourierId !== null && $previousCourierId !== $courier->id;
             event(new OrderAssigned($fresh, $courier, $assignedBy, $reassigned));
+
+            if ($emitBroadcast) {
+                $this->orderBroadcast->dispatch($fresh);
+            }
 
             return $assignment;
         });
     }
 
-    public function assignToCourier(Order $order, User $courier, ?User $assignedBy = null): OrderAssignment
+    public function assignToCourier(Order $order, User $courier, ?User $assignedBy = null, bool $emitBroadcast = true): OrderAssignment
     {
         if (! $courier->isCourier()) {
             throw new RuntimeException('El usuario seleccionado no es domiciliario.');
@@ -66,7 +77,7 @@ final class CourierAssignmentService
 
         $previousCourierId = $order->courier_id;
 
-        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId): OrderAssignment {
+        return DB::transaction(function () use ($order, $courier, $assignedBy, $previousCourierId, $emitBroadcast): OrderAssignment {
             $this->releaseActiveAssignments($order);
 
             $assignment = OrderAssignment::query()->create([
@@ -84,8 +95,12 @@ final class CourierAssignmentService
             $this->markCourierBusy($courier);
 
             $reassigned = $previousCourierId !== null && $previousCourierId !== $courier->id;
-            $fresh = $order->fresh(['user', 'courier']);
+            $fresh = $order->fresh(['user', 'courier', 'items']);
             event(new OrderAssigned($fresh, $courier, $assignedBy, $reassigned));
+
+            if ($emitBroadcast) {
+                $this->orderBroadcast->dispatch($fresh);
+            }
 
             return $assignment;
         });
@@ -106,6 +121,8 @@ final class CourierAssignmentService
             $order->courier_id = null;
             $order->save();
         });
+
+        $this->metricsBroadcast->dispatch();
     }
 
     public function markCourierFree(User $courier): void

@@ -2,6 +2,7 @@
     'url',
     'imageUrl',
     'title',
+    'productId' => null,
     'badge' => null,
     'priceLabel' => null,
     'referencePrice' => null,
@@ -9,14 +10,14 @@
     'meta' => null,
 ])
 
-<a href="{{ $url }}" class="bf-home-product-card group">
+<a href="{{ $url }}" class="bf-home-product-card group" @if($productId) data-store-product-id="{{ $productId }}" @endif>
     <div class="bf-home-product-card__media">
         <img src="{{ $imageUrl }}" alt="{{ $title }}" class="bf-home-product-card__img" loading="lazy">
         @if($badge)
             <span class="bf-home-product-card__badge">{{ $badge }}</span>
         @endif
         @if($availabilityLabel)
-            <span class="bf-home-product-card__stock">{{ $availabilityLabel }}</span>
+            <span class="bf-home-product-card__stock" data-store-availability-label>{{ $availabilityLabel }}</span>
         @endif
     </div>
     <div class="bf-home-product-card__body">

@@ -7,6 +7,7 @@
 @php $t = $metrics['totals']; @endphp
 <div class="max-w-7xl mx-auto space-y-6" data-ops-polling
      data-feed-url="{{ route('admin.pedidos.feed') }}"
+     data-ops-page="{{ $pedidos->currentPage() }}"
      data-ops-tab="{{ $tab }}"
      data-card-fragment-url="{{ str_replace('/0/', '/__ORDER__/', route('admin.pedidos.card-fragment', ['order' => 0])) }}">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -22,16 +23,18 @@
 
     <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         @foreach([
-            ['label' => 'Nuevos', 'value' => $t['pending'], 'tab' => 'pending', 'tone' => 'warn'],
-            ['label' => 'Preparando', 'value' => $t['preparing'], 'tab' => 'preparing', 'tone' => 'info'],
-            ['label' => 'Listos', 'value' => $t['ready'], 'tab' => 'ready', 'tone' => 'indigo'],
-            ['label' => 'En camino', 'value' => $t['in_delivery'], 'tab' => 'in_delivery', 'tone' => 'cyan'],
-            ['label' => 'Entregados hoy', 'value' => $t['delivered_today'], 'tab' => 'delivered', 'tone' => 'success'],
-            ['label' => 'Fallidos', 'value' => $t['failed'], 'tab' => 'failed', 'tone' => 'danger'],
+            ['label' => 'Nuevos', 'value' => $t['pending'], 'tab' => 'pending', 'key' => 'pending', 'tone' => 'warn'],
+            ['label' => 'Preparando', 'value' => $t['preparing'], 'tab' => 'preparing', 'key' => 'preparing', 'tone' => 'info'],
+            ['label' => 'Listos', 'value' => $t['ready'], 'tab' => 'ready', 'key' => 'ready', 'tone' => 'indigo'],
+            ['label' => 'En camino', 'value' => $t['in_delivery'], 'tab' => 'in_delivery', 'key' => 'in_delivery', 'tone' => 'cyan'],
+            ['label' => 'Entregados hoy', 'value' => $t['delivered_today'], 'tab' => 'delivered', 'key' => 'delivered', 'tone' => 'success'],
+            ['label' => 'Fallidos', 'value' => $t['failed'], 'tab' => 'failed', 'key' => 'failed', 'tone' => 'danger'],
         ] as $metric)
             <a href="{{ route('admin.pedidos.index', ['tab' => $metric['tab']]) }}"
+               data-ops-metric
+               data-metric-key="{{ $metric['key'] }}"
                @class(['bf-ops-metric', 'bf-ops-metric--active' => $tab === $metric['tab'], 'bf-ops-metric--'.$metric['tone']])>
-                <span class="bf-ops-metric__value tabular-nums">{{ $metric['value'] }}</span>
+                <span class="bf-ops-metric__value tabular-nums" data-ops-metric-value>{{ $metric['value'] }}</span>
                 <span class="bf-ops-metric__label">{{ $metric['label'] }}</span>
             </a>
         @endforeach
@@ -60,10 +63,10 @@
         </form>
     </div>
 
-    <p class="text-xs text-stone-500">
-        Domiciliarios: <strong class="text-emerald-700">{{ $metrics['available_couriers'] }} libres</strong>
-        · <strong class="text-amber-700">{{ $metrics['busy_couriers'] }} ocupados</strong>
-        · Ingresos hoy: <strong>${{ number_format($metrics['revenue_today'], 0, ',', '.') }}</strong>
+    <p class="text-xs text-stone-500" data-ops-couriers-line>
+        Domiciliarios: <strong class="text-emerald-700"><span data-ops-available-couriers>{{ $metrics['available_couriers'] }}</span> libres</strong>
+        · <strong class="text-amber-700"><span data-ops-active-couriers>{{ $metrics['busy_couriers'] }}</span> ocupados</strong>
+        · Ingresos hoy: <strong><span data-ops-revenue-today>${{ number_format($metrics['revenue_today'], 0, ',', '.') }}</span></strong>
     </p>
 
     @if($pedidos->isEmpty())

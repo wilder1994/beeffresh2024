@@ -16,9 +16,12 @@ export function registerOperationsChannels(echo) {
         bfDispatchRealtimeEvent('bf:order-updated', payload);
     };
 
+    const dispatchMetrics = (payload) => {
+        bfRealtimeStore.recordEvent('metrics', payload);
+        bfDispatchRealtimeEvent('bf:ops-metrics-updated', payload);
+    };
+
     echo.private('operations.orders').listen('.order.updated', dispatchOrder);
-    echo.private('operations.dashboard').listen('.order.updated', (payload) => {
-        bfDispatchRealtimeEvent('bf:dashboard-order-updated', payload);
-        dispatchOrder(payload);
-    });
+    echo.private('operations.orders').listen('.operations.metrics.updated', dispatchMetrics);
+    echo.private('operations.dashboard').listen('.operations.metrics.updated', dispatchMetrics);
 }

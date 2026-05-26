@@ -19,10 +19,12 @@ use App\Models\User;
 use App\Services\Orders\CourierAssignmentService;
 use App\Services\Orders\OrderOperationsQueryService;
 use App\Services\Orders\OrderWorkflowService;
+use App\Services\Realtime\OrderBroadcastService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class OrderOperationsController extends Controller
@@ -31,6 +33,7 @@ class OrderOperationsController extends Controller
         private readonly OrderOperationsQueryService $queries,
         private readonly OrderWorkflowService $workflow,
         private readonly CourierAssignmentService $courierAssignment,
+        private readonly OrderBroadcastService $orderBroadcast,
     ) {}
 
     public function index(OrderOperationsIndexRequest $request): View
@@ -71,7 +74,7 @@ class OrderOperationsController extends Controller
 
     public function markReady(MarkReadyOrderRequest $request, Order $order): RedirectResponse
     {
-        $order = $this->workflow->transition(
+        $order = $this->workflow->transitionSilent(
             $order,
             OrderStatus::ReadyForDelivery,
             $request->user(),
@@ -80,12 +83,16 @@ class OrderOperationsController extends Controller
         $message = 'Pedido listo para entrega.';
 
         try {
-            $this->courierAssignment->assignNearestAvailable($order, $request->user());
+            $this->courierAssignment->assignNearestAvailable($order, $request->user(), emitBroadcast: false);
             $message = 'Pedido listo y domiciliario asignado.';
         } catch (RuntimeException) {
             $message = 'Pedido listo. No hay domiciliario disponible en este momento.';
             event(new OrderUnassigned($order->fresh(['user', 'courier'])));
         }
+
+        DB::transaction(function () use ($order): void {
+            $this->orderBroadcast->dispatch($order->fresh(['user', 'courier', 'items']));
+        });
 
         return redirect()
             ->route('admin.pedidos.show', $order)

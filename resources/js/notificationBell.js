@@ -1,5 +1,5 @@
 /**
- * Campana de notificaciones — Fase 1 realtime + polling fallback 30s.
+ * Campana de notificaciones — Fase 1 realtime + polling fallback 30s + sync multi-tab.
  */
 import {
     bfInitNotificationRealtimeHandler,
@@ -10,6 +10,29 @@ import {
     bfRenderNotificationBadge,
     bfRenderNotificationList,
 } from './realtime/utils/notificationUi.js';
+
+const UNREAD_STORAGE_KEY = 'bf:notifications:unread';
+
+/**
+ * @param {number} count
+ */
+function bfPersistUnreadCount(count) {
+    try {
+        localStorage.setItem(UNREAD_STORAGE_KEY, String(Math.max(0, count)));
+    } catch {
+        // storage bloqueado
+    }
+}
+
+/**
+ * @param {HTMLElement[]} roots
+ * @param {number} count
+ */
+function bfApplyUnreadToRoots(roots, count) {
+    roots.forEach((root) => {
+        bfRenderNotificationBadge(root.querySelector('[data-notification-count]'), count);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const roots = [...document.querySelectorAll('[data-notification-bell]')];
@@ -43,9 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const notifications = payload.notifications ?? [];
 
             bfSeedNotificationIds(notifications);
+            bfPersistUnreadCount(unreadCount);
+            bfApplyUnreadToRoots(roots, unreadCount);
 
             roots.forEach((root) => {
-                bfRenderNotificationBadge(root.querySelector('[data-notification-count]'), unreadCount);
                 bfRenderNotificationList(
                     root.querySelector('[data-notification-list]'),
                     notifications,
@@ -56,6 +80,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // fallback silencioso
         }
     };
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== UNREAD_STORAGE_KEY || event.newValue === null) {
+            return;
+        }
+
+        const count = Number.parseInt(event.newValue, 10);
+        if (Number.isNaN(count)) {
+            return;
+        }
+
+        bfApplyUnreadToRoots(roots, count);
+    });
+
+    window.addEventListener('bf:notification-unread-sync', (event) => {
+        const count = event.detail?.unread_count;
+        if (typeof count !== 'number') {
+            return;
+        }
+
+        bfApplyUnreadToRoots(roots, count);
+    });
 
     document.querySelectorAll('[data-notification-mark-all]').forEach((form) => {
         form.addEventListener('submit', async (event) => {
@@ -97,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                bfPersistUnreadCount(0);
                 await refreshAll();
 
                 const details = form.closest('details');
@@ -110,6 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    const cached = localStorage.getItem(UNREAD_STORAGE_KEY);
+    if (cached !== null) {
+        const parsed = Number.parseInt(cached, 10);
+        if (!Number.isNaN(parsed)) {
+            bfApplyUnreadToRoots(roots, parsed);
+        }
+    }
 
     refreshAll();
     window.setInterval(refreshAll, 30000);

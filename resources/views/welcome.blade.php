@@ -17,6 +17,7 @@
                     @php $product = $row['product']; @endphp
                     <x-store.home-product-card
                         :url="route('products.public.show', $product)"
+                        :product-id="$product->id"
                         :image-url="$product->imageUrl()"
                         :title="$product->name"
                         badge="Promo"
@@ -62,6 +63,7 @@
                     @php $product = $row['product']; @endphp
                     <x-store.home-product-card
                         :url="route('products.public.show', $product)"
+                        :product-id="$product->id"
                         :image-url="$product->imageUrl()"
                         :title="$product->name"
                         badge="Destacado"

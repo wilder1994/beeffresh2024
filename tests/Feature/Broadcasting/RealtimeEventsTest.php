@@ -9,17 +9,24 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Events\Catalog\ProductAvailabilityUpdated;
+use App\Events\Catalog\ProductStockUpdated;
 use App\Events\NotificationCreated;
+use App\Events\Operations\OperationsMetricsUpdated;
 use App\Events\OrderUpdated;
 use App\Events\Payments\PaymentStatusUpdated;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\User;
 use App\Repositories\Notifications\NotificationRepository;
 use App\Services\Orders\OrderWorkflowService;
 use App\Services\Payments\PaymentWebhookProcessor;
+use App\Services\Realtime\OrderBroadcastService;
+use App\Services\Realtime\StockBroadcastService;
 use Database\Seeders\DemoUsersSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -33,7 +40,7 @@ class RealtimeEventsTest extends TestCase
         $this->seed(DemoUsersSeeder::class);
     }
 
-    public function test_order_updated_broadcasts_on_private_channels(): void
+    public function test_order_updated_broadcasts_on_private_channels_including_dashboard(): void
     {
         Event::fake([OrderUpdated::class]);
 
@@ -59,8 +66,83 @@ class RealtimeEventsTest extends TestCase
 
             return $event->order->id === $order->id
                 && in_array('private-operations.orders', $channelNames, true)
+                && in_array('private-operations.dashboard', $channelNames, true)
                 && in_array('private-orders.'.$order->id, $channelNames, true)
                 && $event->broadcastAs() === 'order.updated';
+        });
+    }
+
+    public function test_order_broadcast_service_dispatches_order_updated(): void
+    {
+        Event::fake([OrderUpdated::class]);
+
+        $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();
+        $order = Order::query()->create([
+            'user_id' => $customer->id,
+            'total' => '10000.00',
+            'status' => OrderStatus::Pending,
+            'payment_method' => PaymentMethod::OnlineSimulated,
+            'tracking_token' => Order::generateTrackingToken(),
+            'shipping_recipient_name' => $customer->name,
+            'shipping_phone' => $customer->phone,
+            'shipping_address_line1' => 'Calle 1',
+            'shipping_city' => 'Medellín',
+            'shipping_state' => 'Antioquia',
+            'shipping_country' => 'CO',
+        ]);
+
+        DB::transaction(function () use ($order): void {
+            app(OrderBroadcastService::class)->dispatch($order);
+        });
+
+        Event::assertDispatched(OrderUpdated::class);
+    }
+
+    public function test_product_stock_updated_broadcasts_private_inventory_channels(): void
+    {
+        Event::fake([ProductStockUpdated::class, ProductAvailabilityUpdated::class, OperationsMetricsUpdated::class]);
+
+        $product = Product::factory()->create(['stock' => 10, 'min_stock' => 5]);
+
+        app(StockBroadcastService::class)->dispatch($product);
+
+        Event::assertDispatched(ProductStockUpdated::class, function (ProductStockUpdated $event) use ($product): bool {
+            $channels = collect($event->broadcastOn())->map->name->all();
+            $payload = $event->broadcastWith();
+
+            return $event->product->id === $product->id
+                && in_array('private-operations.inventory', $channels, true)
+                && in_array('private-operations.dashboard', $channels, true)
+                && $event->broadcastAs() === 'product.stock.updated'
+                && $payload['product_id'] === $product->id
+                && array_key_exists('stock', $payload);
+        });
+
+        Event::assertDispatched(ProductAvailabilityUpdated::class, function (ProductAvailabilityUpdated $event): bool {
+            $channels = collect($event->broadcastOn())->map->name->all();
+            $payload = $event->broadcastWith();
+
+            return in_array('store.catalog', $channels, true)
+                && $event->broadcastAs() === 'product.availability.updated'
+                && ! array_key_exists('stock', $payload);
+        });
+    }
+
+    public function test_operations_metrics_updated_broadcasts_on_operations_channels(): void
+    {
+        Event::fake([OperationsMetricsUpdated::class]);
+
+        app(\App\Services\Realtime\OperationsMetricsBroadcastService::class)->dispatch();
+
+        Event::assertDispatched(OperationsMetricsUpdated::class, function (OperationsMetricsUpdated $event): bool {
+            $channels = collect($event->broadcastOn())->map->name->all();
+            $metrics = $event->broadcastWith()['metrics'] ?? [];
+
+            return in_array('private-operations.dashboard', $channels, true)
+                && in_array('private-operations.orders', $channels, true)
+                && $event->broadcastAs() === 'operations.metrics.updated'
+                && array_key_exists('pending', $metrics)
+                && array_key_exists('available_couriers', $metrics);
         });
     }
 

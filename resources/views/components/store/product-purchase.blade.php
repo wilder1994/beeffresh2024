@@ -25,6 +25,7 @@
 
 <div
     class="mt-2 space-y-3"
+    data-store-product-id="{{ $product->id }}"
     data-product-purchase
     x-data="productPurchase(@js($purchaseInitial))"
     :data-sale-unit="unit"
@@ -101,5 +102,7 @@
         >
             Agregar al carrito
         </button>
+    @else
+        <p class="text-sm text-[var(--bf-muted)] hidden" data-store-unavailable-msg data-store-availability-label>Agotado</p>
     @endif
 </div>

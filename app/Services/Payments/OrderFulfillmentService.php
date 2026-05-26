@@ -16,6 +16,8 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Catalog\CartSessionService;
 use App\Services\Orders\OrderWorkflowService;
+use App\Services\Realtime\OrderBroadcastService;
+use App\Services\Realtime\StockBroadcastService;
 use App\Services\Store\OfferPricingService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -26,6 +28,8 @@ final class OrderFulfillmentService
         private readonly CartSessionService $cartSession,
         private readonly OfferPricingService $offerPricing,
         private readonly OrderWorkflowService $orderWorkflow,
+        private readonly StockBroadcastService $stockBroadcast,
+        private readonly OrderBroadcastService $orderBroadcast,
     ) {}
 
     public function fulfillFromPayment(Payment $payment, User $user, CheckoutSessionData $session): Order
@@ -37,7 +41,10 @@ final class OrderFulfillmentService
             }
         }
 
-        return DB::transaction(function () use ($payment, $user, $session): Order {
+        /** @var array<int, int> $affectedProductIds */
+        $affectedProductIds = [];
+
+        $order = DB::transaction(function () use ($payment, $user, $session, &$affectedProductIds): Order {
             $productIds = $this->cartSession->productIds($session->cartSnapshot);
             $offerIds = $this->cartSession->offerIds($session->cartSnapshot);
 
@@ -70,6 +77,7 @@ final class OrderFulfillmentService
                             throw new RuntimeException("Stock insuficiente para completar: {$offer->name}");
                         }
                     }
+
                     continue;
                 }
 
@@ -118,6 +126,7 @@ final class OrderFulfillmentService
                         }
                         $locked->stock = (float) $locked->stock - (float) $requirement['stock_delta'];
                         $locked->save();
+                        $affectedProductIds[$locked->id] = $locked->id;
                     }
 
                     continue;
@@ -140,12 +149,18 @@ final class OrderFulfillmentService
 
                 $product->stock = (float) $product->stock - (float) ($line->meta['stock_delta'] ?? 0);
                 $product->save();
+                $affectedProductIds[$product->id] = $product->id;
             }
 
             $payment->order_id = $order->id;
             $payment->save();
 
-            return $order->fresh(['items.product', 'items.offer']);
+            return $order->fresh(['items.product', 'items.offer', 'user', 'courier']);
         });
+
+        $this->stockBroadcast->dispatchMany(array_values($affectedProductIds));
+        $this->orderBroadcast->dispatch($order, dispatchMetrics: false);
+
+        return $order;
     }
 }

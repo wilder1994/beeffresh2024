@@ -10,7 +10,17 @@
     $unitBadge = $isPack ? 'PACK' : strtoupper($unitLabel);
 @endphp
 
-<article class="bf-cart-table__row">
+<article class="bf-cart-table__row"
+    data-cart-line
+    data-line-key="{{ $linea['line_key'] }}"
+    data-cart-line-type="{{ $linea['tipo'] ?? 'product' }}"
+    @if(($linea['tipo'] ?? '') === 'product' && isset($linea['product_id']))
+        data-product-id="{{ $linea['product_id'] }}"
+    @endif
+    @if(($linea['tipo'] ?? '') === 'offer')
+        data-offer-id="{{ $linea['line_key'] }}"
+    @endif
+>
     {{-- Producto --}}
     <div class="bf-cart-table__cell bf-cart-table__cell--product">
         <div class="bf-cart-product">
@@ -25,6 +35,7 @@
             @endif
 
             <div class="bf-cart-product__body min-w-0">
+                <p class="hidden text-sm text-red-700 font-medium mt-1" data-cart-line-invalid-msg role="status"></p>
                 <div class="bf-cart-product__title-row">
                     <h2 class="bf-cart-product__title">{{ $linea['nombre'] }}</h2>
                     <span class="bf-cart-unit-badge">{{ $unitBadge }}</span>

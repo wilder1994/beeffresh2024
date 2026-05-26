@@ -32,6 +32,9 @@
             </a>
         </div>
     @else
+        <div data-cart-page data-cart-validate-url="{{ route('carrito.validar') }}" class="space-y-4">
+            <div class="hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                 data-cart-validate-banner role="status"></div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             <section class="lg:col-span-2" aria-label="Productos en el carrito">
                 <div class="bf-cart-panel">
@@ -102,7 +105,9 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('checkout.show') }}" class="bf-btn-primary btn-lg w-full justify-center">
+                        <a href="{{ route('checkout.show') }}"
+                           data-cart-checkout
+                           class="bf-btn-primary btn-lg w-full justify-center">
                             Continuar al pago
                         </a>
                         <p class="text-xs text-center text-[var(--bf-muted)]">
@@ -112,6 +117,11 @@
                 </div>
             </aside>
         </div>
+        </div>
     @endif
 </div>
 @endsection
+
+@push('scripts')
+    @vite('resources/js/cartValidate.js')
+@endpush

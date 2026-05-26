@@ -31,6 +31,7 @@ class OrderUpdated implements ShouldBroadcast
     {
         return [
             new PrivateChannel('operations.orders'),
+            new PrivateChannel('operations.dashboard'),
             new PrivateChannel('orders.'.$this->order->id),
         ];
     }

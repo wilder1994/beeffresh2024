@@ -6,12 +6,17 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\Realtime\StockBroadcastService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class InventoryController extends Controller
 {
+    public function __construct(
+        private readonly StockBroadcastService $stockBroadcast,
+    ) {}
+
     public function index(Request $request): View
     {
         $query = Product::query()
@@ -36,14 +41,21 @@ class InventoryController extends Controller
             'stock.*.min_stock' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $productIds = [];
+
         foreach ($validated['stock'] as $row) {
+            $id = (int) $row['id'];
+            $productIds[] = $id;
+
             Product::query()
-                ->whereKey((int) $row['id'])
+                ->whereKey($id)
                 ->update([
                     'stock' => $row['stock'],
                     'min_stock' => $row['min_stock'],
                 ]);
         }
+
+        $this->stockBroadcast->dispatchMany($productIds);
 
         return redirect()
             ->route('catalog.inventory.index', $request->only('low_only'))

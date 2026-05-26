@@ -1,6 +1,12 @@
 import { bfRealtimeStore } from '../stores/realtimeStore.js';
 import { bfRealtimeLog } from '../utils/logger.js';
 import {
+    bfAcquireOrderInsertLock,
+    bfMarkOrderRecentlyInserted,
+    bfReleaseOrderInsertLock,
+    bfShouldSkipOrderInsert,
+} from '../utils/opsInsertGuards.js';
+import {
     bfAnimateOrderCardInsert,
     bfAnimateOrderCardRemove,
     bfFindOrderCard,
@@ -37,9 +43,13 @@ export function bfInitOperationsGridHandler(root) {
 
 /**
  * @param {object} order
+ * @param {{ allowInsert?: boolean }} [options]
  */
-export async function bfHandleOrderUpdated(order) {
+export async function bfHandleOrderUpdated(order, options = {}) {
+    const allowInsert = options.allowInsert !== false;
+
     bfRealtimeLog('info', `Order updated #${order.id}`);
+    bfRealtimeStore.recordBusinessEvent('order');
 
     const tab = opsRoot?.dataset.opsTab ?? 'all';
     const grid = document.getElementById('ops-order-grid');
@@ -61,11 +71,32 @@ export async function bfHandleOrderUpdated(order) {
         return;
     }
 
-    if (!matches) {
+    if (!matches || !allowInsert) {
+        if (!matches && allowInsert) {
+            bfMaybeToastNewOrder(order);
+        }
+
         return;
     }
 
-    await bfInsertOrderCard(order);
+    if (!bfCanInsertOnCurrentPage()) {
+        bfMaybeToastNewOrder(order);
+        return;
+    }
+
+    if (bfShouldSkipOrderInsert(order.id)) {
+        return;
+    }
+
+    if (!bfAcquireOrderInsertLock(order.id)) {
+        return;
+    }
+
+    try {
+        await bfInsertOrderCard(order);
+    } finally {
+        bfReleaseOrderInsertLock(order.id);
+    }
 }
 
 /**
@@ -79,19 +110,38 @@ async function bfInsertOrderCard(order) {
 
     const url = template.replace('__ORDER__', String(order.id));
 
-    try {
+    const fetchFragment = async (attempt = 0) => {
         const response = await fetch(url, {
             headers: { Accept: 'application/json' },
             credentials: 'same-origin',
         });
 
         if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response.json();
+    };
+
+    try {
+        let payload;
+        try {
+            payload = await fetchFragment(0);
+        } catch (firstError) {
+            await new Promise((resolve) => {
+                window.setTimeout(resolve, 2000);
+            });
+
+            payload = await fetchFragment(1);
+        }
+
+        const grid = document.getElementById('ops-order-grid');
+        if (!grid || !payload.html) {
             return;
         }
 
-        const payload = await response.json();
-        const grid = document.getElementById('ops-order-grid');
-        if (!grid || !payload.html) {
+        if (bfFindOrderCard(order.id)) {
+            bfPatchOrderCard(bfFindOrderCard(order.id), payload.order ?? order);
             return;
         }
 
@@ -100,10 +150,34 @@ async function bfInsertOrderCard(order) {
         if (card) {
             bfPatchOrderCard(card, payload.order ?? order);
             bfAnimateOrderCardInsert(card);
+            bfMarkOrderRecentlyInserted(order.id);
         }
     } catch {
         // fallback polling cubrirá
     }
+}
+
+/**
+ * @param {object} order
+ */
+function bfMaybeToastNewOrder(order) {
+    const label = order.status_label ?? `Pedido #${order.id}`;
+    window.dispatchEvent(
+        new CustomEvent('bf-toast', {
+            detail: {
+                type: 'info',
+                message: `Nuevo pedido #${order.id} · ${label}`,
+                duration: 5000,
+            },
+            bubbles: true,
+        }),
+    );
+}
+
+function bfCanInsertOnCurrentPage() {
+    const page = Number(opsRoot?.dataset.opsPage ?? '1');
+
+    return page === 1;
 }
 
 /**
@@ -120,6 +194,13 @@ export function bfPatchOrdersFromFeed(orders) {
             bfPatchOrderCard(card, order);
         }
     });
+}
+
+/**
+ * @param {HTMLElement|null} root
+ */
+export function bfGetOpsPollingRoot() {
+    return opsRoot;
 }
 
 export function bfDestroyOperationsGridHandler() {

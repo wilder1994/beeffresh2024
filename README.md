@@ -8,12 +8,12 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 |--------|------------------|
 | PHP | ^8.2 |
 | Laravel | ^11 |
-| Realtime | [Laravel Reverb](https://laravel.com/docs/reverb) + Echo (Fase 0–1); [`docs/REALTIME.md`](docs/REALTIME.md) |
+| Realtime | [Laravel Reverb](https://laravel.com/docs/reverb) + Echo (Fase 0–1.5); [`docs/REALTIME.md`](docs/REALTIME.md) |
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-26
+**Última actualización de esta documentación:** 2026-05-24
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -159,25 +159,45 @@ https://<tu-subdominio>.ngrok-free.app/webhooks/wompi
 
 ### Realtime (Laravel Reverb)
 
-**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`), eventos `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`. Frontend en `resources/js/realtime/` (`realtimeStore`, handlers desacoplados).
+**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`). Eventos: `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`, `ProductStockUpdated`, `ProductAvailabilityUpdated`, `OperationsMetricsUpdated`. Frontend: `resources/js/realtime/` (`realtimeStore`, handlers, `healthMonitor.js`).
 
-**Fase 1 (operacional):** campana (badge + dropdown + toast sin esperar poll), grid `/admin/pedidos` (parche de tarjetas sin `reload`), pago Wompi (UI + redirect vía websocket). **Polling sigue como fallback** (30 s campana, 15 s operaciones, 2,5 s pago).
+| Fase | Alcance |
+|------|---------|
+| **1** | Campana, grid `/admin/pedidos`, pago Wompi (WS + polling) |
+| **1.5** | Stock tienda/inventario, métricas ops, fulfill post-pago, dashboard low-stock |
+| **1.5-STAB** | Un broadcast en `markReady`, coalesce métricas, health degradado, mutex DOM, carrito `validar`, badge multi-tab |
 
-Documentación completa: [`docs/REALTIME.md`](docs/REALTIME.md).
+**Servicios (único punto de emisión):** `App\Services\Realtime\` — `OrderBroadcastService`, `StockBroadcastService`, `OperationsMetricsBroadcastService` (+ job `BroadcastOperationsMetricsJob`, `ShouldBeUnique` 2s).
+
+**Rutas / API relevantes:**
+
+| Método | Ruta | Uso |
+|--------|------|-----|
+| `GET` | `/admin/realtime/health` | JSON salud cola + modo (`live` / `degraded` / `fallback`); staff con `module.orders` |
+| `GET` | `/admin/pedidos/feed` | Feed polling operaciones (15s) |
+| `GET` | `/admin/pedidos/{order}/fragmento-tarjeta` | HTML tarjeta para insert realtime (solo página 1) |
+| `GET` | `/carrito/validar` | JSON líneas `can_purchase` / `availability_label` (sin WS) |
+
+**Indicador UI:** `<x-realtime.status-indicator />` — *Operación en tiempo real* solo si WS y cola OK; si cola lenta → *Sincronización diferida*; si WS/cola KO → *Modo respaldo (polling)*. Poll health cada 60s (`bf-realtime-health-url` en meta staff).
+
+**Prerrequisitos en local (modo live):**
 
 ```bash
-# Tras cambiar .env o JS: npm run build && php artisan config:clear
+npm run build
+php artisan config:clear
 
-# Terminal 1 — Reverb (puerto 8081; Laragon/ngrok suelen usar 8080)
+# Terminal 1 — Reverb (puerto 8081; Laragon HTTP suele usar 8080)
 php artisan reverb:start
 
-# Terminal 2 — colas (broadcast + notificaciones)
+# Terminal 2 — colas (broadcast + notificaciones; obligatorio para eventos ShouldBroadcast)
 php artisan queue:work database --queue=default,notifications,notifications-email
 ```
 
-En `.env`: `BROADCAST_CONNECTION=reverb`, `REVERB_*`, `VITE_REVERB_*` (ver `.env.example`). Indicador de conexión: `<x-realtime.status-indicator />` en operaciones y pantallas de pago.
+En `.env`: `BROADCAST_CONNECTION=reverb`, `REVERB_*`, `VITE_REVERB_*` (ver `.env.example`). Sin Reverb o sin worker, el sistema **sigue operando** vía polling (15s ops, 30s campana, 2.5s pago).
 
-Tests: `php artisan test --filter=Broadcasting`.
+Documentación: [`docs/REALTIME.md`](docs/REALTIME.md).
+
+**Tests realtime:** `php artisan test --filter=Broadcasting` · `RealtimeHealthTest` · `MetricsCoalesceTest` · `MarkReadyBroadcastTest` · `CartValidationTest` (o `php artisan test` completo).
 
 **Nequi sandbox:** solo `3991111111` (aprobado) y `3992222222` (rechazado); cualquier otro número devuelve `ERROR`.
 

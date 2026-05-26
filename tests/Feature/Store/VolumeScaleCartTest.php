@@ -44,7 +44,7 @@ class VolumeScaleCartTest extends TestCase
 
         $response = $this->get(route('carrito.ver'));
         $response->assertOk();
-        $response->assertSee('Oferta por volumen aplicada');
+        $response->assertSee('Oferta por volumen');
         $response->assertSee('$22.000');
     }
 }
