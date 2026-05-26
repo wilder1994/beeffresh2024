@@ -5,6 +5,7 @@ import {
     bfMarkOrderRecentlyInserted,
     bfReleaseOrderInsertLock,
     bfShouldSkipOrderInsert,
+    bfWasOrderRecentlyInserted,
 } from '../utils/opsInsertGuards.js';
 import {
     bfAnimateOrderCardInsert,
@@ -12,6 +13,7 @@ import {
     bfFindOrderCard,
     bfOrderMatchesTab,
     bfPatchOrderCard,
+    bfSyncOpsEmptyState,
 } from '../utils/orderOpsUi.js';
 
 /** @type {(() => void)|null} */
@@ -55,6 +57,8 @@ export async function bfHandleOrderUpdated(order, options = {}) {
     const grid = document.getElementById('ops-order-grid');
 
     if (!grid) {
+        bfRealtimeLog('warn', `Order #${order.id}: grid no disponible`);
+
         return;
     }
 
@@ -64,10 +68,14 @@ export async function bfHandleOrderUpdated(order, options = {}) {
     if (existing) {
         if (!matches) {
             await bfAnimateOrderCardRemove(existing);
+            bfSyncOpsEmptyState();
+
             return;
         }
 
         bfPatchOrderCard(existing, order);
+        bfSyncOpsEmptyState();
+
         return;
     }
 
@@ -94,6 +102,7 @@ export async function bfHandleOrderUpdated(order, options = {}) {
 
     try {
         await bfInsertOrderCard(order);
+        bfSyncOpsEmptyState();
     } finally {
         bfReleaseOrderInsertLock(order.id);
     }
@@ -151,6 +160,7 @@ async function bfInsertOrderCard(order) {
             bfPatchOrderCard(card, payload.order ?? order);
             bfAnimateOrderCardInsert(card);
             bfMarkOrderRecentlyInserted(order.id);
+            bfSyncOpsEmptyState();
         }
     } catch {
         // fallback polling cubrirá
@@ -194,6 +204,34 @@ export function bfPatchOrdersFromFeed(orders) {
             bfPatchOrderCard(card, order);
         }
     });
+}
+
+/**
+ * Aplica feed operacional: parchea existentes e inserta pedidos nuevos (WS o polling).
+ * @param {Array<object>} orders
+ */
+export async function bfSyncOrdersFromFeed(orders) {
+    if (!Array.isArray(orders) || !document.getElementById('ops-order-grid')) {
+        return;
+    }
+
+    for (const order of orders) {
+        const existing = bfFindOrderCard(order.id);
+
+        if (existing) {
+            await bfHandleOrderUpdated(order, { allowInsert: false });
+            continue;
+        }
+
+        if (bfShouldSkipOrderInsert(order.id) || bfWasOrderRecentlyInserted(order.id)) {
+            continue;
+        }
+
+        await bfHandleOrderUpdated(order, { allowInsert: true });
+    }
+
+    bfPatchOrdersFromFeed(orders);
+    bfSyncOpsEmptyState();
 }
 
 /**

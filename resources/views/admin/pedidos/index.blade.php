@@ -69,15 +69,18 @@
         · Ingresos hoy: <strong><span data-ops-revenue-today>${{ number_format($metrics['revenue_today'], 0, ',', '.') }}</span></strong>
     </p>
 
-    @if($pedidos->isEmpty())
-        <div class="bf-ops-empty">No hay pedidos en este filtro.</div>
-    @else
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="ops-order-grid">
-            @foreach($pedidos as $pedido)
-                <x-order.card :order="$pedido" />
-            @endforeach
-        </div>
-        <div class="mt-6">{{ $pedidos->links() }}</div>
+    <div class="bf-ops-empty @if(!$pedidos->isEmpty()) hidden @endif" data-ops-empty-state>
+        No hay pedidos en este filtro.
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="ops-order-grid">
+        @foreach($pedidos as $pedido)
+            <x-order.card :order="$pedido" />
+        @endforeach
+    </div>
+
+    @if(!$pedidos->isEmpty())
+        <div class="mt-6" data-ops-pagination>{{ $pedidos->links() }}</div>
     @endif
 </div>
 @endsection

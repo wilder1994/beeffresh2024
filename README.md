@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-24
+**Última actualización de esta documentación:** 2026-05-25
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -87,15 +87,7 @@ npm run build
 
 Desarrollo con recarga de assets: `npm run dev`.
 
-5. **Notificaciones (colas):** en `.env` usa `QUEUE_CONNECTION=database` (requiere migración `jobs` y tablas de notificaciones). Plantillas email:
-
-```bash
-php artisan migrate
-php artisan db:seed --class=NotificationTemplateSeeder
-php artisan queue:work database --queue=notifications,notifications-email --tries=3
-```
-
-En local sin SMTP: `MAIL_MAILER=log`. Opcional: `NOTIFICATION_QUEUE`, `NOTIFICATION_EMAIL_QUEUE`, `NOTIFICATION_DELAYED_ORDER_MINUTES`. Scheduler (pedidos retrasados): `php artisan schedule:work` o cron con `notifications:check-delayed-orders` (cada hora). Arquitectura: `docs/NOTIFICATIONS.md`.
+5. **Tiempo real y notificaciones:** ver sección [Arranque en desarrollo: ngrok + tiempo real + notificaciones](#arranque-en-desarrollo-ngrok--tiempo-real--notificaciones) (ngrok `8080`, `reverb:start`, `queue:work` con `default,notifications,notifications-email`). Plantillas: `php artisan db:seed --class=NotificationTemplateSeeder`. En local sin SMTP: `MAIL_MAILER=log`.
 
 **Laragon (Windows):** si en PowerShell o Cursor no se reconocen `php`, `composer` o `npm`:
 
@@ -157,47 +149,116 @@ https://<tu-subdominio>.ngrok-free.app/webhooks/wompi
 - **Cerrar sesión:** usar el botón del menú (POST con CSRF). Si el token expiró, `GET /logout` muestra una pantalla intermedia con token fresco (`auth/logout.blade.php`) antes de destruir la sesión.
 - Si ngrok responde pero la app no carga, revisa que Laragon/Apache esté encendido y que el túnel apunte a **8080** (VirtualHost en `beeffresh2024-ip.conf`).
 
-### Realtime (Laravel Reverb)
+### Arranque en desarrollo: ngrok + tiempo real + notificaciones
 
-**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`). Eventos: `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`, `ProductStockUpdated`, `ProductAvailabilityUpdated`, `OperationsMetricsUpdated`. Frontend: `resources/js/realtime/` (`realtimeStore`, handlers, `healthMonitor.js`).
+En local necesitas **Laragon (Apache)** y, para modo *live*, **tres procesos en segundo plano** (más la app web). Puertos habituales en este proyecto:
+
+| Servicio | Puerto | Rol |
+|----------|--------|-----|
+| Apache / Beeffresh (HTTP) | **8080** | Páginas, API, checkout, webhooks Wompi |
+| Laravel Reverb (WebSocket) | **8081** | Echo: pedidos, campana, pagos, stock, métricas |
+| ngrok (túnel HTTPS) | → 8080 | Exponer la app a internet (Wompi, pruebas móvil) |
+
+#### Checklist rápido
+
+1. Laragon → **Start All** (comprueba `http://127.0.0.1:8080` o `http://beeffresh2024.test`).
+2. **Terminal A — ngrok** (pagos / webhooks / acceso externo a la web):
+
+```powershell
+cd C:\ruta\a\ngrok
+.\ngrok.exe http 8080
+```
+
+Panel de inspección: `http://127.0.0.1:4040`. Copia la URL HTTPS (`https://xxxx.ngrok-free.app`).
+
+3. **Terminal B — Reverb** (WebSocket; no uses el 8080 de Apache):
+
+```bash
+php artisan reverb:start
+```
+
+Por defecto escucha en **8081** (`REVERB_SERVER_PORT` en `.env`).
+
+4. **Terminal C — colas** (obligatorio: `ShouldBroadcast`, emails y jobs de notificaciones):
+
+```bash
+php artisan queue:work database --queue=default,notifications,notifications-email --tries=3
+```
+
+5. Tras cambiar `.env` o variables `VITE_*`:
+
+```bash
+php artisan config:clear
+npm run build
+```
+
+#### Variables `.env` (tiempo real)
+
+```env
+BROADCAST_CONNECTION=reverb
+QUEUE_CONNECTION=database
+
+REVERB_APP_ID=beeffresh-local
+REVERB_APP_KEY=local-reverb-key
+REVERB_APP_SECRET=local-reverb-secret
+REVERB_HOST=localhost
+REVERB_PORT=8081
+REVERB_SCHEME=http
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8081
+
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST="${REVERB_HOST}"
+VITE_REVERB_PORT="${REVERB_PORT}"
+VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+
+NOTIFICATION_QUEUE=notifications
+NOTIFICATION_EMAIL_QUEUE=notifications-email
+```
+
+Con **ngrok solo en 8080** (misma PC abriendo el panel por la URL del túnel), suele bastar `REVERB_HOST=localhost` y `REVERB_SCHEME=http`: el navegador conecta el WS a `localhost:8081`. Si pruebas desde **otro dispositivo**, abre un segundo túnel `ngrok http 8081` y alinea `REVERB_HOST` / `VITE_REVERB_HOST` con ese host (y `REVERB_SCHEME=https` si el túnel es HTTPS).
+
+Tras cada URL nueva de ngrok, actualiza `APP_URL`, `php artisan config:clear`, webhook Wompi y vuelve a compilar assets (`npm run build`).
+
+#### Qué hace cada capa
+
+| Capa | Sin proceso | Con procesos + `BROADCAST_CONNECTION=reverb` |
+|------|-------------|-----------------------------------------------|
+| **Pedidos** (`/admin/pedidos`) | Polling 15 s inserta/parchea tarjetas | WS `order.updated` + polling respaldo |
+| **Campana** | Polling 30 s | WS `notification.created` + polling 30 s |
+| **Pago Wompi** | Polling 2,5 s | WS `payment.status.updated` + polling |
+| **Métricas ops** | Feed indirecto | WS `operations.metrics.updated` (job en cola `default`) |
+
+Indicador en operaciones: `<x-realtime.status-indicator />` — *Operación en tiempo real* (WS + cola OK), *Sincronización diferida* (cola lenta) o *Modo respaldo (polling)*. Salud: `GET /admin/realtime/health` (staff).
+
+#### Notificaciones (campana + email)
+
+- **Tiempo real:** evento `NotificationCreated` → canal privado `App.Models.User.{id}` → `notificationBell.js` (badge, lista, toast). Requiere **Reverb + cola** (el broadcast se encola en `default`).
+- **Entrega email / reintentos:** jobs en colas `notifications` y `notifications-email` (mismo worker de la Terminal C).
+- **Retrasos / pedidos demorados:** `php artisan notifications:check-delayed-orders` (programar en scheduler si aplica).
+
+Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md).
+
+### Realtime (referencia técnica)
+
+**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`). Eventos: `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`, `ProductStockUpdated`, `ProductAvailabilityUpdated`, `OperationsMetricsUpdated`. Frontend: `resources/js/realtime/`.
 
 | Fase | Alcance |
 |------|---------|
 | **1** | Campana, grid `/admin/pedidos`, pago Wompi (WS + polling) |
 | **1.5** | Stock tienda/inventario, métricas ops, fulfill post-pago, dashboard low-stock |
-| **1.5-STAB** | Un broadcast en `markReady`, coalesce métricas, health degradado, mutex DOM, carrito `validar`, badge multi-tab |
+| **1.5-STAB** | markReady un broadcast, coalesce métricas, health degradado, grid ops siempre presente, polling inserta pedidos nuevos |
 
-**Servicios (único punto de emisión):** `App\Services\Realtime\` — `OrderBroadcastService`, `StockBroadcastService`, `OperationsMetricsBroadcastService` (+ job `BroadcastOperationsMetricsJob`, `ShouldBeUnique` 2s).
-
-**Rutas / API relevantes:**
+**Servicios broadcast:** `App\Services\Realtime\` — `OrderBroadcastService`, `StockBroadcastService`, `OperationsMetricsBroadcastService` (+ `BroadcastOperationsMetricsJob`, `ShouldBeUnique` 2s).
 
 | Método | Ruta | Uso |
 |--------|------|-----|
-| `GET` | `/admin/realtime/health` | JSON salud cola + modo (`live` / `degraded` / `fallback`); staff con `module.orders` |
+| `GET` | `/admin/realtime/health` | Salud cola + modo `live` / `degraded` / `fallback` |
 | `GET` | `/admin/pedidos/feed` | Feed polling operaciones (15s) |
-| `GET` | `/admin/pedidos/{order}/fragmento-tarjeta` | HTML tarjeta para insert realtime (solo página 1) |
-| `GET` | `/carrito/validar` | JSON líneas `can_purchase` / `availability_label` (sin WS) |
+| `GET` | `/admin/pedidos/{order}/fragmento-tarjeta` | HTML tarjeta para insert realtime |
+| `GET` | `/carrito/validar` | Validación stock en carrito (sin WS) |
 
-**Indicador UI:** `<x-realtime.status-indicator />` — *Operación en tiempo real* solo si WS y cola OK; si cola lenta → *Sincronización diferida*; si WS/cola KO → *Modo respaldo (polling)*. Poll health cada 60s (`bf-realtime-health-url` en meta staff).
-
-**Prerrequisitos en local (modo live):**
-
-```bash
-npm run build
-php artisan config:clear
-
-# Terminal 1 — Reverb (puerto 8081; Laragon HTTP suele usar 8080)
-php artisan reverb:start
-
-# Terminal 2 — colas (broadcast + notificaciones; obligatorio para eventos ShouldBroadcast)
-php artisan queue:work database --queue=default,notifications,notifications-email
-```
-
-En `.env`: `BROADCAST_CONNECTION=reverb`, `REVERB_*`, `VITE_REVERB_*` (ver `.env.example`). Sin Reverb o sin worker, el sistema **sigue operando** vía polling (15s ops, 30s campana, 2.5s pago).
-
-Documentación: [`docs/REALTIME.md`](docs/REALTIME.md).
-
-**Tests realtime:** `php artisan test --filter=Broadcasting` · `RealtimeHealthTest` · `MetricsCoalesceTest` · `MarkReadyBroadcastTest` · `CartValidationTest` (o `php artisan test` completo).
+**Tests:** `php artisan test --filter=Broadcasting` · `RealtimeHealthTest` · `MetricsCoalesceTest` · `MarkReadyBroadcastTest` · `CartValidationTest`.
 
 **Nequi sandbox:** solo `3991111111` (aprobado) y `3992222222` (rechazado); cualquier otro número devuelve `ERROR`.
 

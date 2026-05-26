@@ -1,13 +1,11 @@
 /**
- * Operaciones pedidos — Fase 1.5: parche DOM + websocket; polling fallback sin reload.
+ * Operaciones pedidos — parche DOM + websocket; polling inserta pedidos nuevos como respaldo.
  */
 import {
-    bfHandleOrderUpdated,
     bfInitOperationsGridHandler,
-    bfPatchOrdersFromFeed,
+    bfSyncOrdersFromFeed,
 } from './realtime/handlers/operationsHandler.js';
-import { bfFindOrderCard } from './realtime/utils/orderOpsUi.js';
-import { bfShouldSkipOrderInsert, bfWasOrderRecentlyInserted } from './realtime/utils/opsInsertGuards.js';
+import { bfSyncOpsEmptyState } from './realtime/utils/orderOpsUi.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.querySelector('[data-ops-polling]');
@@ -21,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     bfInitOperationsGridHandler(root);
+    bfSyncOpsEmptyState();
 
     let lastSignature = '';
     let since = new Date().toISOString();
@@ -44,25 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const orders = payload.orders ?? [];
             const signature = orders.map((o) => `${o.id}:${o.status}:${o.updated_at}:${o.courier_id ?? ''}`).join('|');
 
-            if (lastSignature !== '' && signature !== lastSignature) {
-                for (const order of orders) {
-                    const existing = bfFindOrderCard(order.id);
-                    if (existing) {
-                        await bfHandleOrderUpdated(order, { allowInsert: false });
-                        continue;
-                    }
+            const isFirstSnapshot = lastSignature === '' && orders.length > 0;
+            const hasChanges = lastSignature !== '' && signature !== lastSignature;
 
-                    if (bfWasOrderRecentlyInserted(order.id) || bfShouldSkipOrderInsert(order.id)) {
-                        continue;
-                    }
-
-                    // Polling no inserta tarjetas nuevas; solo parchea existentes.
-                }
-
-                bfPatchOrdersFromFeed(orders);
+            if (isFirstSnapshot || hasChanges) {
+                await bfSyncOrdersFromFeed(orders);
             }
 
             lastSignature = signature;
+
             if (payload.generated_at) {
                 since = payload.generated_at;
             }

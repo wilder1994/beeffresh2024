@@ -73,8 +73,8 @@ export async function bfResyncOperationsAfterReconnect() {
         }
 
         const payload = await response.json();
-        const { bfPatchOrdersFromFeed } = await import('./handlers/operationsHandler.js');
-        bfPatchOrdersFromFeed(payload.orders ?? []);
+        const { bfSyncOrdersFromFeed } = await import('./handlers/operationsHandler.js');
+        await bfSyncOrdersFromFeed(payload.orders ?? []);
     } catch {
         // polling fallback
     } finally {

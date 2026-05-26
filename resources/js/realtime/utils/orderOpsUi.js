@@ -102,3 +102,16 @@ export function bfAnimateOrderCardRemove(card) {
 export function bfFindOrderCard(orderId) {
     return document.querySelector(`[data-ops-order-id="${orderId}"]`);
 }
+
+/** Muestra u oculta el mensaje vacío según tarjetas en el grid. */
+export function bfSyncOpsEmptyState() {
+    const grid = document.getElementById('ops-order-grid');
+    const empty = document.querySelector('[data-ops-empty-state]');
+
+    if (!grid || !empty) {
+        return;
+    }
+
+    const hasCards = grid.querySelector('[data-ops-order-id]') !== null;
+    empty.classList.toggle('hidden', hasCards);
+}
