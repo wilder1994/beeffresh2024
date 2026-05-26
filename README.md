@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-25
+**Última actualización de esta documentación:** 2026-05-26
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -23,7 +23,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Cinta (inicio):** marquesina automática desde productos y ofertas con **`show_on_cinta`** activo (checkbox en producto u oferta). Sin subida manual de diapositivas. Bucle continuo vía `App\Support\CintaMarqueeSlides` y `App\Services\Store\CintaMerchandisingService`. Estilos compactos en `.bf-cinta-marquee*` (`clamp()` en ancho de slide, `max-height` en viewport/tarjeta, overlay reducido); proporción visual **4:3** (`config/cinta.php`).
 
-**Inicio (tienda):** orden **Cinta → Promociones (productos en promo) → Combos y packs → Destacados → Tipos de corte → Recetas en video → Nosotros**. Datos en `App\Services\Store\HomePageService`, vista `welcome.blade.php`, componentes `x-store.home-*`. Layout compacto en desktop/portátil: contenedor `max-w-6xl`, secciones con menos padding (`.bf-home-section`), grids de productos/cortes hasta **6 columnas** en `xl` (`.bf-home-products__grid`, `.bf-home-cuts__grid`), tarjetas con tipografía y padding reducidos. Eliminados `store_banners`, `store_highlights` y admin de cinta manual.
+**Inicio (tienda):** orden **Cinta → Promociones (productos en promo) → Combos y packs → Destacados → Tipos de corte → Recetas en video → Nosotros**. Datos en `App\Services\Store\HomePageService`, vista `welcome.blade.php`, componentes `x-store.home-*`. Layout compacto en desktop/portátil: contenedor `max-w-6xl`, secciones con menos padding (`.bf-home-section`), grids de productos/cortes hasta **6 columnas** en `xl` (`.bf-home-products__grid`, `.bf-home-cuts__grid`), tarjetas con tipografía y padding reducidos. El **catálogo público** (`/productos-publicos`) reutiliza el mismo grid y `x-store.home-product-card` (teaser sin compra en listado; compra en ficha). Eliminados `store_banners`, `store_highlights` y admin de cinta manual.
 
 **Imágenes (catálogo y perfil):** perfiles en `config/images.php` (catálogo 4:3 → 1200×900 JPEG, logo/avatar 1:1 → 512 px). Subida con recorte previo: `resources/js/imageCropCore.js`, `imageCropEditor.js` (Alpine `imageCropUpload`, `logoCropUpload`), modal `x-bf.image-crop-dialog`, componente `x-bf.image-upload-zone` en productos y ofertas; logo desde sidebar admin (solo `admin`); avatares vía `avatarEditor.js` (reutiliza el núcleo de crop). Exportación client-side antes del POST; validación servidor MIME/peso sin cambios. Permisos: catálogo según `module.catalog`; logo solo administrador; avatar según perfil/Livewire usuarios.
 
@@ -349,7 +349,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 
 ## Tienda y pedidos
 
-- **Catálogo público:** `/productos-publicos` (rutas `products.public.*`). Cada tarjeta incluye selector **Kg / Lb** (default Kg), cantidad entera y precio según unidad (`x-store.product-purchase`, Alpine + `resources/js/storeCart.js`). Estilos compactos de la fila unidad/cantidad: `.bf-store-unit-toggle` y `.bf-store-qty-input` en `resources/css/app.css` (scoped a `[data-product-purchase]`).
+- **Catálogo público:** `/productos-publicos` — grid compacto `bf-home-products__grid` + `x-store.home-product-card` (teaser: precio y “Ver producto →”; sin compra en listado). Compra (Kg/Lb, cantidad, agregar) solo en ficha `/productos-publicos/{slug}` (`x-store.product-purchase`, layout `.bf-store-product-detail`). Presentación de precios/badge: `App\Services\Store\StoreCatalogCardPresenter`. Filtro `?promo=1` para promociones activas. Tests: `PublicCatalogViewsTest`.
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
@@ -381,7 +381,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 
