@@ -11,6 +11,7 @@ use App\Enums\PaymentWebhookStatus;
 use App\Events\Orders\OrderPaid;
 use App\Events\Payments\PaymentApproved;
 use App\Events\Payments\PaymentDeclined;
+use App\Events\Payments\PaymentStatusUpdated;
 use App\Events\Payments\PaymentWebhookFailed;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
@@ -185,6 +186,8 @@ final class PaymentWebhookProcessor
         });
 
         $this->dispatchPaymentNotifications($payment, $notificationContext);
+
+        event(new PaymentStatusUpdated($payment));
 
         return $payment;
     }

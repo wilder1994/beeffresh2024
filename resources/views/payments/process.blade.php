@@ -2,6 +2,12 @@
 
 @section('titulo', 'Procesando pago | BEEF FRESH')
 
+@push('bf-realtime-meta')
+    @auth
+        <meta name="bf-payment-uuid" content="{{ $payment->uuid }}">
+    @endauth
+@endpush
+
 @section('content')
 <div
     class="bf-store-page bf-store-page--checkout max-w-lg mx-auto"
@@ -16,6 +22,7 @@
         Referencia <span class="font-mono text-xs" data-bf-payment-reference>{{ $payment->reference }}</span>
         · ${{ number_format((float) $payment->amount, 0, ',', '.') }} COP
     </p>
+    <x-realtime.status-indicator class="justify-center mb-4" />
 
     <div class="bf-store-panel p-6 text-center space-y-4">
         {{-- Abriendo widget --}}

@@ -1,5 +1,8 @@
-/** Polling y sincronización post-pago Wompi en /pago/procesar y /pago/pendiente. */
+/** Polling y sincronización post-pago Wompi — Fase 1 realtime + fallback. */
 import { updateCartCount } from './cartBadge';
+import {
+    bfInitPaymentRealtimeHandler,
+} from './realtime/handlers/paymentHandler.js';
 
 const TERMINAL_STATUSES = new Set(['approved', 'declined', 'failed', 'expired']);
 const POLL_INTERVAL_MS = 2500;
@@ -48,6 +51,19 @@ function redirectTo(root, url) {
     }, REDIRECT_DELAY_MS);
 }
 
+function handleTerminal(root, data) {
+    if (!data.terminal || !TERMINAL_STATUSES.has(data.status)) {
+        return false;
+    }
+
+    root.dataset.polling = '0';
+    if (data.redirect_url) {
+        redirectTo(root, data.redirect_url);
+    }
+
+    return true;
+}
+
 async function pollOnce(root) {
     const pollUrl = root.dataset.pollUrl;
     if (!pollUrl) return null;
@@ -88,11 +104,7 @@ function startPolling(root) {
 
             applyPayload(root, data);
 
-            if (data.terminal && TERMINAL_STATUSES.has(data.status)) {
-                root.dataset.polling = '0';
-                if (data.redirect_url) {
-                    redirectTo(root, data.redirect_url);
-                }
+            if (handleTerminal(root, data)) {
                 return;
             }
 
@@ -115,6 +127,18 @@ function startPolling(root) {
     };
 
     tick();
+}
+
+function bindRealtimePayment(root) {
+    bfInitPaymentRealtimeHandler((data) => {
+        applyPayload(root, data);
+
+        if (data.status === 'approved' && typeof data.cart_count === 'number') {
+            updateCartCount(data.cart_count);
+        }
+
+        handleTerminal(root, data);
+    });
 }
 
 function openWompiWidget(root, config) {
@@ -150,6 +174,7 @@ function registerPaymentProcess() {
         if (!root) return;
 
         bootstrapTransactionId(root);
+        bindRealtimePayment(root);
 
         const widgetConfigRaw = root.dataset.widgetConfig;
         const autoOpen = root.dataset.autoOpenWidget === '1';

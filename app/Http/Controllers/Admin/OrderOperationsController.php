@@ -14,6 +14,7 @@ use App\Http\Requests\Orders\RedispatchOrderRequest;
 use App\Http\Requests\Orders\StartPreparingOrderRequest;
 use App\Models\CompanyProfile;
 use App\Models\Order;
+use App\Support\Realtime\OrderBroadcastPayload;
 use App\Models\User;
 use App\Services\Orders\CourierAssignmentService;
 use App\Services\Orders\OrderOperationsQueryService;
@@ -156,14 +157,19 @@ class OrderOperationsController extends Controller
 
         return response()->json([
             'generated_at' => now()->toIso8601String(),
-            'orders' => $orders->map(fn (Order $order): array => [
-                'id' => $order->id,
-                'status' => $order->status->value,
-                'status_label' => $order->status->label(),
-                'total' => (float) $order->total,
-                'courier_id' => $order->courier_id,
-                'updated_at' => $order->updated_at?->toIso8601String(),
-            ])->values(),
+            'orders' => $orders->map(fn (Order $order): array => OrderBroadcastPayload::fromOrder($order))->values(),
+        ]);
+    }
+
+    public function cardFragment(Order $order): JsonResponse
+    {
+        $this->authorize('view', $order);
+
+        $order->load(['user:id,first_name,last_name', 'courier:id,first_name,last_name']);
+
+        return response()->json([
+            'html' => view('components.order.card', ['order' => $order])->render(),
+            'order' => OrderBroadcastPayload::fromOrder($order),
         ]);
     }
 

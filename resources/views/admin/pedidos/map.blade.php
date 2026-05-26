@@ -3,6 +3,10 @@
 @section('titulo', 'Mapa operativo')
 @section('cabecera', 'Mapa en tiempo real')
 
+@push('bf-realtime-meta')
+    <meta name="bf-staff-operations-map" content="1">
+@endpush
+
 @section('contenido')
 <div class="max-w-7xl mx-auto space-y-4" data-ops-map
      data-map-data-url="{{ route('admin.pedidos.map-data') }}"

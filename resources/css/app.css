@@ -2246,6 +2246,79 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes bf-notification-ring {
+        0%, 100% { transform: rotate(0deg); }
+        15% { transform: rotate(-12deg); }
+        30% { transform: rotate(10deg); }
+        45% { transform: rotate(-8deg); }
+        60% { transform: rotate(6deg); }
+        75% { transform: rotate(-3deg); }
+    }
+
+    .bf-notification-bell--ring .bf-notification-bell__icon {
+        animation: bf-notification-ring 0.65s ease-in-out;
+        filter:
+            drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))
+            drop-shadow(0 0 10px rgba(255, 201, 77, 0.55));
+    }
+
+    .bf-notification-list-item--new {
+        animation: bf-notification-drop 0.22s ease-out;
+    }
+
+    .bf-ops-order-card--updated {
+        animation: bf-ops-card-pulse 0.55s ease-out;
+    }
+
+    .bf-ops-order-card--enter {
+        animation: bf-ops-card-enter 0.38s ease-out;
+    }
+
+    .bf-ops-order-card--leave {
+        animation: bf-ops-card-leave 0.24s ease-in forwards;
+    }
+
+    @keyframes bf-ops-card-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(240, 180, 41, 0.45); }
+        100% { box-shadow: 0 0 0 0 rgba(240, 180, 41, 0); }
+    }
+
+    @keyframes bf-ops-card-enter {
+        from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes bf-ops-card-leave {
+        to { opacity: 0; transform: scale(0.96); }
+    }
+
+    .bf-realtime-status {
+        @apply inline-flex items-center gap-2 text-[11px] text-stone-500;
+    }
+
+    .bf-realtime-dot {
+        @apply inline-block h-2 w-2 rounded-full bg-stone-300;
+    }
+
+    .bf-realtime-dot--live {
+        @apply bg-emerald-500;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .bf-realtime-dot--warn {
+        @apply bg-amber-400;
+        animation: bf-realtime-pulse 1.2s ease-in-out infinite;
+    }
+
+    .bf-realtime-dot--off {
+        @apply bg-stone-300;
+    }
+
+    @keyframes bf-realtime-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.45; }
+    }
+
     .bf-notification-list {
         @apply space-y-3;
     }

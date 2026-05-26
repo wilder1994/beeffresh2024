@@ -1,53 +1,26 @@
 /**
- * Campana de notificaciones (feed + contador unread).
- * Inicializa todas las campanas visibles (sidebar + header móvil).
+ * Campana de notificaciones — Fase 1 realtime + polling fallback 30s.
  */
+import {
+    bfInitNotificationRealtimeHandler,
+    bfRegisterNotificationBellRoots,
+    bfSeedNotificationIds,
+} from './realtime/handlers/notificationsHandler.js';
+import {
+    bfRenderNotificationBadge,
+    bfRenderNotificationList,
+} from './realtime/utils/notificationUi.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-    const roots = document.querySelectorAll('[data-notification-bell]');
+    const roots = [...document.querySelectorAll('[data-notification-bell]')];
     if (roots.length === 0) {
         return;
     }
 
-    const renderList = (list, items, indexUrl) => {
-        if (!list) {
-            return;
-        }
+    bfRegisterNotificationBellRoots(roots);
+    bfInitNotificationRealtimeHandler();
 
-        if (!Array.isArray(items) || items.length === 0) {
-            list.innerHTML = '<li class="px-4 py-6 text-sm text-[var(--bf-muted)] text-center">Sin notificaciones</li>';
-            return;
-        }
-
-        list.innerHTML = items
-            .map(
-                (item) => `
-                <li class="px-4 py-3 ${item.read ? '' : 'bg-amber-50/60'}">
-                    <a href="${item.action_url || indexUrl}" class="block">
-                        <p class="text-sm font-medium text-[var(--bf-ink)] line-clamp-1">${item.title ?? ''}</p>
-                        <p class="text-xs text-[var(--bf-muted)] mt-0.5 line-clamp-2">${item.body ?? ''}</p>
-                        <p class="text-[10px] text-stone-400 mt-1">${item.created_human ?? ''}</p>
-                    </a>
-                </li>`,
-            )
-            .join('');
-    };
-
-    const renderBadge = (badge, count) => {
-        if (!badge) {
-            return;
-        }
-
-        if (!count || count <= 0) {
-            badge.classList.remove('inline-flex');
-            badge.classList.add('hidden');
-            badge.textContent = '';
-            return;
-        }
-
-        badge.classList.remove('hidden');
-        badge.classList.add('inline-flex');
-        badge.textContent = count > 99 ? '99+' : String(count);
-    };
+    const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
     const refreshAll = async () => {
         const feedUrl = roots[0]?.dataset.feedUrl;
@@ -69,20 +42,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const unreadCount = payload.unread_count ?? 0;
             const notifications = payload.notifications ?? [];
 
+            bfSeedNotificationIds(notifications);
+
             roots.forEach((root) => {
-                renderBadge(root.querySelector('[data-notification-count]'), unreadCount);
-                renderList(
+                bfRenderNotificationBadge(root.querySelector('[data-notification-count]'), unreadCount);
+                bfRenderNotificationList(
                     root.querySelector('[data-notification-list]'),
                     notifications,
-                    root.dataset.indexUrl,
+                    root.dataset.indexUrl ?? '/notificaciones',
                 );
             });
         } catch {
-            // ignore
+            // fallback silencioso
         }
     };
-
-    const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 
     document.querySelectorAll('[data-notification-mark-all]').forEach((form) => {
         form.addEventListener('submit', async (event) => {
@@ -127,9 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await refreshAll();
 
                 const details = form.closest('details');
-                if (details) {
-                    details.removeAttribute('open');
-                }
+                details?.removeAttribute('open');
             } catch {
                 // ignore
             } finally {

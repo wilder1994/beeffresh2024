@@ -115,6 +115,7 @@ Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('adm
         Route::get('/', [OrderOperationsController::class, 'index'])->name('index');
         Route::get('/mapa', [OrderOperationsController::class, 'map'])->name('map');
         Route::get('/feed', [OrderOperationsController::class, 'feed'])->name('feed');
+        Route::get('/{order}/fragmento-tarjeta', [OrderOperationsController::class, 'cardFragment'])->name('card-fragment');
         Route::get('/mapa/datos', [OrderOperationsController::class, 'mapData'])->name('map-data');
         Route::get('/{order}/ticket', [OrderTicketController::class, 'show'])->name('ticket.show');
         Route::post('/{order}/ticket/impreso', [OrderTicketController::class, 'markPrinted'])->name('ticket.mark-printed');

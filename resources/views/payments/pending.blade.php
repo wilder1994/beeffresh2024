@@ -2,6 +2,12 @@
 
 @section('titulo', 'Pago pendiente | BEEF FRESH')
 
+@push('bf-realtime-meta')
+    @auth
+        <meta name="bf-payment-uuid" content="{{ $payment->uuid }}">
+    @endauth
+@endpush
+
 @section('content')
 <div
     class="bf-store-page bf-store-page--checkout max-w-lg mx-auto text-center"
@@ -13,6 +19,7 @@
         <div data-bf-payment-phase="syncing" class="space-y-4">
             <div class="bf-payment-loader mx-auto"></div>
             <h1 class="font-brand text-2xl text-[var(--bf-ink)]">Confirmando pago…</h1>
+            <x-realtime.status-indicator class="justify-center" />
             <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>Estamos esperando la confirmación de la entidad financiera.</p>
             <x-payment.status-badge :status="$payment->status" />
             <p class="text-xs text-[var(--bf-muted)]">Referencia: <span data-bf-payment-reference>{{ $payment->reference }}</span></p>

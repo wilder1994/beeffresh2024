@@ -1,5 +1,6 @@
 import './bootstrap';
 
+import { bootstrapBfRealtime } from './realtime';
 import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import registerAvatarEditor from './avatarEditor';
 import registerImageCropEditor from './imageCropEditor';
@@ -96,3 +97,5 @@ document.addEventListener('livewire:init', () => {
 if (window.livewireScriptConfig !== undefined) {
     Livewire.start();
 }
+
+bootstrapBfRealtime();

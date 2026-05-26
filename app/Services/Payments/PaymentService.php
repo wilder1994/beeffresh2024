@@ -198,18 +198,32 @@ final class PaymentService
 
         $cartCount = $this->clearCartSessionIfApproved($payment);
 
+        return array_merge($this->realtimePayload($payment), [
+            'cart_count' => $cartCount,
+        ]);
+    }
+
+    /** Payload para websocket (Fase 1). cart_count=0 en approved indica vaciar badge en cliente. */
+    public function realtimePayload(Payment $payment): array
+    {
+        $payment->loadMissing('order');
+
         return [
+            'uuid' => $payment->uuid,
             'status' => $payment->status->value,
             'status_label' => $payment->status->label(),
             'terminal' => $payment->status->isTerminal(),
             'reference' => $payment->reference,
-            'cart_count' => $cartCount,
             'order_id' => $payment->order_id,
             'redirect_url' => $this->redirectUrlForStatus($payment),
             'tracking_url' => $payment->order !== null
                 ? route('orders.tracking.show', $payment->order)
                 : null,
             'message' => $this->pollMessage($payment),
+            'cart_count' => $payment->status === PaymentStatus::Approved ? 0 : null,
+            'paid_at' => $payment->paid_at?->toIso8601String(),
+            'failed_at' => $payment->failed_at?->toIso8601String(),
+            'updated_at' => $payment->updated_at?->toIso8601String(),
         ];
     }
 

@@ -1,6 +1,12 @@
 /**
- * Polling ligero para el panel operacional de pedidos.
+ * Operaciones pedidos — Fase 1: parche DOM + websocket; polling fallback sin reload.
  */
+import {
+    bfHandleOrderUpdated,
+    bfInitOperationsGridHandler,
+    bfPatchOrdersFromFeed,
+} from './realtime/handlers/operationsHandler.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.querySelector('[data-ops-polling]');
     if (!root) {
@@ -11,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!feedUrl) {
         return;
     }
+
+    bfInitOperationsGridHandler(root);
 
     let lastSignature = '';
     let since = new Date().toISOString();
@@ -32,11 +40,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const payload = await response.json();
             const orders = payload.orders ?? [];
-            const signature = orders.map((o) => `${o.id}:${o.status}:${o.updated_at}`).join('|');
+            const signature = orders.map((o) => `${o.id}:${o.status}:${o.updated_at}:${o.courier_id ?? ''}`).join('|');
 
             if (lastSignature !== '' && signature !== lastSignature) {
-                window.location.reload();
-                return;
+                for (const order of orders) {
+                    await bfHandleOrderUpdated(order);
+                }
+                bfPatchOrdersFromFeed(orders);
             }
 
             lastSignature = signature;
@@ -44,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 since = payload.generated_at;
             }
         } catch {
-            // ignore transient network errors
+            // fallback silencioso
         }
     };
 

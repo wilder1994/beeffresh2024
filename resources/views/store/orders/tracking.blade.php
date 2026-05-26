@@ -2,6 +2,12 @@
 
 @section('titulo', 'Seguimiento pedido #'.$order->id)
 
+@push('bf-realtime-meta')
+    @auth
+        <meta name="bf-order-id" content="{{ $order->id }}">
+    @endauth
+@endpush
+
 @section('content')
 <div class="bf-store-page bf-store-page--wide max-w-2xl mx-auto" data-order-tracking data-feed-url="{{ auth()->check() && auth()->user()->isCustomer() ? route('orders.tracking.feed', $order) : route('orders.tracking.guest-feed', $trackingToken) }}">
     @auth

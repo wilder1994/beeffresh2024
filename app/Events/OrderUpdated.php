@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\Order;
-use Illuminate\Broadcasting\Channel;
+use App\Support\Realtime\OrderBroadcastPayload;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * Broadcast de cambios operacionales de pedido.
+ * Canales privados (antes era público operations.orders — inseguro).
+ */
 class OrderUpdated implements ShouldBroadcast
 {
     use Dispatchable;
@@ -21,11 +26,12 @@ class OrderUpdated implements ShouldBroadcast
         public readonly Order $order,
     ) {}
 
-    /** @return array<int, Channel> */
+    /** @return array<int, PrivateChannel> */
     public function broadcastOn(): array
     {
         return [
-            new Channel('operations.orders'),
+            new PrivateChannel('operations.orders'),
+            new PrivateChannel('orders.'.$this->order->id),
         ];
     }
 
@@ -37,24 +43,8 @@ class OrderUpdated implements ShouldBroadcast
     /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
-        $this->order->loadMissing(['courier:id,first_name,last_name', 'user:id,first_name,last_name,email']);
-
         return [
-            'order' => [
-                'id' => $this->order->id,
-                'status' => $this->order->status->value,
-                'status_label' => $this->order->status->label(),
-                'courier_id' => $this->order->courier_id,
-                'courier_name' => $this->order->courier?->name,
-                'customer_name' => $this->order->user?->name,
-                'total' => (float) $this->order->total,
-                'delivery_attempt' => $this->order->delivery_attempt,
-                'assigned_at' => $this->order->assigned_at?->toIso8601String(),
-                'ready_at' => $this->order->ready_at?->toIso8601String(),
-                'picked_up_at' => $this->order->picked_up_at?->toIso8601String(),
-                'delivered_at' => $this->order->delivered_at?->toIso8601String(),
-                'updated_at' => $this->order->updated_at?->toIso8601String(),
-            ],
+            'order' => OrderBroadcastPayload::fromOrder($this->order),
         ];
     }
 }

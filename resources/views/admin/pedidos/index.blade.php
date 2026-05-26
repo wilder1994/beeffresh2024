@@ -5,11 +5,15 @@
 
 @section('contenido')
 @php $t = $metrics['totals']; @endphp
-<div class="max-w-7xl mx-auto space-y-6" data-ops-polling data-feed-url="{{ route('admin.pedidos.feed') }}">
+<div class="max-w-7xl mx-auto space-y-6" data-ops-polling
+     data-feed-url="{{ route('admin.pedidos.feed') }}"
+     data-ops-tab="{{ $tab }}"
+     data-card-fragment-url="{{ str_replace('/0/', '/__ORDER__/', route('admin.pedidos.card-fragment', ['order' => 0])) }}">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
             <h1 class="text-xl font-bold text-stone-900">Pedidos en línea</h1>
             <p class="text-sm text-stone-600 mt-0.5">Despacho, asignación y seguimiento en tiempo real.</p>
+            <x-realtime.status-indicator class="mt-2" />
         </div>
         <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.pedidos.map') }}" class="bf-btn-ghost">Mapa operativo</a>

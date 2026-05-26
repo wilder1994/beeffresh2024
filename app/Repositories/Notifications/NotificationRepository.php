@@ -7,6 +7,7 @@ namespace App\Repositories\Notifications;
 use App\Enums\Notifications\NotificationChannel;
 use App\Enums\Notifications\NotificationDeliveryStatus;
 use App\Enums\Notifications\NotificationType;
+use App\Events\NotificationCreated;
 use App\Models\Notification;
 use App\Models\NotificationDelivery;
 use App\Models\User;
@@ -27,7 +28,7 @@ final class NotificationRepository
         array $payload = [],
         array $metadata = [],
     ): Notification {
-        return Notification::query()->create([
+        $notification = Notification::query()->create([
             'user_id' => $user->id,
             'type' => $type,
             'title' => $title,
@@ -35,6 +36,10 @@ final class NotificationRepository
             'payload' => $payload,
             'metadata' => $metadata,
         ]);
+
+        event(new NotificationCreated($notification));
+
+        return $notification;
     }
 
     /**

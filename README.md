@@ -6,13 +6,14 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 | Stack | Versión / notas |
 |--------|------------------|
-| PHP | ^8.1 |
-| Laravel | ^10 |
+| PHP | ^8.2 |
+| Laravel | ^11 |
+| Realtime | [Laravel Reverb](https://laravel.com/docs/reverb) + Echo (Fase 0–1); [`docs/REALTIME.md`](docs/REALTIME.md) |
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-25
+**Última actualización de esta documentación:** 2026-05-26
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -119,15 +120,64 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 
 ### Túnel ngrok (pagos Wompi / webhooks)
 
-Para probar checkout y webhooks desde internet (p. ej. Wompi sandbox):
+Para probar checkout y webhooks desde internet (p. ej. Wompi sandbox). **Beeffresh en Laragon escucha en el puerto 8080** (no uses `ngrok http 80`, salvo que expongas otro proyecto en ese puerto).
 
-1. Expone el puerto local (`8080` o el que uses): `ngrok http 8080`.
-2. En `.env`, actualiza `APP_URL` con la URL HTTPS de ngrok (cambia en cada sesión free).
-3. En el panel Wompi → Developers, configura el webhook: `https://<tu-subdominio>.ngrok-free.app/webhooks/wompi`.
-4. Ejecuta `php artisan config:clear` tras cambiar `APP_URL`.
-5. En local (`APP_ENV=local`), `TrustProxies` confía el proxy para que Vite/assets y URLs de pago usen el host HTTPS correcto. `AppServiceProvider` fuerza **HTTPS** y cookies de sesión seguras cuando `APP_URL` empieza por `https://` (evita 419 en POST/PATCH vía túnel).
-6. **Cerrar sesión:** usar el botón del menú (POST con CSRF). Si el token expiró, `GET /logout` muestra una pantalla intermedia con token fresco (`auth/logout.blade.php`) antes de destruir la sesión.
-7. Compila assets con `npm run build` (no basta `npm run dev` para compartir el túnel).
+**Levantar el túnel (Windows):**
+
+1. En Laragon: **Start All** (Apache debe estar activo; comprueba `http://127.0.0.1:8080` o `http://beeffresh2024.test`).
+2. En una terminal, desde la carpeta de ngrok (p. ej. `C:\Users\wandy\Downloads\ngrok-v3-stable-windows-amd64`):
+
+```powershell
+.\ngrok.exe http 8080
+```
+
+3. Copia la URL **HTTPS** que muestra ngrok (plan free: cambia en cada sesión), p. ej. `https://xxxx-xxxx.ngrok-free.app`.
+4. Panel local de ngrok (estado y peticiones): `http://127.0.0.1:4040`.
+
+**Configurar el proyecto tras cada nueva URL de ngrok:**
+
+1. En `.env`: `APP_URL=https://<tu-subdominio>.ngrok-free.app` (sin barra final).
+2. Limpia configuración en caché:
+
+```bash
+php artisan config:clear
+```
+
+3. En el panel Wompi → Developers, webhook:
+
+```
+https://<tu-subdominio>.ngrok-free.app/webhooks/wompi
+```
+
+4. Compila assets (`npm run build`); no basta `npm run dev` para compartir el túnel con terceros.
+
+**Notas:**
+
+- En local (`APP_ENV=local`), `TrustProxies` confía el proxy para que Vite/assets y URLs de pago usen el host HTTPS correcto. `AppServiceProvider` fuerza **HTTPS** y cookies de sesión seguras cuando `APP_URL` empieza por `https://` (evita 419 en POST/PATCH vía túnel).
+- **Cerrar sesión:** usar el botón del menú (POST con CSRF). Si el token expiró, `GET /logout` muestra una pantalla intermedia con token fresco (`auth/logout.blade.php`) antes de destruir la sesión.
+- Si ngrok responde pero la app no carga, revisa que Laragon/Apache esté encendido y que el túnel apunte a **8080** (VirtualHost en `beeffresh2024-ip.conf`).
+
+### Realtime (Laravel Reverb)
+
+**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`), eventos `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`. Frontend en `resources/js/realtime/` (`realtimeStore`, handlers desacoplados).
+
+**Fase 1 (operacional):** campana (badge + dropdown + toast sin esperar poll), grid `/admin/pedidos` (parche de tarjetas sin `reload`), pago Wompi (UI + redirect vía websocket). **Polling sigue como fallback** (30 s campana, 15 s operaciones, 2,5 s pago).
+
+Documentación completa: [`docs/REALTIME.md`](docs/REALTIME.md).
+
+```bash
+# Tras cambiar .env o JS: npm run build && php artisan config:clear
+
+# Terminal 1 — Reverb (puerto 8081; Laragon/ngrok suelen usar 8080)
+php artisan reverb:start
+
+# Terminal 2 — colas (broadcast + notificaciones)
+php artisan queue:work database --queue=default,notifications,notifications-email
+```
+
+En `.env`: `BROADCAST_CONNECTION=reverb`, `REVERB_*`, `VITE_REVERB_*` (ver `.env.example`). Indicador de conexión: `<x-realtime.status-indicator />` en operaciones y pantallas de pago.
+
+Tests: `php artisan test --filter=Broadcasting`.
 
 **Nequi sandbox:** solo `3991111111` (aprobado) y `3992222222` (rechazado); cualquier otro número devuelve `ERROR`.
 
@@ -222,11 +272,11 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Carrito en sesión:** líneas `product:{id}:{kg|lb}` u `offer:{id}` (packs); servicios `App\Services\Catalog\CartSessionService`, `App\Services\Store\ProductBestPriceResolver`, `App\Services\Store\OfferPricingService`, `App\Services\Store\OfferAvailabilityService` y `App\Services\Catalog\ProductPromotionResolver`. Conversión a stock: `App\Services\Catalog\CartUnitConverter` (2 lb ≈ 1 kg). Badge del carrito: `resources/js/cartBadge.js` + `bfUpdateCartCount()`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
-- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` hace polling JSON (`GET /pago/estado/{uuid}` con `Accept: application/json`) vía `resources/js/paymentProcess.js`; si el callback trae `?id=` de Wompi o no llega webhook, el polling consulta la API por `transaction_id` o por **referencia** (`WompiGateway::findLatestTransactionByReference`). Al aprobar vacía la sesión `carrito` y actualiza el badge. Notificaciones por correo se envían **fuera** de la transacción del webhook (evita revertir el pedido si falla el mail en local). Logs de pagos: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`; en local sin SMTP use `MAIL_MAILER=log`. Rutas: `POST /checkout/pagar`, `POST /webhooks/wompi`, panel admin `/admin/pagos`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
+- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` y `/pago/pendiente/{uuid}` con **websocket** (`payment.status.updated` en canal privado `payments.{uuid}`) + **polling JSON de respaldo** (`GET /pago/estado/{uuid}`, `resources/js/paymentProcess.js`). El webhook sigue siendo la fuente de verdad; el WS acelera la UI. Al aprobar vacía la sesión `carrito` y actualiza el badge. Logs: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
 - **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Línea de tiempo con pasos **completados** y **pendientes** del flujo de entrega (`OrderTrackingTimelineBuilder`: Pendiente → … → Entregado). Polling cada 12 s (`resources/js/orderTracking.js`, feed JSON). Fechas en zona **`America/Bogota`**. Componente `x-store.tracking-timeline`.
-- **Notificaciones (núcleo):** arquitectura desacoplada en `App\Services\Notifications\` — `NotificationService`, canales (`internal`, `email`; stubs WhatsApp/push/SMS), eventos de dominio (`OrderPaid`, `OrderPreparing`, …), colas `notifications` / `notifications-email` (`QUEUE_CONNECTION=database`). Tablas: `notifications`, `notification_deliveries`, `notification_templates`, `notification_preferences`. **Audiencias:** clientes, domiciliarios y **operaciones** (admin + empleados con `module.orders`) en eventos clave (pago confirmado, preparación, listo para entrega, etc.); textos específicos en `config/notifications.php` → `content_operations`. **UI:** campana dorada `<x-notifications.bell />` en tienda, sidebar staff y header móvil del panel; badge con contador sin leer (render server-side + polling cada 30 s en `notificationBell.js`); panel lateral en staff con `placement="aside"`; **Marcar todas** vía AJAX desde la campana (JSON) o formulario en `/notificaciones`. Métricas en dashboard admin. Documentación: `docs/NOTIFICATIONS.md`. Worker: `php artisan queue:work database --queue=notifications,notifications-email`. Tests: `tests/Feature/Notifications/NotificationSystemTest.php`.
-- **Operaciones y despacho:** tras pago aprobado, estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos`, mapa, ticket, domiciliario. Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
+- **Notificaciones (núcleo):** arquitectura desacoplada en `App\Services\Notifications\` — `NotificationService`, canales (`internal`, `email`; stubs WhatsApp/push/SMS), eventos de dominio (`OrderPaid`, `OrderPreparing`, …), broadcast `NotificationCreated` (canal `App.Models.User.{id}`), colas `notifications` / `notifications-email`. **UI:** campana `<x-notifications.bell />`; **tiempo real** vía Echo (badge, ítem en dropdown, toast BF) con **polling 30 s de respaldo** (`notificationBell.js`). **Marcar todas** vía AJAX (JSON). Documentación: `docs/NOTIFICATIONS.md`, `docs/REALTIME.md`.
+- **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos` actualiza **tarjetas en vivo** (`order.updated`, sin recargar página; fragmento `GET /admin/pedidos/{order}/fragmento-tarjeta` para pedidos nuevos); **polling 15 s de respaldo** (`operationsPolling.js`). Mapa, ticket y domiciliario sin cambios realtime (Fase 2). Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 - Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.
@@ -250,7 +300,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`), pagos Wompi (`tests/Feature/Payments/`), carrito y escalas por volumen (`tests/Feature/Store/`), catálogo de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 
