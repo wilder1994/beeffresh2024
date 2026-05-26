@@ -35,6 +35,7 @@
 
             <div class="flex items-center gap-2 shrink-0 ml-auto">
                 @auth
+                    <x-notifications.bell variant="dark" />
                     <x-nav-user-menu :user="auth()->user()" variant="dark" />
                 @endauth
             </div>
@@ -55,5 +56,7 @@
     @auth
         <x-account.profile-dialog />
     @endauth
+
+    @stack('scripts')
 </body>
 </html>

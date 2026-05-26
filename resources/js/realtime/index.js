@@ -9,6 +9,7 @@ import { bfInitAvailabilityRealtimeHandler } from './handlers/availabilityHandle
 import { bfInitMetricsRealtimeHandler } from './handlers/metricsHandler.js';
 import { bfInitNotificationRealtimeHandler } from './handlers/notificationsHandler.js';
 import { bfInitRealtimeStatusIndicator } from './handlers/statusIndicator.js';
+import { bfInitNotificationSoundUnlock } from './utils/notificationSound.js';
 import { bfInitStockRealtimeHandler } from './handlers/stockHandler.js';
 import { initBfEcho } from './echo.js';
 import { bfStartRealtimeHealthMonitor } from './healthMonitor.js';
@@ -33,6 +34,7 @@ export function bootstrapBfRealtime() {
     }
 
     bfInitNotificationRealtimeHandler();
+    bfInitNotificationSoundUnlock();
     bfInitMetricsRealtimeHandler();
     bfInitStockRealtimeHandler();
     bfInitAvailabilityRealtimeHandler();

@@ -1,12 +1,18 @@
-@extends(auth()->user()?->isStaff() ? 'layouts.app' : 'layouts.store')
+@php
+    $user = auth()->user();
+    $layout = match (true) {
+        $user?->isStaff() => 'layouts.app',
+        $user?->isSupplier() => 'layouts.supplier',
+        default => 'layouts.store',
+    };
+    $contentSection = $user?->isStaff() ? 'contenido' : 'content';
+@endphp
+
+@extends($layout)
 
 @section('titulo', 'Notificaciones')
 
-@if(! auth()->user()?->isStaff())
-@section('content')
-@else
-@section('contenido')
-@endif
+@section($contentSection)
 <div class="max-w-3xl mx-auto space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -20,8 +26,8 @@
         </form>
     </div>
 
-    <section class="bf-store-panel p-5">
-        <h2 class="text-sm font-semibold text-stone-800 mb-4">Preferencias</h2>
+    <section class="bf-store-panel p-5 space-y-4">
+        <h2 class="text-sm font-semibold text-stone-800">Preferencias</h2>
         <form method="POST" action="{{ route('notifications.preferences.update') }}" class="grid sm:grid-cols-3 gap-4">
             @csrf
             @method('PATCH')
@@ -44,6 +50,24 @@
                 <button type="submit" class="bf-btn-primary text-sm">Guardar preferencias</button>
             </div>
         </form>
+
+        <div
+            class="pt-4 border-t border-stone-100"
+            data-notification-sound-prefs
+        >
+            <p class="text-xs font-medium text-stone-700 mb-2">Sonido en el navegador</p>
+            <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                    type="checkbox"
+                    class="checkbox checkbox-sm checkbox-primary"
+                    data-notification-sound-toggle
+                    checked
+                    aria-label="Reproducir sonido al recibir notificaciones nuevas"
+                >
+                <span data-notification-sound-label>Sonido activo</span>
+            </label>
+            <p class="text-xs text-stone-500 mt-1">El volumen lo controla tu sistema operativo y el navegador.</p>
+        </div>
     </section>
 
     <section class="bf-notification-list">

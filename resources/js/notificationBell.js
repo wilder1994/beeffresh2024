@@ -2,6 +2,7 @@
  * Campana de notificaciones — Fase 1 realtime + polling fallback 30s + sync multi-tab.
  */
 import {
+    bfHandleNotificationsFromFeed,
     bfInitNotificationRealtimeHandler,
     bfRegisterNotificationBellRoots,
     bfSeedNotificationIds,
@@ -10,6 +11,10 @@ import {
     bfRenderNotificationBadge,
     bfRenderNotificationList,
 } from './realtime/utils/notificationUi.js';
+import {
+    bfInitNotificationSoundToggles,
+    bfInitNotificationSoundUnlock,
+} from './realtime/utils/notificationSound.js';
 
 const UNREAD_STORAGE_KEY = 'bf:notifications:unread';
 
@@ -34,7 +39,10 @@ function bfApplyUnreadToRoots(roots, count) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function bfBootNotificationBell() {
+    bfInitNotificationSoundUnlock();
+    bfInitNotificationSoundToggles();
+
     const roots = [...document.querySelectorAll('[data-notification-bell]')];
     if (roots.length === 0) {
         return;
@@ -44,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bfInitNotificationRealtimeHandler();
 
     const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+
+    let feedInitialized = false;
 
     const refreshAll = async () => {
         const feedUrl = roots[0]?.dataset.feedUrl;
@@ -65,7 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const unreadCount = payload.unread_count ?? 0;
             const notifications = payload.notifications ?? [];
 
-            bfSeedNotificationIds(notifications);
+            if (feedInitialized) {
+                bfHandleNotificationsFromFeed(notifications, unreadCount);
+            } else {
+                bfSeedNotificationIds(notifications);
+                feedInitialized = true;
+            }
+
             bfPersistUnreadCount(unreadCount);
             bfApplyUnreadToRoots(roots, unreadCount);
 
@@ -168,4 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     refreshAll();
     window.setInterval(refreshAll, 30000);
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bfBootNotificationBell);
+} else {
+    bfBootNotificationBell();
+}

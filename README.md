@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-26
+**Última actualización de esta documentación:** 2026-05-27
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -231,9 +231,12 @@ Tras cada URL nueva de ngrok, actualiza `APP_URL`, `php artisan config:clear`, w
 
 Indicador en operaciones: `<x-realtime.status-indicator />` — *Operación en tiempo real* (WS + cola OK), *Sincronización diferida* (cola lenta) o *Modo respaldo (polling)*. Salud: `GET /admin/realtime/health` (staff).
 
-#### Notificaciones (campana + email)
+#### Notificaciones (campana + email + sonido)
 
 - **Tiempo real:** evento `NotificationCreated` → canal privado `App.Models.User.{id}` → `notificationBell.js` (badge, lista, toast). Requiere **Reverb + cola** (el broadcast se encola en `default`).
+- **Sonido:** tono tipo **campana** (`public/sounds/notification.wav`, ~0,55 s). Lógica en `resources/js/realtime/utils/notificationSound.js` (importada desde `app.js`). Se reproduce solo en notificaciones **nuevas** (WS o detección en polling cada 30 s; no al cargar la página). El volumen lo controla el **sistema operativo** / pestaña del navegador (`HTMLAudio` a volumen 1). **Silenciar:** checkbox «Sonido activo» en el dropdown de la campana o en `/notificaciones` (`localStorage` `bf:notifications:sound-muted`). Tras recargar la página hace falta **un clic** en la UI para cumplir la política de autoplay del navegador. Respaldo si falla el archivo: campana sintética vía Web Audio API.
+- **Regenerar el WAV:** `php scripts/generate-notification-sound.php`
+- **Portal proveedor:** campana en `layouts/supplier` y centro `/notificaciones` con el mismo layout.
 - **Entrega email / reintentos:** jobs en colas `notifications` y `notifications-email` (mismo worker de la Terminal C).
 - **Retrasos / pedidos demorados:** `php artisan notifications:check-delayed-orders` (programar en scheduler si aplica).
 
@@ -356,7 +359,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` y `/pago/pendiente/{uuid}` con **websocket** (`payment.status.updated` en canal privado `payments.{uuid}`) + **polling JSON de respaldo** (`GET /pago/estado/{uuid}`, `resources/js/paymentProcess.js`). El webhook sigue siendo la fuente de verdad; el WS acelera la UI. Al aprobar vacía la sesión `carrito` y actualiza el badge. Logs: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
 - **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Línea de tiempo con pasos **completados** y **pendientes** del flujo de entrega (`OrderTrackingTimelineBuilder`: Pendiente → … → Entregado). Polling cada 12 s (`resources/js/orderTracking.js`, feed JSON). Fechas en zona **`America/Bogota`**. Componente `x-store.tracking-timeline`.
-- **Notificaciones (núcleo):** arquitectura desacoplada en `App\Services\Notifications\` — `NotificationService`, canales (`internal`, `email`; stubs WhatsApp/push/SMS), eventos de dominio (`OrderPaid`, `OrderPreparing`, …), broadcast `NotificationCreated` (canal `App.Models.User.{id}`), colas `notifications` / `notifications-email`. **UI:** campana `<x-notifications.bell />`; **tiempo real** vía Echo (badge, ítem en dropdown, toast BF) con **polling 30 s de respaldo** (`notificationBell.js`). **Marcar todas** vía AJAX (JSON). Documentación: `docs/NOTIFICATIONS.md`, `docs/REALTIME.md`.
+- **Notificaciones (núcleo):** arquitectura desacoplada en `App\Services\Notifications\` — `NotificationService`, canales (`internal`, `email`; stubs WhatsApp/push/SMS), eventos de dominio (`OrderPaid`, `OrderPreparing`, …), broadcast `NotificationCreated` (canal `App.Models.User.{id}`), colas `notifications` / `notifications-email`. **UI:** campana `<x-notifications.bell />` (tienda, panel staff, portal proveedor); centro `/notificaciones` (todos los roles autenticados). **Tiempo real:** Echo + `notificationsHandler.js` (badge, dropdown, toast, sonido campana) y **polling 30 s** de respaldo (`notificationBell.js` en el bundle `app.js`). **Marcar todas** vía AJAX (JSON). Tests: `NotificationSystemTest`, `SupplierNotificationCenterTest`. Documentación: `docs/NOTIFICATIONS.md`, `docs/REALTIME.md`.
 - **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos` actualiza **tarjetas en vivo** (`order.updated`, sin recargar página; fragmento `GET /admin/pedidos/{order}/fragmento-tarjeta` para pedidos nuevos); **polling 15 s de respaldo** (`operationsPolling.js`). Mapa, ticket y domiciliario sin cambios realtime (Fase 2). Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
@@ -381,7 +384,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`tests/Feature/Orders/OrderOperationsFlowTest.php`), historial y seguimiento cliente (`CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`), **notificaciones** (`tests/Feature/Notifications/NotificationSystemTest.php`, `SupplierNotificationCenterTest.php`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 

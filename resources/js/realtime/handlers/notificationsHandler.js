@@ -5,6 +5,10 @@ import {
     bfRenderNotificationBadge,
     bfShowNotificationToast,
 } from '../utils/notificationUi.js';
+import {
+    bfNormalizeNotificationId,
+    bfPlayNotificationSound,
+} from '../utils/notificationSound.js';
 
 /** @type {Set<number|string>} */
 const seenNotificationIds = new Set();
@@ -12,6 +16,10 @@ const seenNotificationIds = new Set();
 let bellRoots = [];
 /** @type {(() => void)|null} */
 let boundHandler = null;
+
+function bfRefreshBellRoots() {
+    bellRoots = [...document.querySelectorAll('[data-notification-bell]')];
+}
 
 /**
  * @param {HTMLElement[]} roots
@@ -29,8 +37,14 @@ export function bfHandleNotificationCreated(payload) {
         return;
     }
 
-    if (seenNotificationIds.has(notification.id)) {
+    const notificationId = bfNormalizeNotificationId(notification.id);
+
+    if (seenNotificationIds.has(notificationId)) {
         return;
+    }
+
+    if (bellRoots.length === 0) {
+        bfRefreshBellRoots();
     }
 
     const unreadCount =
@@ -60,7 +74,7 @@ export function bfHandleNotificationCreated(payload) {
 
         bfPrependNotificationItem(
             root.querySelector('[data-notification-list]'),
-            { ...notification, read: false },
+            { ...notification, id: notificationId, read: false },
             root.dataset.indexUrl ?? '/notificaciones',
             seenNotificationIds,
         );
@@ -68,11 +82,44 @@ export function bfHandleNotificationCreated(payload) {
         bfAnimateNotificationBell(root);
     });
 
-    if (!seenNotificationIds.has(notification.id)) {
+    if (!seenNotificationIds.has(notificationId)) {
+        seenNotificationIds.add(notificationId);
+    }
+
+    void bfPlayNotificationSound();
+
+    if (!payload?.suppressToast) {
+        bfShowNotificationToast(notification.title ?? 'Nueva notificación', notification.body ?? '');
+    }
+}
+
+/**
+ * Notificaciones nuevas detectadas por polling (sin sonar en la carga inicial).
+ *
+ * @param {Array<object>} notifications
+ * @param {number|null} unreadCount
+ */
+export function bfHandleNotificationsFromFeed(notifications, unreadCount = null) {
+    if (!Array.isArray(notifications)) {
         return;
     }
 
-    bfShowNotificationToast(notification.title ?? 'Nueva notificación', notification.body ?? '');
+    notifications.forEach((item) => {
+        if (!item?.id) {
+            return;
+        }
+
+        const id = bfNormalizeNotificationId(item.id);
+        if (seenNotificationIds.has(id)) {
+            return;
+        }
+
+        bfHandleNotificationCreated({
+            notification: item,
+            unread_count: unreadCount,
+            suppressToast: true,
+        });
+    });
 }
 
 /**
@@ -85,7 +132,7 @@ export function bfSeedNotificationIds(items) {
 
     items.forEach((item) => {
         if (item?.id) {
-            seenNotificationIds.add(item.id);
+            seenNotificationIds.add(bfNormalizeNotificationId(item.id));
         }
     });
 }

@@ -99,15 +99,20 @@
             <ul data-notification-list class="max-h-80 overflow-y-auto divide-y divide-stone-100">
                 <li class="px-4 py-6 text-sm text-[var(--bf-muted)] text-center">Cargando…</li>
             </ul>
-            <div class="px-4 py-3 border-t border-stone-100 bg-stone-50">
-                <a href="{{ route('notifications.index') }}" class="text-sm font-medium text-[var(--bf-brand)] hover:underline">Ver todas</a>
+            <div class="px-4 py-3 border-t border-stone-100 bg-stone-50 space-y-2">
+                <label class="flex items-center gap-2 text-xs text-stone-600 cursor-pointer select-none">
+                    <input
+                        type="checkbox"
+                        class="checkbox checkbox-xs checkbox-primary"
+                        data-notification-sound-toggle
+                        checked
+                        aria-label="Reproducir sonido al recibir notificaciones"
+                    >
+                    <span data-notification-sound-label>Sonido activo</span>
+                </label>
+                <a href="{{ route('notifications.index') }}" class="block text-sm font-medium text-[var(--bf-brand)] hover:underline">Ver todas</a>
             </div>
         </div>
     </details>
 </div>
 
-@once
-    @push('scripts')
-        @vite('resources/js/notificationBell.js')
-    @endpush
-@endonce

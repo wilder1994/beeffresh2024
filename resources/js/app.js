@@ -99,3 +99,5 @@ if (window.livewireScriptConfig !== undefined) {
 }
 
 bootstrapBfRealtime();
+
+import './notificationBell.js';
