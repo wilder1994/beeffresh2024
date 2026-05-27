@@ -1,5 +1,5 @@
 /**
- * Campana de notificaciones — Fase 1 realtime + polling fallback 30s + sync multi-tab.
+ * Campana de notificaciones — solo no leídas + realtime + polling 30s.
  */
 import {
     bfHandleNotificationsFromFeed,
@@ -8,13 +8,15 @@ import {
     bfSeedNotificationIds,
 } from './realtime/handlers/notificationsHandler.js';
 import {
+    bfRemoveBellNotificationItem,
+    bfRenderBellNotificationList,
     bfRenderNotificationBadge,
-    bfRenderNotificationList,
 } from './realtime/utils/notificationUi.js';
 import {
     bfInitNotificationSoundToggles,
     bfInitNotificationSoundUnlock,
 } from './realtime/utils/notificationSound.js';
+import { bfMarkNotificationRead } from './notificationCenter.js';
 
 const UNREAD_STORAGE_KEY = 'bf:notifications:unread';
 
@@ -86,16 +88,50 @@ function bfBootNotificationBell() {
             bfApplyUnreadToRoots(roots, unreadCount);
 
             roots.forEach((root) => {
-                bfRenderNotificationList(
+                bfRenderBellNotificationList(
                     root.querySelector('[data-notification-list]'),
                     notifications,
-                    root.dataset.indexUrl ?? '/notificaciones',
                 );
             });
         } catch {
             // fallback silencioso
         }
     };
+
+    document.addEventListener('click', async (event) => {
+        const link = event.target.closest('[data-notification-bell-link]');
+        if (!link) {
+            return;
+        }
+
+        const bell = link.closest('[data-notification-bell]');
+        if (!bell) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const destination = link.getAttribute('href') || '/';
+        const readUrl = link.getAttribute('data-notification-read-url');
+        const itemId = link.closest('[data-notification-item-id]')?.getAttribute('data-notification-item-id');
+        const token = csrfToken();
+
+        if (readUrl && token) {
+            const result = await bfMarkNotificationRead(readUrl, token);
+            if (result.ok && typeof result.unread_count === 'number') {
+                bfPersistUnreadCount(result.unread_count);
+                bfApplyUnreadToRoots(roots, result.unread_count);
+            }
+
+            if (itemId) {
+                roots.forEach((root) => {
+                    bfRemoveBellNotificationItem(root.querySelector('[data-notification-list]'), itemId);
+                });
+            }
+        }
+
+        window.location.assign(destination);
+    });
 
     window.addEventListener('storage', (event) => {
         if (event.key !== UNREAD_STORAGE_KEY || event.newValue === null) {
@@ -117,6 +153,11 @@ function bfBootNotificationBell() {
         }
 
         bfApplyUnreadToRoots(roots, count);
+    });
+
+    window.addEventListener('bf:notification-bell-refresh', () => {
+        feedInitialized = true;
+        refreshAll();
     });
 
     document.querySelectorAll('[data-notification-mark-all]').forEach((form) => {

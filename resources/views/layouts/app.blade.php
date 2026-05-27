@@ -105,6 +105,7 @@
 
 @auth
     <x-account.profile-dialog />
+    <x-notifications.center-dialog />
 @endauth
 
 <x-bf.confirm-dialog />

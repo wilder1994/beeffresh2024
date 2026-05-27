@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Notifications;
 use App\Enums\Notifications\NotificationChannel;
 use App\Http\Controllers\Controller;
 use App\Services\Notifications\NotificationPreferenceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class NotificationPreferenceController extends Controller
         private readonly NotificationPreferenceService $preferences,
     ) {}
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         abort_unless($user !== null, 403);
@@ -49,6 +50,10 @@ class NotificationPreferenceController extends Controller
                 NotificationChannel::Push,
                 (bool) $validated['push_enabled'],
             );
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true]);
         }
 
         return back()->with('status', 'Preferencias de notificación actualizadas.');

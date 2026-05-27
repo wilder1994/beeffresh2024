@@ -55,6 +55,7 @@
 
     @auth
         <x-account.profile-dialog />
+        <x-notifications.center-dialog />
     @endauth
 
     @stack('scripts')

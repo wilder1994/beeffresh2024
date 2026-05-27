@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\Notification;
+use App\Support\NotificationActionUrl;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -50,8 +51,9 @@ class NotificationCreated implements ShouldBroadcast
                 'title' => $this->notification->title,
                 'body' => $this->notification->body,
                 'payload' => $payload,
-                'action_url' => $payload['action_url'] ?? null,
+                'action_url' => NotificationActionUrl::normalize($payload['action_url'] ?? null),
                 'read' => ! $this->notification->isUnread(),
+                'read_url' => route('notifications.read', $this->notification),
                 'read_at' => $this->notification->read_at?->toIso8601String(),
                 'created_at' => $this->notification->created_at?->toIso8601String(),
                 'created_human' => $this->notification->created_at?->diffForHumans(short: true),

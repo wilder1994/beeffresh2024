@@ -39,7 +39,7 @@ export function bfHandleNotificationCreated(payload) {
 
     const notificationId = bfNormalizeNotificationId(notification.id);
 
-    if (seenNotificationIds.has(notificationId)) {
+    if (seenNotificationIds.has(notificationId) || notification.read) {
         return;
     }
 
@@ -75,7 +75,6 @@ export function bfHandleNotificationCreated(payload) {
         bfPrependNotificationItem(
             root.querySelector('[data-notification-list]'),
             { ...notification, id: notificationId, read: false },
-            root.dataset.indexUrl ?? '/notificaciones',
             seenNotificationIds,
         );
 
@@ -105,7 +104,7 @@ export function bfHandleNotificationsFromFeed(notifications, unreadCount = null)
     }
 
     notifications.forEach((item) => {
-        if (!item?.id) {
+        if (!item?.id || item.read) {
             return;
         }
 

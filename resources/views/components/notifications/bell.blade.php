@@ -41,7 +41,7 @@
 <div
     class="relative shrink-0 overflow-visible"
     data-notification-bell
-    data-feed-url="{{ route('notifications.feed') }}"
+    data-feed-url="{{ route('notifications.feed', ['scope' => 'unread']) }}"
     data-index-url="{{ route('notifications.index') }}"
     data-mark-all-url="{{ route('notifications.mark-all-read') }}"
 >
@@ -89,7 +89,7 @@
 
         <div @class(['bf-notification-dropdown absolute z-[250] rounded-xl border border-black/10 bg-white text-[var(--bf-ink)] shadow-xl overflow-hidden max-w-[calc(100vw-2rem)]', $panelPositionClass, $panelAlignClass, $panelWidthClass])>
             <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-stone-100">
-                <p class="text-sm font-semibold">Notificaciones</p>
+                <p class="text-sm font-semibold">Sin leer</p>
                 <form method="POST" action="{{ route('notifications.mark-all-read') }}" data-notification-mark-all>
                     @csrf
                     @method('PATCH')
@@ -110,7 +110,13 @@
                     >
                     <span data-notification-sound-label>Sonido activo</span>
                 </label>
-                <a href="{{ route('notifications.index') }}" class="block text-sm font-medium text-[var(--bf-brand)] hover:underline">Ver todas</a>
+                <button
+                    type="button"
+                    class="block w-full text-left text-sm font-medium text-[var(--bf-brand)] hover:underline"
+                    data-open-notification-center
+                >
+                    Centro de notificaciones
+                </button>
             </div>
         </div>
     </details>

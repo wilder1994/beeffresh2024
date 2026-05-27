@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('notificaciones')->name('notifications.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'index'])->name('index');
         Route::get('/feed', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'feed'])->name('feed');
+        Route::get('/historial', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'history'])->name('history');
         Route::patch('/preferencias', [\App\Http\Controllers\Notifications\NotificationPreferenceController::class, 'update'])->name('preferences.update');
         Route::patch('/marcar-todas', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'markAllRead'])->name('mark-all-read');
         Route::patch('/{notification}/leida', [\App\Http\Controllers\Notifications\NotificationCenterController::class, 'markRead'])->name('read');

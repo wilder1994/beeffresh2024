@@ -182,7 +182,7 @@ class NotificationSystemTest extends TestCase
             ->firstOrFail();
 
         $this->assertStringContainsString('Cliente:', $staffNotification->body);
-        $this->assertSame(route('admin.pedidos.show', $order), $staffNotification->payload['action_url'] ?? null);
+        $this->assertSame(route('admin.pedidos.show', $order, absolute: false), $staffNotification->payload['action_url'] ?? null);
     }
 
     public function test_failed_delivery_job_marks_failed_after_retries(): void

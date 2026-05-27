@@ -30,7 +30,11 @@
                     <span class="bf-sidebar-account__meta truncate">{{ $accountLabel }}</span>
                 </label>
                 <ul tabindex="0" class="dropdown-content menu bg-[#fffaf5] text-gray-900 rounded-box shadow-lg w-52 z-[120] border border-amber-100 mb-2 text-sm">
-                    <li><a href="{{ route('notifications.index') }}">Centro de notificaciones</a></li>
+                    <li>
+                        <button type="button" class="w-full text-left" data-open-notification-center>
+                            Centro de notificaciones
+                        </button>
+                    </li>
                     <li><x-profile.open-button tag="a" class="w-full text-left">Mi perfil</x-profile.open-button></li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">

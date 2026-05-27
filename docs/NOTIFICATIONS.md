@@ -1,6 +1,6 @@
 # Sistema de notificaciones BeefFresh
 
-**Última actualización:** 2026-05-25
+**Última actualización:** 2026-05-29
 
 ## Objetivo
 
@@ -108,10 +108,22 @@ flowchart TB
 
 ## UI
 
-- **Campana** `<x-notifications.bell />` en tienda y panel staff.
-- **Listado** `/notificaciones` con preferencias y marcar leídas.
-- **Feed JSON** `/notificaciones/feed` (contador + recientes).
+- **Campana** `<x-notifications.bell />` — dropdown solo **no leídas** (`/notificaciones/feed?scope=unread`).
+- **Modal centro** `<x-notifications.center-dialog />` — historial (`/notificaciones/historial`), preferencias de canal y sonido del navegador.
+- **Página** `/notificaciones` — respaldo con el mismo contenido.
 - **Métricas admin** en `/dashboard` (enviadas, fallidas, pendientes, tiempo prom.).
+
+## Preferencias de usuario
+
+| Canal UI | Clave | Implementado | Efecto |
+|----------|-------|--------------|--------|
+| Centro interno | `internal` | Sí | Inbox + campana + broadcast realtime |
+| Correo electrónico | `email` | Sí | Job en cola `notifications-email` |
+| Push (próximamente) | `push` | Stub | Sin envío; checkbox deshabilitado en UI |
+
+**Sonido activo** en el modal no es un canal: solo silencia el WAV/Web Audio en el navegador (`localStorage`), independiente de `notification_preferences`.
+
+Resolución de canales: `NotificationChannelResolver` omite canales con `NotificationChannel::isImplemented() === false`.
 
 ## Configuración
 

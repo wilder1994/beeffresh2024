@@ -122,6 +122,19 @@ final class NotificationRepository
             ->get();
     }
 
+    /**
+     * Todas las no leídas (campana con scroll; tope de seguridad).
+     */
+    public function unreadForUser(User $user, int $limit = 100): Collection
+    {
+        return Notification::query()
+            ->where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->latest()
+            ->limit($limit)
+            ->get();
+    }
+
     public function paginateForUser(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return Notification::query()

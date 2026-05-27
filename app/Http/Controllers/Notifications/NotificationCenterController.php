@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Repositories\Notifications\NotificationRepository;
 use App\Services\Notifications\NotificationPreferenceService;
+use App\Support\NotificationActionUrl;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,21 +38,31 @@ class NotificationCenterController extends Controller
         $user = $request->user();
         abort_unless($user !== null, 403);
 
-        $recent = $this->repository->recentForUser($user, 8);
+        $scope = (string) $request->query('scope', 'unread');
+
+        $items = $scope === 'all'
+            ? $this->repository->recentForUser($user, 8)
+            : $this->repository->unreadForUser($user);
 
         return response()->json([
             'unread_count' => $this->repository->unreadCount($user),
-            'notifications' => $recent->map(fn (Notification $n): array => [
-                'id' => $n->id,
-                'type' => $n->type->value,
-                'type_label' => $n->type->label(),
-                'title' => $n->title,
-                'body' => $n->body,
-                'read' => ! $n->isUnread(),
-                'action_url' => $n->payload['action_url'] ?? null,
-                'created_at' => $n->created_at?->toIso8601String(),
-                'created_human' => $n->created_at?->diffForHumans(short: true),
-            ]),
+            'notifications' => $items->map(fn (Notification $n): array => $this->serializeNotification($n)),
+        ]);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null, 403);
+
+        $perPage = min(50, max(5, (int) $request->query('per_page', 15)));
+        $paginator = $this->repository->paginateForUser($user, $perPage);
+
+        return response()->json([
+            'unread_count' => $this->repository->unreadCount($user),
+            'notifications' => $paginator->getCollection()
+                ->map(fn (Notification $n): array => $this->serializeNotification($n)),
+            'meta' => $this->paginationMeta($paginator),
         ]);
     }
 
@@ -61,7 +73,10 @@ class NotificationCenterController extends Controller
         $this->repository->markAsRead($notification);
 
         if ($request->wantsJson()) {
-            return response()->json(['ok' => true]);
+            return response()->json([
+                'ok' => true,
+                'unread_count' => $this->repository->unreadCount($request->user()),
+            ]);
         }
 
         return back();
@@ -85,5 +100,38 @@ class NotificationCenterController extends Controller
         return redirect()
             ->route('notifications.index')
             ->with('status', 'Notificaciones marcadas como leídas.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeNotification(Notification $notification): array
+    {
+        return [
+            'id' => $notification->id,
+            'type' => $notification->type->value,
+            'type_label' => $notification->type->label(),
+            'title' => $notification->title,
+            'body' => $notification->body,
+            'read' => ! $notification->isUnread(),
+            'read_url' => route('notifications.read', $notification),
+            'action_url' => NotificationActionUrl::normalize($notification->payload['action_url'] ?? null),
+            'created_at' => $notification->created_at?->toIso8601String(),
+            'created_human' => $notification->created_at?->diffForHumans(short: true),
+        ];
+    }
+
+    /**
+     * @return array<string, int|bool|null>
+     */
+    private function paginationMeta(LengthAwarePaginator $paginator): array
+    {
+        return [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'has_more' => $paginator->hasMorePages(),
+        ];
     }
 }

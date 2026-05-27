@@ -9,6 +9,7 @@ use App\Enums\Notifications\NotificationType;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\NotificationActionUrl;
 
 final class NotificationContentBuilder
 {
@@ -84,8 +85,8 @@ final class NotificationContentBuilder
                 return match ($type) {
                     NotificationType::OrderAssigned,
                     NotificationType::OrderReassigned,
-                    NotificationType::DeliveryFailedCourier => route('courier.orders.show', $order),
-                    default => route('admin.pedidos.show', $order),
+                    NotificationType::DeliveryFailedCourier => NotificationActionUrl::route('courier.orders.show', $order),
+                    default => NotificationActionUrl::route('admin.pedidos.show', $order),
                 };
             }
 
@@ -93,33 +94,33 @@ final class NotificationContentBuilder
                 return match ($type) {
                     NotificationType::OrderAssigned,
                     NotificationType::OrderReassigned,
-                    NotificationType::DeliveryFailedCourier => route('courier.orders.show', $order),
-                    default => route('courier.orders.show', $order),
+                    NotificationType::DeliveryFailedCourier => NotificationActionUrl::route('courier.orders.show', $order),
+                    default => NotificationActionUrl::route('courier.orders.show', $order),
                 };
             }
 
             return match ($type) {
                 NotificationType::OrderAssigned,
                 NotificationType::OrderReassigned,
-                NotificationType::DeliveryFailedCourier => route('courier.orders.show', $order),
+                NotificationType::DeliveryFailedCourier => NotificationActionUrl::route('courier.orders.show', $order),
                 NotificationType::OrderUnassigned,
                 NotificationType::OrderDelayed,
-                NotificationType::OrderReturnedToStore => route('admin.pedidos.show', $order),
-                default => route('orders.tracking.show', $order),
+                NotificationType::OrderReturnedToStore => NotificationActionUrl::route('admin.pedidos.show', $order),
+                default => NotificationActionUrl::route('orders.tracking.show', $order),
             };
         }
 
         if ($payment instanceof Payment) {
             return match ($type) {
-                NotificationType::PaymentDeclined => route('payments.failed', $payment->uuid),
-                default => route('payments.status', $payment->uuid),
+                NotificationType::PaymentDeclined => NotificationActionUrl::route('payments.failed', $payment->uuid),
+                default => NotificationActionUrl::route('payments.status', $payment->uuid),
             };
         }
 
         if ($type === NotificationType::WebhookFailed) {
-            return route('admin.payments.index');
+            return NotificationActionUrl::route('admin.payments.index');
         }
 
-        return $payload['action_url'] ?? null;
+        return NotificationActionUrl::normalize($payload['action_url'] ?? null);
     }
 }
