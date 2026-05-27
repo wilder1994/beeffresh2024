@@ -7,6 +7,7 @@ namespace App\Support\Realtime;
 use App\Models\CourierLocation;
 use App\Models\Order;
 use App\Services\Orders\OrderTrackingTimelineBuilder;
+use App\Support\Orders\CustomerTrackingMapPhase;
 
 final class TrackingPayload
 {
@@ -51,6 +52,11 @@ final class TrackingPayload
                 'name' => $order->courier?->name,
             ] : null,
             'courier_location' => $courierLocation,
+            'map_phase' => CustomerTrackingMapPhase::forOrder($order),
+            'destination' => [
+                'lat' => $order->shipping_latitude !== null ? (float) $order->shipping_latitude : null,
+                'lng' => $order->shipping_longitude !== null ? (float) $order->shipping_longitude : null,
+            ],
             'updated_at' => $order->updated_at?->toIso8601String(),
         ];
     }

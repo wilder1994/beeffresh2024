@@ -50,13 +50,12 @@ class MarkReadyBroadcastTest extends TestCase
         $orderBroadcast = app(OrderBroadcastService::class);
 
         $order = $workflow->transitionSilent($order, OrderStatus::ReadyForDelivery, $dispatcher);
-        $courierAssignment->assignNearestAvailable($order, $dispatcher, emitBroadcast: false);
 
         DB::transaction(function () use ($orderBroadcast, $order): void {
             $orderBroadcast->dispatch($order->fresh(['user', 'courier', 'items']));
         });
 
-        Event::assertDispatched(OrderUpdated::class, 1);
+        $courierAssignment->claimByCourier($order->fresh(), $courier);
 
         Event::assertDispatched(OrderUpdated::class, function (OrderUpdated $event) use ($order, $courier): bool {
             return $event->order->id === $order->id

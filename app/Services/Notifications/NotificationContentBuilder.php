@@ -20,7 +20,12 @@ final class NotificationContentBuilder
     {
         $template = config('notifications.content.'.$type->value, []);
 
-        if ($recipient !== null && $recipient->isStaff()) {
+        if ($recipient !== null && $recipient->isCourier()) {
+            $courierTemplate = config('notifications.content_courier.'.$type->value, []);
+            if ($courierTemplate !== []) {
+                $template = array_merge($template, $courierTemplate);
+            }
+        } elseif ($recipient !== null && $recipient->isStaff()) {
             $operationsTemplate = config('notifications.content_operations.'.$type->value, []);
             if ($operationsTemplate !== []) {
                 $template = array_merge($template, $operationsTemplate);
@@ -92,10 +97,11 @@ final class NotificationContentBuilder
 
             if ($recipient !== null && $recipient->isCourier()) {
                 return match ($type) {
+                    NotificationType::OrderReadyForDelivery => NotificationActionUrl::route('courier.orders.index'),
                     NotificationType::OrderAssigned,
                     NotificationType::OrderReassigned,
                     NotificationType::DeliveryFailedCourier => NotificationActionUrl::route('courier.orders.show', $order),
-                    default => NotificationActionUrl::route('courier.orders.show', $order),
+                    default => NotificationActionUrl::route('courier.orders.index'),
                 };
             }
 

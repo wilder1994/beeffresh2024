@@ -512,6 +512,44 @@
         @apply px-3 sm:px-4 py-4 md:py-6 max-w-[1600px] mx-auto w-full;
     }
 
+    .staff-main-inner--compact {
+        @apply pt-2 md:pt-2.5;
+    }
+
+    /* Mapa operativo: alto explícito (mismo criterio que bf-tracking-map-canvas; evita height:100% con padre auto) */
+    .staff-content--map {
+        @apply flex flex-col;
+    }
+
+    .staff-content--map .staff-map-main {
+        @apply flex flex-1 flex-col min-h-0;
+    }
+
+    .staff-map-main {
+        @apply px-3 sm:px-4 pt-2 pb-2 md:pt-2.5 md:pb-3 max-w-[1600px] mx-auto w-full;
+    }
+
+    .staff-content--map .bf-ops-map-shell {
+        @apply flex flex-1 flex-col min-h-0 gap-2;
+    }
+
+    .bf-ops-map-toolbar {
+        @apply shrink-0;
+    }
+
+    .staff-content--map #ops-map-canvas.bf-ops-map-canvas--fill {
+        @apply w-full flex-1;
+        height: calc(100dvh - 14rem);
+        min-height: calc(100dvh - 14rem);
+    }
+
+    @media (min-width: 1024px) {
+        .staff-content--map #ops-map-canvas.bf-ops-map-canvas--fill {
+            height: calc(100dvh - 11.5rem);
+            min-height: calc(100dvh - 11.5rem);
+        }
+    }
+
     .bf-footer-watermark {
         @apply text-center text-[10px] sm:text-[11px] leading-tight font-normal tracking-wide text-stone-600/45;
     }
@@ -1252,6 +1290,30 @@
 
     .bf-store-page--wide {
         @apply max-w-7xl;
+    }
+
+    .bf-tracking-layout {
+        @apply grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8 items-start;
+    }
+
+    .bf-tracking-layout__info {
+        @apply min-w-0;
+    }
+
+    .bf-tracking-map-panel {
+        @apply bf-store-panel overflow-hidden min-h-[280px] lg:min-h-[420px] flex flex-col;
+    }
+
+    .bf-tracking-map-message {
+        @apply flex flex-1 flex-col items-center justify-center p-8 text-center text-sm text-[var(--bf-muted)] min-h-[280px] lg:min-h-[420px];
+    }
+
+    .bf-tracking-map-live {
+        @apply flex flex-1 flex-col min-h-0;
+    }
+
+    .bf-tracking-map-canvas {
+        @apply w-full flex-1 min-h-[260px] lg:min-h-[360px];
     }
 
     .bf-store-page--narrow {
@@ -2146,16 +2208,6 @@
     .bf-ops-timeline__item--upcoming .bf-ops-timeline__dot {
         background: color-mix(in srgb, var(--bf-muted) 35%, white);
         box-shadow: 0 0 0 3px color-mix(in srgb, var(--bf-muted) 12%, white);
-    }
-
-    .bf-ops-map-canvas {
-        min-height: 420px;
-    }
-
-    @media (min-width: 768px) {
-        .bf-ops-map-canvas {
-            min-height: 560px;
-        }
     }
 
     .bf-payment-trust {

@@ -23,11 +23,26 @@ class OrderPolicy
             return true;
         }
 
-        if ($user->isCourier() && $order->courier_id === $user->id) {
-            return true;
+        if ($user->isCourier()) {
+            if ($order->courier_id === $user->id) {
+                return true;
+            }
+
+            return $order->status === OrderStatus::ReadyForDelivery
+                && $order->courier_id === null
+                && (bool) $user->employeeProfile?->available;
         }
 
         return $user->isCustomer() && $order->user_id === $user->id;
+    }
+
+    public function accept(User $user, Order $order): bool
+    {
+        return $user->isCourier()
+            && $order->status === OrderStatus::ReadyForDelivery
+            && $order->courier_id === null
+            && (bool) $user->employeeProfile?->available
+            && ! app(\App\Services\Orders\CourierAssignmentService::class)->courierHasActiveDelivery($user);
     }
 
     public function transition(User $user, Order $order): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Orders;
 
+use App\Enums\OrderStatus;
 use App\Events\Orders\OrderAssigned;
 use App\Models\CompanyProfile;
 use App\Services\Realtime\CourierPresenceBroadcastService;
@@ -24,6 +25,51 @@ final class CourierAssignmentService
         private readonly OperationsMetricsBroadcastService $metricsBroadcast,
         private readonly CourierPresenceBroadcastService $presenceBroadcast,
     ) {}
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function listAvailableCouriers(): Collection
+    {
+        return User::query()
+            ->whereHas('employeeProfile', function (Builder $query): void {
+                $query->where('available', true)
+                    ->whereHas('position', fn (Builder $position) => $position->where('slug', \App\Models\Position::SLUG_DELIVERY));
+            })
+            ->orderBy('first_name')
+            ->get();
+    }
+
+    public function claimByCourier(Order $order, User $courier): OrderAssignment
+    {
+        if (! $courier->isCourier()) {
+            throw new RuntimeException('El usuario no es domiciliario.');
+        }
+
+        if (! (bool) $courier->employeeProfile?->available) {
+            throw new RuntimeException('Debes estar disponible para aceptar pedidos.');
+        }
+
+        if ($this->courierHasActiveDelivery($courier)) {
+            throw new RuntimeException('Ya tienes una entrega activa. Finalízala antes de aceptar otra.');
+        }
+
+        return DB::transaction(function () use ($order, $courier): OrderAssignment {
+            /** @var Order|null $locked */
+            $locked = Order::query()
+                ->whereKey($order->id)
+                ->where('status', OrderStatus::ReadyForDelivery)
+                ->whereNull('courier_id')
+                ->lockForUpdate()
+                ->first();
+
+            if ($locked === null) {
+                throw new RuntimeException('Este pedido ya fue tomado por otro domiciliario.');
+            }
+
+            return $this->assignToCourier($locked, $courier, $courier, emitBroadcast: true);
+        });
+    }
 
     public function assignNearestAvailable(Order $order, ?User $assignedBy = null, bool $emitBroadcast = true): OrderAssignment
     {
@@ -167,6 +213,18 @@ final class CourierAssignmentService
             + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
 
         return $earthRadius * (2 * atan2(sqrt($a), sqrt(1 - $a)));
+    }
+
+    public function courierHasActiveDelivery(User $courier): bool
+    {
+        return Order::query()
+            ->where('courier_id', $courier->id)
+            ->whereIn('status', [
+                OrderStatus::ReadyForDelivery->value,
+                OrderStatus::PickedUp->value,
+                OrderStatus::InTransit->value,
+            ])
+            ->exists();
     }
 
     private function findNearestAvailableCourier(float $destinationLat, float $destinationLng): ?User

@@ -43,7 +43,16 @@
 
     <section class="bf-ops-panel space-y-3">
         <h3 class="bf-ops-panel__title">Acciones</h3>
-        @if($order->status === \App\Enums\OrderStatus::ReadyForDelivery)
+        @if($order->status === \App\Enums\OrderStatus::ReadyForDelivery && $order->courier_id === null)
+            @can('accept', $order)
+                <form method="POST" action="{{ route('courier.orders.accept', $order) }}">@csrf
+                    <button type="submit" class="bf-btn-primary w-full justify-center">Aceptar este pedido</button>
+                </form>
+            @else
+                <p class="text-sm text-stone-600">Este pedido está disponible para otro domiciliario o debes finalizar tu entrega actual.</p>
+            @endcan
+        @endif
+        @if($order->status === \App\Enums\OrderStatus::ReadyForDelivery && $order->courier_id === auth()->id())
             <form method="POST" action="{{ route('courier.orders.picked-up', $order) }}">@csrf
                 <button type="submit" class="bf-btn-primary w-full justify-center">Confirmar recogida</button>
             </form>

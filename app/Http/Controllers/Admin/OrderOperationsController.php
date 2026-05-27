@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\Orders\OrderUnassigned;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Orders\AssignCourierOrderRequest;
 use App\Http\Requests\Orders\CancelOrderRequest;
 use App\Http\Requests\Orders\MarkReadyOrderRequest;
 use App\Http\Requests\Orders\OrderOperationsIndexRequest;
@@ -53,8 +53,13 @@ class OrderOperationsController extends Controller
     {
         $this->authorize('view', $order);
 
+        $order = $this->loadDetail($order);
+
         return view('admin.pedidos.show', [
-            'order' => $this->loadDetail($order),
+            'order' => $order,
+            'availableCouriers' => $order->status === OrderStatus::ReadyForDelivery && $order->courier_id === null
+                ? $this->courierAssignment->listAvailableCouriers()
+                : collect(),
         ]);
     }
 
@@ -80,23 +85,28 @@ class OrderOperationsController extends Controller
             $request->user(),
         );
 
-        $message = 'Pedido listo para entrega.';
-
-        try {
-            $this->courierAssignment->assignNearestAvailable($order, $request->user(), emitBroadcast: false);
-            $message = 'Pedido listo y domiciliario asignado.';
-        } catch (RuntimeException) {
-            $message = 'Pedido listo. No hay domiciliario disponible en este momento.';
-            event(new OrderUnassigned($order->fresh(['user', 'courier'])));
-        }
-
         DB::transaction(function () use ($order): void {
             $this->orderBroadcast->dispatch($order->fresh(['user', 'courier', 'items']));
         });
 
         return redirect()
             ->route('admin.pedidos.show', $order)
-            ->with('status', $message);
+            ->with('status', 'Pedido listo para entrega. Los domiciliarios disponibles fueron notificados.');
+    }
+
+    public function assignCourier(AssignCourierOrderRequest $request, Order $order): RedirectResponse
+    {
+        $courier = User::query()->findOrFail((int) $request->validated('courier_id'));
+
+        try {
+            $this->courierAssignment->assignToCourier($order, $courier, $request->user());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['courier_id' => $exception->getMessage()]);
+        }
+
+        return redirect()
+            ->route('admin.pedidos.show', $order)
+            ->with('status', 'Domiciliario asignado manualmente.');
     }
 
     public function cancel(CancelOrderRequest $request, Order $order): RedirectResponse

@@ -50,8 +50,14 @@ class OrderOperationsFlowTest extends TestCase
 
         $order->refresh();
         $this->assertSame(OrderStatus::ReadyForDelivery, $order->status);
+        $this->assertNull($order->courier_id);
+
+        $this->actingAs($courier)
+            ->post(route('courier.orders.accept', $order))
+            ->assertRedirect(route('courier.orders.show', $order));
+
+        $order->refresh();
         $this->assertSame($courier->id, $order->courier_id);
-        $this->assertFalse((bool) $courier->fresh()->employeeProfile?->available);
 
         $this->actingAs($courier)
             ->post(route('courier.orders.picked-up', $order))
@@ -95,6 +101,7 @@ class OrderOperationsFlowTest extends TestCase
 
         $this->actingAs($dispatcher)->post(route('admin.pedidos.start-preparing', $order));
         $this->actingAs($dispatcher)->post(route('admin.pedidos.mark-ready', $order));
+        $this->actingAs($courier)->post(route('courier.orders.accept', $order));
         $this->actingAs($courier)->post(route('courier.orders.picked-up', $order));
         $this->actingAs($courier)->post(route('courier.orders.in-transit', $order));
 

@@ -39,8 +39,28 @@ class CourierOrderController extends Controller
         $courier = auth()->user();
 
         return view('courier.orders.index', [
-            'orders' => $this->queries->courierActiveOrders($courier),
+            'poolOrders' => $this->queries->courierPoolOrders(),
+            'myOrders' => $this->queries->courierActiveOrders($courier),
+            'canAccept' => (bool) $courier->employeeProfile?->available
+                && ! $this->courierAssignment->courierHasActiveDelivery($courier),
         ]);
+    }
+
+    public function accept(\Illuminate\Http\Request $request, Order $order): RedirectResponse
+    {
+        $this->authorize('accept', $order);
+
+        try {
+            $this->courierAssignment->claimByCourier($order, $request->user());
+        } catch (\RuntimeException $exception) {
+            return redirect()
+                ->route('courier.orders.index')
+                ->withErrors(['accept' => $exception->getMessage()]);
+        }
+
+        return redirect()
+            ->route('courier.orders.show', $order)
+            ->with('status', 'Pedido aceptado. Puedes recogerlo en tienda.');
     }
 
     public function show(Order $order): View

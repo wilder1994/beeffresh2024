@@ -132,6 +132,17 @@ final class OrderOperationsQueryService
     }
 
     /** @return Collection<int, Order> */
+    public function courierPoolOrders(): Collection
+    {
+        return Order::query()
+            ->where('status', OrderStatus::ReadyForDelivery)
+            ->whereNull('courier_id')
+            ->with(['user:id,first_name,last_name,phone'])
+            ->latest('ready_at')
+            ->get();
+    }
+
+    /** @return Collection<int, Order> */
     public function courierActiveOrders(User $courier): Collection
     {
         return Order::query()

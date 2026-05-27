@@ -16,7 +16,14 @@
 <body class="bf-panel-bg min-h-screen antialiased text-[var(--bf-ink)]">
 
 @if(auth()->check() && auth()->user()->isStaff())
-    <div x-data="staffLayout()" class="min-h-screen" x-on:keydown.escape.window="closeMobileMenu()">
+    <div
+        x-data="staffLayout()"
+        @class([
+            'flex flex-col min-h-screen',
+            'h-dvh overflow-hidden' => View::hasSection('staff_map_page'),
+        ])
+        x-on:keydown.escape.window="closeMobileMenu()"
+    >
         {{-- x-if: el scrim no permanece en el DOM al cerrar (evita capa bloqueando clics si Alpine queda desincronizado) --}}
         <template x-if="mobileMenuOpen">
             <div
@@ -49,7 +56,11 @@
         </aside>
 
         <div
-            class="min-h-screen flex flex-col transition-[padding] duration-300 ease-out staff-content"
+            @class([
+                'flex flex-col transition-[padding] duration-300 ease-out staff-content min-h-0',
+                'min-h-screen' => ! View::hasSection('staff_map_page'),
+                'flex-1 min-h-0 overflow-hidden staff-content--map' => View::hasSection('staff_map_page'),
+            ])
             x-bind:class="sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-[17rem]'"
         >
             <header class="sticky top-0 z-20 flex items-center gap-2 px-3 py-2 sm:py-2.5 bg-[var(--bf-rust-deep)] text-white shadow-md border-b border-black/15 lg:hidden">
@@ -60,22 +71,33 @@
                 <x-notifications.bell variant="dark" />
             </header>
 
-            <main class="flex-grow flex flex-col min-w-0">
+            <main class="flex flex-1 flex-col min-w-0 min-h-0">
                 @include('layouts.partials.flash-alerts')
                 @hasSection('cabecera')
-                    <div class="bg-[var(--bf-red)] my-2 sm:my-3 md:my-4 text-center mx-2 sm:mx-3 md:mx-4 rounded-lg md:rounded-xl overflow-hidden shadow border border-black/10">
+                    <div @class([
+                        'shrink-0 bg-[var(--bf-red)] text-center mx-2 sm:mx-3 md:mx-4 rounded-lg md:rounded-xl overflow-hidden shadow border border-black/10',
+                        'my-2 sm:my-3 md:my-4' => ! View::hasSection('cabecera_compact') && ! View::hasSection('staff_map_page'),
+                        'mt-2 mb-1 sm:mb-1 md:mt-2 md:mb-1' => View::hasSection('cabecera_compact') || View::hasSection('staff_map_page'),
+                    ])>
                         <h1 class="staff-page-banner font-brand leading-tight">@yield('cabecera')</h1>
                     </div>
                 @endif
 
-                <div class="staff-main-inner flex-1 pb-6">
+                <div @class([
+                    'w-full min-h-0 flex flex-col',
+                    'staff-map-main flex-1' => View::hasSection('staff_map_page'),
+                    'staff-main-inner flex-1 pb-6' => ! View::hasSection('staff_map_page') && ! View::hasSection('cabecera_compact'),
+                    'staff-main-inner staff-main-inner--compact flex-1 pb-3' => ! View::hasSection('staff_map_page') && View::hasSection('cabecera_compact'),
+                ])>
                     @yield('contenido')
                 </div>
             </main>
 
-            <footer class="shrink-0 py-2 sm:py-2.5 px-2 text-center border-0 bg-transparent" role="contentinfo" aria-label="Aviso legal">
-                @include('layouts.footer')
-            </footer>
+            @unless(View::hasSection('staff_map_page'))
+                <footer class="shrink-0 py-2 sm:py-2.5 px-2 text-center border-0 bg-transparent" role="contentinfo" aria-label="Aviso legal">
+                    @include('layouts.footer')
+                </footer>
+            @endunless
         </div>
     </div>
 @else

@@ -126,6 +126,7 @@ Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('adm
         Route::post('/{order}/ticket/impreso', [OrderTicketController::class, 'markPrinted'])->name('ticket.mark-printed');
         Route::post('/{order}/preparar', [OrderOperationsController::class, 'startPreparing'])->name('start-preparing');
         Route::post('/{order}/listo', [OrderOperationsController::class, 'markReady'])->name('mark-ready');
+        Route::post('/{order}/asignar-domiciliario', [OrderOperationsController::class, 'assignCourier'])->name('assign-courier');
         Route::post('/{order}/cancelar', [OrderOperationsController::class, 'cancel'])->name('cancel');
         Route::post('/{order}/reprogramar', [OrderOperationsController::class, 'redispatch'])->name('redispatch');
         Route::get('/{order}', [OrderOperationsController::class, 'show'])->name('show');
@@ -134,6 +135,7 @@ Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('adm
 
 Route::middleware(['auth', 'role:employee', 'courier'])->prefix('domiciliario')->name('courier.')->group(function () {
     Route::get('/pedidos', [CourierOrderController::class, 'index'])->name('orders.index');
+    Route::post('/pedidos/{order}/aceptar', [CourierOrderController::class, 'accept'])->name('orders.accept');
     Route::post('/ubicacion', [CourierOrderController::class, 'updateLocation'])->name('location.update');
     Route::get('/pedidos/{order}', [CourierOrderController::class, 'show'])->name('orders.show');
     Route::post('/pedidos/{order}/recogido', [CourierOrderController::class, 'markPickedUp'])->name('orders.picked-up');

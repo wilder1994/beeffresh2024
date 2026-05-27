@@ -51,6 +51,19 @@ final class NotificationRecipientResolver
     /**
      * @return Collection<int, User>
      */
+    /**
+     * @return Collection<int, User>
+     */
+    public function availableCouriers(): Collection
+    {
+        return User::query()
+            ->whereHas('employeeProfile', function ($query): void {
+                $query->where('available', true)
+                    ->whereHas('position', fn ($q) => $q->where('slug', Position::SLUG_DELIVERY));
+            })
+            ->get();
+    }
+
     public function forAudiences(array $audiences, array $payload): Collection
     {
         $recipients = collect();
@@ -59,6 +72,7 @@ final class NotificationRecipientResolver
             $recipients = $recipients->merge(match ($audience) {
                 'customer' => $this->customerAudience($payload),
                 'courier' => $this->courierAudience($payload),
+                'available_couriers' => $this->availableCouriers(),
                 'operations' => $this->operationsStaff(),
                 default => collect(),
             });

@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('notifications:check-delayed-orders')->hourly();
+        $schedule->command('orders:notify-unclaimed-ready')->everyFifteenMinutes();
     }
 
     /**

@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Store;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Orders\OrderTrackingFeedRequest;
+use App\Models\CourierLocation;
 use App\Models\Order;
 use App\Services\Orders\OrderTrackingTimelineBuilder;
+use App\Support\Orders\CustomerTrackingMapPhase;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -24,11 +26,7 @@ class OrderTrackingController extends Controller
 
         $order = $this->loadTrackingDetail($order);
 
-        return view('store.orders.tracking', [
-            'order' => $order,
-            'timeline' => $this->timelineBuilder->build($order),
-            'trackingToken' => $order->tracking_token,
-        ]);
+        return $this->trackingView($order, $order->tracking_token);
     }
 
     public function showByToken(string $trackingToken): View
@@ -36,10 +34,18 @@ class OrderTrackingController extends Controller
         $order = $this->resolveByToken($trackingToken);
         $order = $this->loadTrackingDetail($order);
 
+        return $this->trackingView($order, $trackingToken);
+    }
+
+    private function trackingView(Order $order, string $trackingToken): View
+    {
         return view('store.orders.tracking', [
             'order' => $order,
             'timeline' => $this->timelineBuilder->build($order),
             'trackingToken' => $trackingToken,
+            'mapPhase' => CustomerTrackingMapPhase::forOrder($order),
+            'courierLocation' => $this->courierLocationFor($order),
+            'mapsApiKey' => config('services.google.maps_api_key'),
         ]);
     }
 
@@ -102,8 +108,41 @@ class OrderTrackingController extends Controller
                 'picked_up_at' => $order->picked_up_at?->toIso8601String(),
                 'delivered_at' => $order->delivered_at?->toIso8601String(),
                 'updated_at' => $order->updated_at?->toIso8601String(),
+                'shipping_latitude' => $order->shipping_latitude !== null ? (float) $order->shipping_latitude : null,
+                'shipping_longitude' => $order->shipping_longitude !== null ? (float) $order->shipping_longitude : null,
             ],
             'timeline' => $this->timelineBuilder->build($order),
+            'map_phase' => CustomerTrackingMapPhase::forOrder($order),
+            'destination' => [
+                'lat' => $order->shipping_latitude !== null ? (float) $order->shipping_latitude : null,
+                'lng' => $order->shipping_longitude !== null ? (float) $order->shipping_longitude : null,
+            ],
+            'courier_location' => $this->courierLocationFor($order),
+        ];
+    }
+
+    /**
+     * @return array{lat: float, lng: float, updated_at: string|null}|null
+     */
+    private function courierLocationFor(Order $order): ?array
+    {
+        if ($order->courier_id === null) {
+            return null;
+        }
+
+        $latest = CourierLocation::query()
+            ->where('user_id', $order->courier_id)
+            ->latest('recorded_at')
+            ->first();
+
+        if ($latest === null) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $latest->latitude,
+            'lng' => (float) $latest->longitude,
+            'updated_at' => $latest->recorded_at?->toIso8601String(),
         ];
     }
 }

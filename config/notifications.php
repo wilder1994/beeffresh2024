@@ -39,7 +39,7 @@ return [
         ],
         NotificationType::OrderReadyForDelivery->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
-            'audiences' => ['customer', 'operations'],
+            'audiences' => ['customer', 'operations', 'available_couriers'],
         ],
         NotificationType::OrderAssigned->value => [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
@@ -203,7 +203,7 @@ return [
         ],
         NotificationType::OrderReadyForDelivery->value => [
             'title' => 'Pedido #{order_id} listo para entrega',
-            'body' => 'El pedido de {customer_name} está listo. Asigna domiciliario si aplica.',
+            'body' => 'El pedido de {customer_name} está listo. Esperando que un domiciliario lo acepte.',
             'action_label' => 'Ver pedido',
         ],
         NotificationType::OrderPickedUp->value => [
@@ -219,6 +219,19 @@ return [
         NotificationType::PaymentDeclined->value => [
             'title' => 'Pago rechazado · Pedido #{order_id}',
             'body' => 'Pago rechazado para el pedido #{order_id} ({reference}).',
+            'action_label' => 'Ver pedido',
+        ],
+    ],
+
+    'content_courier' => [
+        NotificationType::OrderReadyForDelivery->value => [
+            'title' => 'Nuevo pedido #{order_id} para recoger',
+            'body' => 'Pedido de {customer_name} listo en tienda. Puedes aceptarlo desde tu panel.',
+            'action_label' => 'Ver pedidos disponibles',
+        ],
+        NotificationType::OrderAssigned->value => [
+            'title' => 'Tomaste el pedido #{order_id}',
+            'body' => 'Ya puedes recogerlo en tienda y completar la entrega.',
             'action_label' => 'Ver pedido',
         ],
     ],

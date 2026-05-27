@@ -1,25 +1,29 @@
 @extends('layouts.app')
 
 @section('titulo', 'Mapa operativo')
-@section('cabecera', 'Mapa en tiempo real')
+@section('staff_map_page', '1')
+@section('cabecera_compact', '1')
+@section('cabecera', 'Mapa operativo')
 
 @push('bf-realtime-meta')
     <meta name="bf-staff-operations-map" content="1">
 @endpush
 
 @section('contenido')
-<div class="max-w-7xl mx-auto space-y-4" data-ops-map
-     data-map-data-url="{{ route('admin.pedidos.map-data') }}"
-     data-api-key="{{ config('services.google.maps_api_key') }}">
-    <div class="flex items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl font-bold text-stone-900">Mapa operativo</h1>
-            <p class="text-sm text-stone-600">Domiciliarios, pedidos activos y tienda.</p>
+<div
+    class="bf-ops-map-shell max-w-7xl mx-auto w-full"
+    data-ops-map
+    data-map-data-url="{{ route('admin.pedidos.map-data') }}"
+    data-api-key="{{ config('services.google.maps_api_key') }}"
+>
+    <div class="bf-ops-map-toolbar flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <p class="text-sm text-stone-600">Domiciliarios, pedidos activos y tienda.</p>
+        <div class="flex flex-wrap items-center gap-3">
+            <x-realtime.status-indicator />
+            <a href="{{ route('admin.pedidos.index') }}" class="bf-btn-ghost shrink-0">← Pedidos</a>
         </div>
-        <a href="{{ route('admin.pedidos.index') }}" class="bf-btn-ghost">← Pedidos</a>
     </div>
-    <div id="ops-map-canvas" class="bf-ops-map-canvas rounded-xl border border-stone-200 overflow-hidden min-h-[420px] bg-stone-100"></div>
-    <p class="text-xs text-stone-500">Tiempo real cuando Reverb está activo; respaldo automático cada 15–30 s.</p>
+    <div id="ops-map-canvas" class="bf-ops-map-canvas bf-ops-map-canvas--fill rounded-xl border border-stone-200 overflow-hidden bg-stone-100"></div>
 </div>
 @endsection
 

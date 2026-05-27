@@ -85,9 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     fullscreenControl: true,
                 });
                 bfRegisterOpsMap(map);
+                window.setTimeout(() => {
+                    google.maps.event.trigger(map, 'resize');
+                }, 100);
             }
 
             bfSyncOpsMapFromFeed(payload);
+
+            if (map) {
+                google.maps.event.trigger(map, 'resize');
+            }
         } catch {
             // ignore
         } finally {
@@ -104,5 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('bf:realtime-status', () => {
         schedulePoll();
+    });
+
+    window.addEventListener('resize', () => {
+        if (map) {
+            google.maps.event.trigger(map, 'resize');
+        }
     });
 });

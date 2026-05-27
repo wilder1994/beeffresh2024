@@ -1,6 +1,7 @@
 /**
  * Parches DOM de seguimiento de pedido (cliente / staff).
  */
+import { bfUpdateCustomerTrackingMap } from '../../trackingMap.js';
 
 /**
  * @param {string} iso
@@ -68,12 +69,25 @@ export function bfPatchTrackingPage(tracking) {
         bfPatchTrackingTimeline(tracking.timeline, timeline);
     }
 
-    if (courierEl && tracking.courier) {
-        courierEl.textContent = tracking.courier.name ?? '—';
+    const courierWrap = document.getElementById('tracking-courier-wrap');
+    if (courierEl && tracking.courier?.name) {
+        courierEl.textContent = tracking.courier.name;
+        courierWrap?.classList.remove('hidden');
     }
 
     if (etaEl && tracking.eta) {
         etaEl.textContent = String(tracking.eta);
+    }
+
+    if (document.querySelector('[data-order-tracking]')) {
+        bfUpdateCustomerTrackingMap(tracking);
+
+        const locPending = document.getElementById('tracking-map-loc-pending');
+        if (locPending) {
+            const live = tracking.status === 'picked_up' || tracking.status === 'in_transit';
+            const hasLoc = tracking.courier_location?.lat != null;
+            locPending.classList.toggle('hidden', !live || hasLoc);
+        }
     }
 
     window.dispatchEvent(new CustomEvent('bf:tracking-map-patch', {

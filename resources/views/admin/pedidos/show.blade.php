@@ -102,8 +102,23 @@
                 @endif
                 @if($order->status === \App\Enums\OrderStatus::Preparing)
                     <form method="POST" action="{{ route('admin.pedidos.mark-ready', $order) }}">@csrf
-                        <button type="submit" class="bf-btn-primary w-full justify-center">Marcar listo y asignar</button>
+                        <button type="submit" class="bf-btn-primary w-full justify-center">Marcar listo para recoger</button>
                     </form>
+                @endif
+                @if($order->status === \App\Enums\OrderStatus::ReadyForDelivery && !$order->courier)
+                    <form method="POST" action="{{ route('admin.pedidos.assign-courier', $order) }}" class="space-y-2">@csrf
+                        <label class="bf-label-muted">Asignar domiciliario manualmente</label>
+                        <select name="courier_id" class="bf-input" required>
+                            <option value="">Seleccionar domiciliario disponible</option>
+                            @foreach($availableCouriers as $courier)
+                                <option value="{{ $courier->id }}">{{ $courier->name }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="bf-btn-primary w-full justify-center">Asignar</button>
+                    </form>
+                    @if($availableCouriers->isEmpty())
+                        <p class="text-xs text-amber-700">No hay domiciliarios marcados como disponibles.</p>
+                    @endif
                 @endif
                 @if($order->status === \App\Enums\OrderStatus::ReturnedToStore)
                     <form method="POST" action="{{ route('admin.pedidos.redispatch', $order) }}" class="space-y-2">@csrf
