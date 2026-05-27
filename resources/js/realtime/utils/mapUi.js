@@ -11,6 +11,53 @@ const orderMarkers = new Map();
 /** @type {Map<string, import('google.maps').Marker>} */
 const courierMarkers = new Map();
 
+/** @type {Map<string, number>} */
+const courierMarkerAnimations = new Map();
+
+/**
+ * @param {import('google.maps').Marker} marker
+ * @param {{ lat: number, lng: number }} target
+ * @param {number} durationMs
+ */
+function bfAnimateMarkerTo(marker, target, durationMs = 900, animKey = 'marker') {
+    const key = String(animKey);
+    if (courierMarkerAnimations.has(key)) {
+        window.cancelAnimationFrame(courierMarkerAnimations.get(key));
+    }
+
+    const start = marker.getPosition();
+    if (!start) {
+        marker.setPosition(target);
+
+        return;
+    }
+
+    const startLat = start.lat();
+    const startLng = start.lng();
+    const deltaLat = target.lat - startLat;
+    const deltaLng = target.lng - startLng;
+    const t0 = performance.now();
+
+    const step = (now) => {
+        const t = Math.min(1, (now - t0) / durationMs);
+        const eased = t * (2 - t);
+        marker.setPosition({
+            lat: startLat + deltaLat * eased,
+            lng: startLng + deltaLng * eased,
+        });
+
+        if (t < 1) {
+            const id = window.requestAnimationFrame(step);
+            courierMarkerAnimations.set(key, id);
+        } else {
+            courierMarkerAnimations.delete(key);
+        }
+    };
+
+    const id = window.requestAnimationFrame(step);
+    courierMarkerAnimations.set(key, id);
+}
+
 const statusColors = {
     pending: '#eab308',
     preparing: '#3b82f6',
@@ -118,7 +165,7 @@ export function bfPatchCourierMarker(payload) {
     const existing = courierMarkers.get(key);
 
     if (existing) {
-        existing.setPosition(position);
+        bfAnimateMarkerTo(existing, position, 900, key);
         existing.setTitle(`${name} (${available ? 'Libre' : 'Ocupado'})`);
         existing.setIcon({
             path: google.maps.SymbolPath.CIRCLE,

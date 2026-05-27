@@ -6,6 +6,7 @@ namespace App\Services\Realtime;
 
 use App\Jobs\Realtime\BroadcastCourierLocationJob;
 use App\Models\CourierLocation;
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderAssignment;
 use App\Models\User;
@@ -29,15 +30,19 @@ final class CourierLocationBroadcastService
 
     public function dispatch(User $courier, CourierLocation $location): void
     {
+        $activeOrder = $this->activeOrderForCourier($courier);
+        $onActiveRoute = $activeOrder !== null
+            && in_array($activeOrder->status, OrderStatus::activeCourierStatuses(), true);
+
         if (! $this->rateLimiter->shouldBroadcast(
             $courier->id,
             (float) $location->latitude,
             (float) $location->longitude,
+            $onActiveRoute,
         )) {
             return;
         }
 
-        $activeOrder = $this->activeOrderForCourier($courier);
         $payload = CourierLocationPayload::from($courier, $location, $activeOrder);
 
         $this->afterCommitBroadcast(function () use ($payload, $activeOrder): void {

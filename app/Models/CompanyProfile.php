@@ -11,6 +11,17 @@ class CompanyProfile extends Model
     public const SINGLETON_ID = 1;
 
     protected $fillable = [
+        'legal_name',
+        'trade_name',
+        'nit',
+        'contact_phone',
+        'contact_email',
+        'store_address',
+        'store_neighborhood',
+        'store_city',
+        'store_state',
+        'store_latitude',
+        'store_longitude',
         'about_heading',
         'about_content',
         'promise_heading',
@@ -22,8 +33,6 @@ class CompanyProfile extends Model
         'social_whatsapp',
         'social_tiktok',
         'social_youtube',
-        'store_latitude',
-        'store_longitude',
     ];
 
     protected $casts = [

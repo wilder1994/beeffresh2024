@@ -17,7 +17,9 @@
     data-api-key="{{ config('services.google.maps_api_key') }}"
 >
     <div class="bf-ops-map-toolbar flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <p class="text-sm text-stone-600">Domiciliarios, pedidos activos y tienda.</p>
+        <p class="text-sm text-stone-600">
+            Domiciliarios en vivo (GPS cada ~12 s en ruta), pedidos activos y tienda. Requiere panel domiciliario abierto + Reverb.
+        </p>
         <div class="flex flex-wrap items-center gap-3">
             <x-realtime.status-indicator />
             <a href="{{ route('admin.pedidos.index') }}" class="bf-btn-ghost shrink-0">← Pedidos</a>

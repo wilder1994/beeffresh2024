@@ -8,7 +8,20 @@
 @section('cabecera', 'Panel domiciliario')
 
 @section('contenido')
-<div class="max-w-3xl mx-auto space-y-8" data-courier-location data-location-url="{{ route('courier.location.update') }}">
+@php
+    $gpsActive = $myOrders->contains(
+        fn ($o) => in_array($o->status, \App\Enums\OrderStatus::activeCourierStatuses(), true)
+    );
+@endphp
+<div
+    class="max-w-3xl mx-auto space-y-8"
+    data-courier-location
+    data-location-url="{{ route('courier.location.update') }}"
+    data-tracking-mode="{{ $gpsActive ? 'active' : 'idle' }}"
+    data-interval-active-ms="{{ config('realtime.courier_gps.interval_active_ms') }}"
+    data-interval-idle-ms="{{ config('realtime.courier_gps.interval_idle_ms') }}"
+    data-min-send-meters="{{ config('realtime.courier_gps.min_send_meters') }}"
+>
     @if(session('status'))
         <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('status') }}</div>
     @endif

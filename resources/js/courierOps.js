@@ -1,10 +1,23 @@
 /**
- * Geolocalización del domiciliario y firma de entrega.
+ * Geolocalización del domiciliario (watchPosition) y firma de entrega.
  */
 document.addEventListener('DOMContentLoaded', () => {
     bootCourierLocation();
     bootCourierSignature();
 });
+
+function haversineMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2
+        + Math.cos((lat1 * Math.PI) / 180)
+        * Math.cos((lat2 * Math.PI) / 180)
+        * Math.sin(dLng / 2) ** 2;
+
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 function bootCourierLocation() {
     const root = document.querySelector('[data-courier-location]');
@@ -17,9 +30,36 @@ function bootCourierLocation() {
         return;
     }
 
+    const cfg = {
+        intervalActiveMs: Number(root.dataset.intervalActiveMs) || 12000,
+        intervalIdleMs: Number(root.dataset.intervalIdleMs) || 45000,
+        minSendMeters: Number(root.dataset.minSendMeters) || 8,
+    };
+
+    const isActive = () => root.dataset.trackingMode === 'active';
+    const intervalMs = () => (isActive() ? cfg.intervalActiveMs : cfg.intervalIdleMs);
+
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    let watchId = null;
+    let lastSent = null;
+    let lastSentAt = 0;
 
     const send = (coords) => {
+        const now = Date.now();
+        const lat = coords.latitude;
+        const lng = coords.longitude;
+
+        if (lastSent !== null) {
+            const moved = haversineMeters(lastSent.lat, lastSent.lng, lat, lng);
+            const elapsed = now - lastSentAt;
+            if (moved < cfg.minSendMeters && elapsed < intervalMs()) {
+                return;
+            }
+        }
+
+        lastSent = { lat, lng };
+        lastSentAt = now;
+
         fetch(url, {
             method: 'POST',
             headers: {
@@ -29,23 +69,41 @@ function bootCourierLocation() {
             },
             credentials: 'same-origin',
             body: JSON.stringify({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
+                latitude: lat,
+                longitude: lng,
                 accuracy: coords.accuracy,
             }),
         }).catch(() => {});
     };
 
-    const tick = () => {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => send(pos.coords),
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 },
-        );
+    const onPosition = (pos) => send(pos.coords);
+
+    const onError = () => {};
+
+    const geoOptions = () => ({
+        enableHighAccuracy: isActive(),
+        maximumAge: Math.floor(intervalMs() / 2),
+        timeout: 15000,
+    });
+
+    const startWatch = () => {
+        if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+        }
+
+        navigator.geolocation.getCurrentPosition(onPosition, onError, geoOptions());
+
+        watchId = navigator.geolocation.watchPosition(onPosition, onError, geoOptions());
     };
 
-    tick();
-    window.setInterval(tick, 45000);
+    startWatch();
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            startWatch();
+        }
+    });
 }
 
 function bootCourierSignature() {

@@ -13,7 +13,18 @@
         ? 'https://www.google.com/maps/dir/?api=1&destination='.$order->shipping_latitude.','.$order->shipping_longitude
         : 'https://www.google.com/maps/search/?api=1&query='.urlencode(trim(($order->shipping_address_line1 ?? '').' '.$order->shipping_city));
 @endphp
-<div class="max-w-lg mx-auto space-y-6" data-courier-location data-location-url="{{ route('courier.location.update') }}">
+@php
+    $gpsActive = in_array($order->status, \App\Enums\OrderStatus::activeCourierStatuses(), true);
+@endphp
+<div
+    class="max-w-lg mx-auto space-y-6"
+    data-courier-location
+    data-location-url="{{ route('courier.location.update') }}"
+    data-tracking-mode="{{ $gpsActive ? 'active' : 'idle' }}"
+    data-interval-active-ms="{{ config('realtime.courier_gps.interval_active_ms') }}"
+    data-interval-idle-ms="{{ config('realtime.courier_gps.interval_idle_ms') }}"
+    data-min-send-meters="{{ config('realtime.courier_gps.min_send_meters') }}"
+>
     @if(session('status'))
         <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('status') }}</div>
     @endif

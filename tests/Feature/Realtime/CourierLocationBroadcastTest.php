@@ -35,6 +35,17 @@ class CourierLocationBroadcastTest extends TestCase
         $this->assertFalse($limiter->shouldBroadcast(1, 6.2442, -75.5812));
     }
 
+    public function test_rate_limiter_allows_faster_updates_on_active_route(): void
+    {
+        $limiter = app(CourierLocationRateLimiter::class);
+        Cache::flush();
+
+        $this->assertTrue($limiter->shouldBroadcast(2, 3.4516, -76.5320, true));
+        $this->assertFalse($limiter->shouldBroadcast(2, 3.45161, -76.53201, true));
+        sleep(3);
+        $this->assertTrue($limiter->shouldBroadcast(2, 3.4525, -76.5330, true));
+    }
+
     public function test_courier_location_record_dispatches_throttled_broadcast_job(): void
     {
         Queue::fake();

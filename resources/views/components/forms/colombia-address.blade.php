@@ -20,6 +20,15 @@
     use App\Domain\Geo\ColombianLocations;
 
     $fields = match ($prefix) {
+        'company_store' => [
+            'address' => 'company_store_address',
+            'neighborhood' => 'company_store_neighborhood',
+            'city' => 'company_store_city',
+            'department' => 'company_store_state',
+            'country' => 'company_store_country',
+            'latitude' => 'company_store_latitude',
+            'longitude' => 'company_store_longitude',
+        ],
         'employee_home' => [
             'address' => 'employee_home_address',
             'neighborhood' => 'employee_home_neighborhood',
@@ -245,7 +254,8 @@
                 <template x-if="mapSearchError">
                     <p class="text-sm text-red-700" x-text="mapSearchError"></p>
                 </template>
-                <form class="flex gap-2" autocomplete="off" @submit.prevent="searchMapAddress()">
+                {{-- Sin <form> anidado: rompe el formulario padre (p. ej. Guardar ubicación en configuración empresa). --}}
+                <div class="flex gap-2" role="search" autocomplete="off">
                     <input
                         x-ref="mapSearch"
                         type="search"
@@ -259,11 +269,11 @@
                         :disabled="mapBusy"
                         @keydown.enter.prevent="searchMapAddress()"
                     />
-                    <button type="submit" class="bf-btn-primary btn-sm shrink-0" :disabled="mapBusy">
+                    <button type="button" class="bf-btn-primary btn-sm shrink-0" :disabled="mapBusy" @click="searchMapAddress()">
                         <span x-show="!mapBusy">Buscar</span>
                         <span x-show="mapBusy">…</span>
                     </button>
-                </form>
+                </div>
                 <div x-show="mapLoading" class="text-sm text-stone-500 py-8 text-center">Cargando mapa…</div>
                 <div x-ref="mapCanvas" class="w-full h-72 sm:h-80 rounded-lg border border-[var(--bf-border-brand-subtle)]" x-show="!mapLoading && !mapError"></div>
             </div>

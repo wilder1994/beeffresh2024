@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\CompanyProfileController;
+use App\Http\Controllers\Admin\CompanySettingsController;
 use App\Http\Controllers\Admin\LogoController;
 use App\Http\Controllers\Admin\OrderOperationsController;
 use App\Http\Controllers\Admin\RealtimeHealthController;
@@ -144,13 +145,16 @@ Route::middleware(['auth', 'role:employee', 'courier'])->prefix('domiciliario')-
     Route::post('/pedidos/{order}/fallido', [CourierOrderController::class, 'markFailed'])->name('orders.failed');
 });
 
-Route::middleware(['auth', 'role_or_permission:admin|module.settings'])->name('admin.')->prefix('admin')->group(function () {
-    Route::post('/logo/empresa', [LogoController::class, 'update'])->name('logo.update');
-    Route::get('/empresa', [CompanyProfileController::class, 'edit'])->name('empresa.edit');
-    Route::put('/empresa', [CompanyProfileController::class, 'update'])->name('empresa.update');
-});
-
 Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->group(function () {
+    Route::post('/logo/empresa', [LogoController::class, 'update'])->name('logo.update');
+    Route::redirect('/empresa', '/admin/configuracion/empresa?tab=nosotros')->name('empresa.edit');
+    Route::put('/empresa', [CompanyProfileController::class, 'update'])->name('empresa.update');
+
+    Route::get('/configuracion/empresa', [CompanySettingsController::class, 'index'])->name('configuracion.empresa');
+    Route::put('/configuracion/empresa/general', [CompanySettingsController::class, 'updateGeneral'])->name('configuracion.empresa.general');
+    Route::put('/configuracion/empresa/ubicacion', [CompanySettingsController::class, 'updateLocation'])->name('configuracion.empresa.ubicacion');
+    Route::put('/configuracion/empresa/nosotros', [CompanySettingsController::class, 'updateAbout'])->name('configuracion.empresa.nosotros');
+
     Route::get('/', function () {
         return redirect()->route('dashboard');
     })->name('home');

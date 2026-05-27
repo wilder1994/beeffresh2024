@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-26
+**Última actualización de esta documentación:** 2026-05-28
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -33,7 +33,9 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Formularios (panel admin, catálogo, perfil, auth):** clases en `@layer components` de `resources/css/app.css`: contenedor `bf-form-panel` / `bf-form-panel-tight`, barra de filtros `bf-form-toolbar`, secciones internas `bf-form-section` / `bf-form-section--nested`, ítems checkbox `bf-form-check-item`, campos `bf-input`, `bf-select`, `bf-textarea`, `bf-file` (fondo semitransparente y borde café), etiquetas `bf-label` / `bf-label-muted`, acciones `bf-form-actions`, botones `bf-btn-primary` / `bf-btn-ghost`. Paneles de cuenta y login: `bf-account-shell`, `bf-auth-card`; modales de registro y confirmación usan `bf-surface`. El componente Blade `x-text-input` aplica `bf-input` por defecto (login Breeze, perfil). **Usuarios (admin):** alta y edición con **Livewire 3** (`App\Livewire\Admin\UserForm`, vista `resources/views/livewire/admin/user-form.blade.php`, cabecera en `livewire/admin/partials/user-form-header.blade.php`); persistencia en `App\Services\Admin\AdminUserPersistence`. **Cargos:** CRUD en `/admin/positions` (modelo `Position`; el domiciliario es un **cargo** con slug `domiciliario`, no un rol). **Frontend (Alpine + Livewire):** `resources/js/app.js` importa Alpine y Livewire desde `vendor/livewire/livewire/dist/livewire.esm.js` y arranca **una sola vez** (`Livewire.start()` cuando existe `@livewireScriptConfig` en el panel); en `layouts/app.blade.php` usar `@livewireScriptConfig` en lugar de `@livewireScripts` para evitar doble inicialización de Alpine (rompe `x-for` en formularios dinámicos). Tras cambiar CSS o JS, ejecuta `npm run build` (o `npm run dev`) para regenerar assets; `public/build` está en `.gitignore` — en despliegue conviene compilar en CI o en el servidor.
 
-**Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). El administrador edita el texto y enlaces de redes (WhatsApp, TikTok, Instagram, Facebook, X) en **`/admin/empresa`**. Iconos reutilizables: `x-store.social-icons`.
+**Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). Iconos: `x-store.social-icons`.
+
+**Configuración de empresa (solo administrador):** `GET /admin/configuracion/empresa` con pestañas **General** (logo, razón social, NIT, contacto), **Ubicación** (dirección Colombia + mapa Google; coordenadas `store_latitude` / `store_longitude` para mapa operativo y asignación) y **Nosotros** (textos y redes de `/nosotros`). Tras elegir dirección en el mapa, confirmar con **Usar esta ubicación** antes de **Guardar ubicación**. Servicio `App\Services\Admin\CompanySettingsService`. Sidebar **Empresa y marca** (solo rol `admin`; `module.settings` ya no abre esta pantalla). Legacy `/admin/empresa` → redirección a pestaña Nosotros. Semilla `CompanyProfileSeeder` en `DatabaseSeeder`. Colores de marca: fijos en `app.css` (`--bf-*`).
 
 **Tras login:** clientes → **`/`**; proveedores → `/portal-proveedor`; **domiciliarios** (`module.courier`) → `/domiciliario/pedidos`; **despachadores** y empleados con `module.orders` → `/admin/pedidos`; resto del personal → `/dashboard` (`App\Support\PostLoginRedirect`, `DashboardController`).
 
@@ -63,7 +65,7 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-1. Configura en `.env`: `DB_*`, `APP_URL`, `ADMIN_*` (administrador inicial vía semillas), `GOOGLE_MAPS_API_KEY` (opcional si no usas mapas) y, para despacho, `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` (opcional, default 45).
+1. Configura en `.env`: `DB_*`, `APP_URL`, `ADMIN_*` (administrador inicial vía semillas), `GOOGLE_MAPS_API_KEY` (mapas y dirección), `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` (opcional, default 45) y, para GPS en vivo del domiciliario, `BF_COURIER_GPS_ACTIVE_MS` / `BF_COURIER_GPS_IDLE_MS` / `BF_COURIER_GPS_MIN_METERS` (ver `.env.example` y `config/realtime.php`).
 2. Enlaza almacenamiento público para imágenes de productos, promociones, **cinta**, avatares, etc.:
 
 ```bash
@@ -229,10 +231,11 @@ Tras cada URL nueva de ngrok, actualiza `APP_URL`, `php artisan config:clear`, w
 | **Pago Wompi** | Polling 2,5 s | WS `payment.status.updated` + polling |
 | **Métricas ops** | Feed indirecto | WS `operations.metrics.updated` (job en cola `default`) |
 | **Seguimiento pedido** | Polling 12 s | WS `order.tracking.updated` + invitado en canal público `tracking.{token}` + polling 12–24 s |
-| **Mapa operativo** (`/admin/pedidos/mapa`) | Polling 15 s | WS `operations.map.updated`, `courier.location.updated`, `courier.presence.updated` + polling 15–30 s |
+| **Mapa operativo** (`/admin/pedidos/mapa`) | Polling 15–30 s | WS `operations.map.updated`, `courier.location.updated`, `courier.presence.updated` + polling |
+| **GPS domiciliario** | `watchPosition` ~12 s en ruta / ~45 s en espera | `POST /domiciliario/ubicacion` → `courier.location.updated`; pin animado en mapa (`mapUi.js`) |
 
-**UI mapa operativo:** banner rojo del panel (`cabecera`), toolbar con `<x-realtime.status-indicator />` y enlace a pedidos; contenedor `#ops-map-canvas` con altura explícita `calc(100dvh − offset)` en `app.css` (mismo criterio que `bf-tracking-map-canvas`; evita `height: 100%` sin padre con alto definido). Vista a pantalla completa: sección `staff_map_page` en `layouts/app` (`h-dvh`, sin footer). JS: `operationsMap.js`.
-| **GPS domiciliario** | POST cada 45 s (`courierOps.js`) | `POST /domiciliario/ubicacion` → broadcast throttled (≥3 s, ≥25 m) |
+- **Mapa operativo (UI):** banner `cabecera`, indicador realtime, mapa a alto `calc(100dvh − offset)` (`staff_map_page`, sin footer). Centro del mapa = coords de tienda en `company_profiles`.
+- **GPS:** requiere panel domiciliario abierto, permiso de ubicación y **Reverb + cola** para ver movimiento casi en vivo; con *Modo respaldo (polling)* el pin se actualiza cada 15–30 s.
 
 Indicador en operaciones: `<x-realtime.status-indicator />` — *Operación en tiempo real* (WS + cola OK), *Sincronización diferida* (cola lenta) o *Modo respaldo (polling)*. Salud: `GET /admin/realtime/health` (staff).
 
@@ -276,7 +279,7 @@ Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIF
 | `StockBroadcastService` | `ProductStockUpdated`, availability | — |
 | `OperationsMetricsBroadcastService` | `OperationsMetricsUpdated` | job unique 2s |
 | `TrackingBroadcastService` | `OrderTrackingUpdated` | coalesce 2s; timeline + courier |
-| `CourierLocationBroadcastService` | `CourierLocationUpdated` | throttle 3s/25m; job unique 3s |
+| `CourierLocationBroadcastService` | `CourierLocationUpdated` | throttle por ruta/idle (`config/realtime.php`); job unique 3s |
 | `OperationsMapBroadcastService` | `OperationsMapUpdated` | coalesce ~1s |
 | `CourierPresenceBroadcastService` | `CourierPresenceUpdated` | disponible/ocupado |
 
@@ -306,7 +309,7 @@ Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIF
 
 ### Logo de la empresa y fotos de perfil
 
-- **Logo comercial** (`logos.tipo = principal`): se sube **solo desde el panel** con el **icono de cámara** junto al logo circular en el **sidebar** (administradores). No hay página dedicada `/admin/logo/edit`. Alternativa por defecto: `public/logos/logo.jpeg`.
+- **Logo comercial** (`logos.tipo = principal`): en **Empresa y marca → General** o con el **icono de cámara** del sidebar (`POST /admin/logo/empresa`, solo admin). Por defecto: `public/logos/logo.jpeg`.
 - **Foto de usuario**: columna `users.avatar` (disco `public/avatars/…`). En **Mi perfil** y en **crear/editar usuario** (`/admin/users`) el botón de cámara abre el editor de recorte circular; la imagen exportada es JPEG cuadrado (512×512) lista para `object-cover` en círculo.
 
 ## Usuario administrador (semillas)
@@ -336,7 +339,8 @@ Roles de aplicación (guard `web`): `admin`, `employee`, `customer`, `supplier`.
 | `module.catalog` | CRUD catálogo, videos, recetas |
 | `module.orders` | Centro de operaciones `/admin/pedidos` |
 | `module.courier` | Portal domiciliario `/domiciliario/pedidos` |
-| `module.users` / `module.settings` | Usuarios, cargos, contenido empresa |
+| `module.users` | Usuarios, cargos |
+| `admin` (rol) | Configuración **Empresa y marca** (`/admin/configuracion/empresa`) |
 
 | Rol | Uso |
 |-----|-----|
@@ -374,7 +378,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Tienda (clientes) | `/` (cinta automática, promos, combos, destacados), `/nosotros`, `/productos-publicos`, `/combos/{slug}`, `/carrito`, `/checkout` (auth; cliente con perfil de entrega completo), **`/mis-pedidos`** (historial de pedidos, menú avatar) |
 | Catálogo admin | `/catalogo/productos`, `/catalogo/combos`, `/catalogo/tipos-carne`, `/catalogo/cortes`, `/catalogo/promociones`, `/catalogo/precios`, `/catalogo/inventario` |
 | Auth invitados | `/login?tipo=cliente|empleado|proveedor`; registro cliente vía modal en tienda o `/register` → `/?registro=confirm` |
-| Contenido empresa (admin) | `GET/PUT /admin/empresa` — texto de la página Nosotros y enlaces de redes (`company_profiles`) |
+| Configuración empresa (admin) | `GET /admin/configuracion/empresa` (?tab=general\|ubicacion\|nosotros); `PUT …/general`, `…/ubicacion`, `…/nosotros` — `company_profiles` + logo (`logos`) |
 | Dashboard | `/dashboard` (admin/empleado con KPIs; **clientes** usan inicio `/` tras login) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
@@ -423,7 +427,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`OrderOperationsFlowTest`, `CourierOrderClaimTest`, `MarkReadyBroadcastTest`), historial y seguimiento cliente (`CustomerOrderHistoryTest`, `OrderTrackingTimelineTest`, `CustomerTrackingMapTest`), **notificaciones** (`NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`, `tests/Feature/Realtime/`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`OrderOperationsFlowTest`, `CourierOrderClaimTest`, `MarkReadyBroadcastTest`), configuración empresa (`CompanySettingsTest`), historial y seguimiento cliente (`CustomerOrderHistoryTest`, `OrderTrackingTimelineTest`, `CustomerTrackingMapTest`), **notificaciones** (`NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`, `tests/Feature/Realtime/`, incl. `CourierLocationBroadcastTest`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 

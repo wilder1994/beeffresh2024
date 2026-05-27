@@ -10,12 +10,21 @@ final class CourierLocationRateLimiter
 {
     private const CACHE_PREFIX = 'bf:courier:loc:broadcast:';
 
-    private const MIN_SECONDS = 3;
+    public function shouldBroadcast(
+        int $courierId,
+        float $latitude,
+        float $longitude,
+        bool $onActiveRoute = false,
+    ): bool {
+        $cfg = config('realtime.courier_location_broadcast', []);
+        $minSeconds = $onActiveRoute
+            ? (int) ($cfg['min_seconds_active'] ?? 2)
+            : (int) ($cfg['min_seconds_idle'] ?? 8);
+        $minMeters = $onActiveRoute
+            ? (float) ($cfg['min_meters_active'] ?? 12)
+            : (float) ($cfg['min_meters_idle'] ?? 35);
+        $staleSeconds = $onActiveRoute ? 20 : 45;
 
-    private const MIN_METERS = 25;
-
-    public function shouldBroadcast(int $courierId, float $latitude, float $longitude): bool
-    {
         $key = self::CACHE_PREFIX.$courierId;
         /** @var array{lat: float, lng: float, at: int}|null $last */
         $last = Cache::get($key);
@@ -28,7 +37,7 @@ final class CourierLocationRateLimiter
             return true;
         }
 
-        if (($now - (int) $last['at']) < self::MIN_SECONDS) {
+        if (($now - (int) $last['at']) < $minSeconds) {
             return false;
         }
 
@@ -39,7 +48,7 @@ final class CourierLocationRateLimiter
             $longitude,
         );
 
-        if ($meters < self::MIN_METERS && ($now - (int) $last['at']) < 30) {
+        if ($meters < $minMeters && ($now - (int) $last['at']) < $staleSeconds) {
             return false;
         }
 

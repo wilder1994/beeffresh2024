@@ -410,12 +410,21 @@ export default function registerAddressPicker(Alpine) {
             });
         },
 
+        syncCoordsFromMarker() {
+            const pos = this.mapMarker?.getPosition?.();
+            if (pos) {
+                this.latitude = String(pos.lat());
+                this.longitude = String(pos.lng());
+            }
+        },
+
         async confirmMap() {
             const searchEl = this.$refs.mapSearch;
             const query = searchEl?.value?.trim();
             if (query && !this._geoFromMap && window.google?.maps) {
                 await this.searchMapAddress();
             }
+            this.syncCoordsFromMarker();
             this.mapOpen = false;
             this.destroyMap();
             this.pushToLivewire();

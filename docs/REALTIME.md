@@ -38,7 +38,9 @@
 
 ### Throttling GPS (backend)
 
-- `CourierLocationRateLimiter`: mínimo **3 s** entre broadcasts y **25 m** de desplazamiento (cache por courier).
+- `CourierLocationRateLimiter`: en ruta (recogido/en tránsito) ~**2 s** / **12 m**; en espera ~**8 s** / **35 m** (`config/realtime.php`).
+- `courierOps.js`: `watchPosition`, modo `active` en pedido en ruta; envío ~12 s / ~45 s según `BF_COURIER_GPS_*`.
+- Mapa operativo: `bfAnimateMarkerTo` suaviza el movimiento del pin del domiciliario vía WS.
 - `BroadcastCourierLocationJob`: `ShouldBeUnique` 3 s por `courier_id`.
 - `TrackingBroadcastService`: coalesce 2 s por `order_id`.
 - `OperationsMapBroadcastService`: coalesce ~1 s global (`BroadcastOperationsMapJob` unique por order/courier).
