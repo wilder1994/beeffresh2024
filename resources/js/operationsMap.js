@@ -1,6 +1,12 @@
 /**
- * Mapa operativo: tienda, pedidos activos y domiciliarios.
+ * Mapa operativo: patch granular + polling fallback 15s.
  */
+import { bfRealtimeStore } from './realtime/stores/realtimeStore.js';
+import {
+    bfRegisterOpsMap,
+    bfSyncOpsMapFromFeed,
+} from './realtime/utils/mapUi.js';
+
 function loadGoogleMaps(apiKey) {
     if (window.google?.maps) {
         return Promise.resolve();
@@ -17,15 +23,6 @@ function loadGoogleMaps(apiKey) {
     });
 }
 
-const statusColors = {
-    pending: '#eab308',
-    preparing: '#3b82f6',
-    ready_for_delivery: '#6366f1',
-    picked_up: '#a855f7',
-    in_transit: '#06b6d4',
-    delivery_failed: '#ef4444',
-};
-
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.querySelector('[data-ops-map]');
     if (!root) {
@@ -41,14 +38,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let map = null;
-    const markers = [];
+    let renderInFlight = false;
 
-    const clearMarkers = () => {
-        markers.forEach((m) => m.setMap(null));
-        markers.length = 0;
+    const pollIntervalMs = () => (bfRealtimeStore.isLiveMode() ? 30000 : 15000);
+
+    let pollTimer = null;
+
+    const schedulePoll = () => {
+        if (pollTimer !== null) {
+            window.clearInterval(pollTimer);
+        }
+
+        pollTimer = window.setInterval(render, pollIntervalMs());
     };
 
     const render = async () => {
+        if (renderInFlight) {
+            return;
+        }
+
+        renderInFlight = true;
+
         try {
             const response = await fetch(dataUrl, {
                 headers: { Accept: 'application/json' },
@@ -74,66 +84,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     streetViewControl: false,
                     fullscreenControl: true,
                 });
+                bfRegisterOpsMap(map);
             }
 
-            clearMarkers();
-
-            if (payload.store?.latitude && payload.store?.longitude) {
-                markers.push(new google.maps.Marker({
-                    map,
-                    position: { lat: payload.store.latitude, lng: payload.store.longitude },
-                    title: 'Tienda',
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 10,
-                        fillColor: '#7b301b',
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        strokeColor: '#fff',
-                    },
-                }));
-            }
-
-            (payload.orders ?? []).forEach((order) => {
-                markers.push(new google.maps.Marker({
-                    map,
-                    position: { lat: order.latitude, lng: order.longitude },
-                    title: `Pedido #${order.id}`,
-                    icon: {
-                        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-                        scale: 5,
-                        fillColor: statusColors[order.status] ?? '#64748b',
-                        fillOpacity: 1,
-                        strokeWeight: 1,
-                        strokeColor: '#fff',
-                    },
-                }));
-            });
-
-            (payload.couriers ?? []).forEach((courier) => {
-                if (courier.latitude == null || courier.longitude == null) {
-                    return;
-                }
-
-                markers.push(new google.maps.Marker({
-                    map,
-                    position: { lat: courier.latitude, lng: courier.longitude },
-                    title: `${courier.name} (${courier.available ? 'Libre' : 'Ocupado'})`,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 8,
-                        fillColor: courier.available ? '#22c55e' : '#f59e0b',
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        strokeColor: '#fff',
-                    },
-                }));
-            });
+            bfSyncOpsMapFromFeed(payload);
         } catch {
             // ignore
+        } finally {
+            renderInFlight = false;
         }
     };
 
     render();
-    window.setInterval(render, 15000);
+    schedulePoll();
+
+    window.addEventListener('bf:realtime-resync', () => {
+        render();
+    });
+
+    window.addEventListener('bf:realtime-status', () => {
+        schedulePoll();
+    });
 });

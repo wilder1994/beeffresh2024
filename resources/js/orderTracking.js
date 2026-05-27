@@ -1,6 +1,9 @@
 /**
- * Seguimiento de pedido para clientes (polling).
+ * Seguimiento de pedido: WS realtime + polling fallback 12s.
  */
+import { bfRealtimeStore } from './realtime/stores/realtimeStore.js';
+import { bfPatchTrackingPage } from './realtime/utils/trackingUi.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.querySelector('[data-order-tracking]');
     if (!root) {
@@ -12,53 +15,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const statusLabel = document.getElementById('tracking-status-label');
-    const timeline = document.getElementById('tracking-timeline');
     let pollTimer = null;
+    let pollInFlight = false;
 
-    const formatDate = (iso) => {
-        if (!iso) {
-            return '';
+    const pollIntervalMs = () => (bfRealtimeStore.isLiveMode() ? 24000 : 12000);
+
+    const schedulePoll = () => {
+        if (pollTimer !== null) {
+            window.clearInterval(pollTimer);
         }
 
-        return new Date(iso).toLocaleString('es-CO', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'America/Bogota',
-        });
+        pollTimer = window.setInterval(poll, pollIntervalMs());
     };
 
-    const renderTimeline = (entries) => {
-        if (!timeline || !Array.isArray(entries)) {
-            return;
+    const applyFeed = (payload) => {
+        const order = payload.order ?? {};
+
+        const tracking = {
+            order_id: order.id,
+            status: order.status,
+            status_label: order.status_label,
+            timeline: payload.timeline,
+            courier: order.courier_name ? { name: order.courier_name } : null,
+            updated_at: order.updated_at,
+        };
+
+        bfPatchTrackingPage(tracking);
+
+        if (order.status === 'delivered' || order.status === 'cancelled') {
+            if (pollTimer !== null) {
+                window.clearInterval(pollTimer);
+                pollTimer = null;
+            }
         }
-
-        timeline.innerHTML = entries
-            .map((entry) => {
-                const isUpcoming = entry.state === 'upcoming';
-                const label = entry.label ?? entry.to_status_label ?? entry.to_status ?? '';
-                const dateMarkup = isUpcoming
-                    ? '<p class="text-xs text-[var(--bf-muted)]">Pendiente</p>'
-                    : entry.created_at
-                      ? `<p class="text-xs text-[var(--bf-muted)]">${formatDate(entry.created_at)}</p>`
-                      : '';
-
-                return `
-                <li class="bf-ops-timeline__item${isUpcoming ? ' bf-ops-timeline__item--upcoming' : ''}">
-                    <span class="bf-ops-timeline__dot"></span>
-                    <div>
-                        <p class="font-medium text-sm${isUpcoming ? ' text-[var(--bf-muted)]' : ''}">${label}</p>
-                        ${dateMarkup}
-                    </div>
-                </li>`;
-            })
-            .join('');
     };
 
     const poll = async () => {
+        if (pollInFlight) {
+            return;
+        }
+
+        pollInFlight = true;
+
         try {
             const response = await fetch(feedUrl, {
                 headers: { Accept: 'application/json' },
@@ -69,27 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const payload = await response.json();
-            const order = payload.order ?? {};
-
-            if (statusLabel && order.status_label) {
-                statusLabel.textContent = order.status_label;
-            }
-
-            if (Array.isArray(payload.timeline)) {
-                renderTimeline(payload.timeline);
-            }
-
-            if (order.status === 'delivered' || order.status === 'cancelled') {
-                if (pollTimer !== null) {
-                    window.clearInterval(pollTimer);
-                }
-            }
+            applyFeed(await response.json());
         } catch {
             // ignore
+        } finally {
+            pollInFlight = false;
         }
     };
 
     poll();
-    pollTimer = window.setInterval(poll, 12000);
+    schedulePoll();
+
+    window.addEventListener('bf:realtime-resync', () => {
+        poll();
+    });
+
+    window.addEventListener('bf:realtime-status', () => {
+        schedulePoll();
+    });
 });

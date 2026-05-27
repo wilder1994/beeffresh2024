@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('bf-realtime-meta')
+    <meta name="bf-order-id" content="{{ $order->id }}">
+@endpush
+
 @section('titulo', 'Pedido #'.$order->id)
 @section('cabecera', 'Pedido #'.$order->id)
 
@@ -49,7 +53,7 @@
 
             <section class="bf-ops-panel">
                 <h2 class="bf-ops-panel__title">Historial</h2>
-                <ol class="bf-ops-timeline">
+                <ol class="bf-ops-timeline" id="admin-order-timeline">
                     @foreach($order->statusLogs as $log)
                         <li class="bf-ops-timeline__item">
                             <span class="bf-ops-timeline__dot"></span>
@@ -82,7 +86,7 @@
             <section class="bf-ops-panel">
                 <h2 class="bf-ops-panel__title">Domiciliario</h2>
                 @if($order->courier)
-                    <p class="font-medium">{{ $order->courier->name }}</p>
+                    <p class="font-medium" id="admin-order-courier">{{ $order->courier->name }}</p>
                     <p class="text-xs text-stone-500 mt-1">Asignado {{ $order->assigned_at?->diffForHumans() }}</p>
                 @else
                     <p class="text-sm text-stone-500">Sin asignar</p>

@@ -1,4 +1,5 @@
 import { registerInventoryChannels } from './channels/inventory.js';
+import { registerCourierChannels } from './channels/couriers.js';
 import { registerMapsChannels } from './channels/maps.js';
 import { registerNotificationChannel } from './channels/notifications.js';
 import { registerOperationsChannels } from './channels/operations.js';
@@ -11,6 +12,10 @@ import { bfInitNotificationRealtimeHandler } from './handlers/notificationsHandl
 import { bfInitRealtimeStatusIndicator } from './handlers/statusIndicator.js';
 import { bfInitNotificationSoundUnlock } from './utils/notificationSound.js';
 import { bfInitStockRealtimeHandler } from './handlers/stockHandler.js';
+import { bfInitTrackingRealtimeHandler } from './handlers/trackingHandler.js';
+import { bfInitCourierLocationHandler } from './handlers/courierLocationHandler.js';
+import { bfInitOperationsMapHandler } from './handlers/operationsMapHandler.js';
+import { bfInitCourierPresenceHandler } from './handlers/courierPresenceHandler.js';
 import { initBfEcho } from './echo.js';
 import { bfStartRealtimeHealthMonitor } from './healthMonitor.js';
 import { bfRealtimeLog } from './utils/logger.js';
@@ -30,6 +35,7 @@ export function bootstrapBfRealtime() {
         registerTrackingChannels(echo);
         registerPaymentChannels(echo);
         registerMapsChannels(echo);
+        registerCourierChannels(echo);
         bfRealtimeLog('info', 'Listeners realtime registrados');
     }
 
@@ -39,6 +45,10 @@ export function bootstrapBfRealtime() {
     bfInitStockRealtimeHandler();
     bfInitAvailabilityRealtimeHandler();
     bfInitRealtimeStatusIndicator();
+    bfInitTrackingRealtimeHandler();
+    bfInitCourierLocationHandler();
+    bfInitOperationsMapHandler();
+    bfInitCourierPresenceHandler();
     bfStartRealtimeHealthMonitor();
 
     return echo;

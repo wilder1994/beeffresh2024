@@ -3,6 +3,7 @@
 @section('titulo', 'Seguimiento pedido #'.$order->id)
 
 @push('bf-realtime-meta')
+    <meta name="bf-tracking-token" content="{{ $trackingToken }}">
     @auth
         <meta name="bf-order-id" content="{{ $order->id }}">
     @endauth
@@ -30,7 +31,9 @@
         </div>
 
         @if($order->courier)
-            <p class="text-sm text-[var(--bf-muted)]">Domiciliario: <span class="font-medium text-[var(--bf-ink)]">{{ $order->courier->name }}</span></p>
+            <p class="text-sm text-[var(--bf-muted)]">Domiciliario: <span id="tracking-courier-name" class="font-medium text-[var(--bf-ink)]">{{ $order->courier->name }}</span></p>
+        @else
+            <p class="text-sm text-[var(--bf-muted)] hidden" id="tracking-courier-wrap">Domiciliario: <span id="tracking-courier-name" class="font-medium text-[var(--bf-ink)]"></span></p>
         @endif
 
         <x-store.tracking-timeline :entries="$timeline" id="tracking-timeline" />

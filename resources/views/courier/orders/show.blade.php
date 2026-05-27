@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('bf-realtime-meta')
+    <meta name="bf-courier-id" content="{{ auth()->id() }}">
+@endpush
+
 @section('titulo', 'Entrega #'.$order->id)
 @section('cabecera', 'Entrega #'.$order->id)
 

@@ -15,6 +15,8 @@ final class OrderBroadcastService
 
     public function __construct(
         private readonly OperationsMetricsBroadcastService $metricsBroadcast,
+        private readonly TrackingBroadcastService $trackingBroadcast,
+        private readonly OperationsMapBroadcastService $mapBroadcast,
     ) {}
 
     public function dispatch(Order $order, bool $dispatchMetrics = true): void
@@ -25,6 +27,9 @@ final class OrderBroadcastService
             $fresh = $order->fresh(['user', 'courier', 'items']) ?? $order;
 
             event(new OrderUpdated($fresh));
+
+            $this->trackingBroadcast->dispatch($fresh);
+            $this->mapBroadcast->dispatchForOrder($fresh);
 
             if (! $skipMetrics) {
                 $this->metricsBroadcast->dispatch();

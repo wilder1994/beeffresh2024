@@ -80,6 +80,25 @@ class BroadcastingAuthorizationTest extends TestCase
             ->assertOk();
     }
 
+    public function test_staff_can_authorize_operations_map_and_couriers_channels(): void
+    {
+        $dispatcher = User::query()->where('email', 'despachador1@demo.beeffresh.test')->firstOrFail();
+
+        $this->actingAs($dispatcher)
+            ->post('/broadcasting/auth', [
+                'socket_id' => '1.1',
+                'channel_name' => 'private-operations.map',
+            ])
+            ->assertOk();
+
+        $this->actingAs($dispatcher)
+            ->post('/broadcasting/auth', [
+                'socket_id' => '1.1',
+                'channel_name' => 'private-operations.couriers',
+            ])
+            ->assertOk();
+    }
+
     public function test_customer_cannot_authorize_operations_orders_channel(): void
     {
         $customer = User::query()->where('email', 'cliente2@demo.beeffresh.test')->firstOrFail();

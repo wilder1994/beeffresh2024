@@ -6,6 +6,7 @@ namespace App\Services\Orders;
 
 use App\Events\Orders\OrderAssigned;
 use App\Models\CompanyProfile;
+use App\Services\Realtime\CourierPresenceBroadcastService;
 use App\Services\Realtime\OperationsMetricsBroadcastService;
 use App\Services\Realtime\OrderBroadcastService;
 use App\Models\Order;
@@ -21,6 +22,7 @@ final class CourierAssignmentService
     public function __construct(
         private readonly OrderBroadcastService $orderBroadcast,
         private readonly OperationsMetricsBroadcastService $metricsBroadcast,
+        private readonly CourierPresenceBroadcastService $presenceBroadcast,
     ) {}
 
     public function assignNearestAvailable(Order $order, ?User $assignedBy = null, bool $emitBroadcast = true): OrderAssignment
@@ -134,6 +136,8 @@ final class CourierAssignmentService
 
         $profile->available = true;
         $profile->save();
+
+        $this->presenceBroadcast->dispatch($courier);
     }
 
     public function markCourierBusy(User $courier): void
@@ -145,6 +149,13 @@ final class CourierAssignmentService
 
         $profile->available = false;
         $profile->save();
+
+        $activeOrder = Order::query()
+            ->where('courier_id', $courier->id)
+            ->activeForOperations()
+            ->first();
+
+        $this->presenceBroadcast->dispatch($courier, $activeOrder);
     }
 
     public function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float

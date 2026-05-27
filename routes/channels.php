@@ -34,6 +34,14 @@ Broadcast::channel('operations.orders', function (User $user): bool {
     return $user->canAccessOrderOperations() || $user->isDispatcher();
 });
 
+Broadcast::channel('operations.map', function (User $user): bool {
+    return $user->canAccessOrderOperations() || $user->isDispatcher();
+});
+
+Broadcast::channel('operations.couriers', function (User $user): bool {
+    return $user->canAccessOrderOperations() || $user->isDispatcher();
+});
+
 Broadcast::channel('operations.dashboard', function (User $user): bool {
     return $user->canAccessOrderOperations() || $user->isDispatcher() || $user->isAdmin();
 });

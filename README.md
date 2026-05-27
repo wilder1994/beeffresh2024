@@ -8,12 +8,12 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 |--------|------------------|
 | PHP | ^8.2 |
 | Laravel | ^11 |
-| Realtime | [Laravel Reverb](https://laravel.com/docs/reverb) + Echo (Fase 0–1.5); [`docs/REALTIME.md`](docs/REALTIME.md) |
+| Realtime | [Laravel Reverb](https://laravel.com/docs/reverb) + Echo (Fase 0–2); [`docs/REALTIME.md`](docs/REALTIME.md) |
 | Frontend | Vite, Tailwind CSS, DaisyUI |
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-29
+**Última actualización de esta documentación:** 2026-05-24
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -228,6 +228,9 @@ Tras cada URL nueva de ngrok, actualiza `APP_URL`, `php artisan config:clear`, w
 | **Campana** | Polling 30 s | WS `notification.created` + polling 30 s |
 | **Pago Wompi** | Polling 2,5 s | WS `payment.status.updated` + polling |
 | **Métricas ops** | Feed indirecto | WS `operations.metrics.updated` (job en cola `default`) |
+| **Seguimiento pedido** | Polling 12 s | WS `order.tracking.updated` + invitado en canal público `tracking.{token}` + polling 12–24 s |
+| **Mapa operativo** (`/admin/pedidos/mapa`) | Polling 15 s | WS `operations.map.updated`, `courier.location.updated`, `courier.presence.updated` + polling 15–30 s |
+| **GPS domiciliario** | POST cada 45 s (`courierOps.js`) | `POST /domiciliario/ubicacion` → broadcast throttled (≥3 s, ≥25 m) |
 
 Indicador en operaciones: `<x-realtime.status-indicator />` — *Operación en tiempo real* (WS + cola OK), *Sincronización diferida* (cola lenta) o *Modo respaldo (polling)*. Salud: `GET /admin/realtime/health` (staff).
 
@@ -254,24 +257,46 @@ Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIF
 
 ### Realtime (referencia técnica)
 
-**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados (`routes/channels.php`). Eventos: `OrderUpdated`, `NotificationCreated`, `PaymentStatusUpdated`, `ProductStockUpdated`, `ProductAvailabilityUpdated`, `OperationsMetricsUpdated`. Frontend: `resources/js/realtime/`.
+**Stack:** Laravel 11, `laravel/reverb`, `laravel-echo`, canales privados y públicos (`routes/channels.php`). Frontend MPA: `resources/js/realtime/` (Echo + DOM patch granular; **sin SPA**).
 
 | Fase | Alcance |
 |------|---------|
 | **1** | Campana, grid `/admin/pedidos`, pago Wompi (WS + polling) |
 | **1.5** | Stock tienda/inventario, métricas ops, fulfill post-pago, dashboard low-stock |
-| **1.5-STAB** | markReady un broadcast, coalesce métricas, health degradado, grid ops siempre presente, polling inserta pedidos nuevos |
+| **1.5-STAB** | markReady un broadcast, coalesce métricas, health degradado, grid ops siempre presente |
+| **2** | Tracking cliente/staff, mapa operativo live, GPS courier, presencia básica, resync reconnect |
 
-**Servicios broadcast:** `App\Services\Realtime\` — `OrderBroadcastService`, `StockBroadcastService`, `OperationsMetricsBroadcastService` (+ `BroadcastOperationsMetricsJob`, `ShouldBeUnique` 2s).
+**Servicios broadcast (`App\Services\Realtime\`):**
+
+| Servicio | Evento(s) | Notas |
+|----------|-----------|--------|
+| `OrderBroadcastService` | `OrderUpdated` + dispara tracking/mapa | `afterCommit` |
+| `StockBroadcastService` | `ProductStockUpdated`, availability | — |
+| `OperationsMetricsBroadcastService` | `OperationsMetricsUpdated` | job unique 2s |
+| `TrackingBroadcastService` | `OrderTrackingUpdated` | coalesce 2s; timeline + courier |
+| `CourierLocationBroadcastService` | `CourierLocationUpdated` | throttle 3s/25m; job unique 3s |
+| `OperationsMapBroadcastService` | `OperationsMapUpdated` | coalesce ~1s |
+| `CourierPresenceBroadcastService` | `CourierPresenceUpdated` | disponible/ocupado |
+
+**Eventos Fase 2 (alias WS):** `order.tracking.updated`, `courier.location.updated`, `operations.map.updated`, `courier.presence.updated`.
+
+**Canales:** privados `operations.map`, `operations.couriers`, `orders.{id}`, `couriers.{id}`; público `tracking.{token}` (invitado, token no enumerable). Metas Blade: `bf-tracking-token`, `bf-order-id`, `bf-staff-operations-map`, `bf-courier-id`.
+
+**Frontend Fase 2:** `channels/tracking.js`, `maps.js`, `couriers.js`; handlers `trackingHandler`, `operationsMapHandler`, `courierLocationHandler`, `courierPresenceHandler`; utils `trackingUi.js`, `mapUi.js` (`bfPatchOrderMarker`, `bfPatchCourierMarker`). Entradas Vite: `orderTracking.js`, `operationsMap.js`, `courierOps.js` (polling fallback intacto). Reconnect: evento `bf:realtime-resync`.
 
 | Método | Ruta | Uso |
 |--------|------|-----|
 | `GET` | `/admin/realtime/health` | Salud cola + modo `live` / `degraded` / `fallback` |
 | `GET` | `/admin/pedidos/feed` | Feed polling operaciones (15s) |
+| `GET` | `/admin/pedidos/mapa/datos` | JSON mapa (store, pedidos, couriers) |
 | `GET` | `/admin/pedidos/{order}/fragmento-tarjeta` | HTML tarjeta para insert realtime |
+| `GET` | `/seguimiento/{tracking_token}/feed` | Feed tracking invitado (polling) |
+| `POST` | `/domiciliario/ubicacion` | GPS domiciliario (throttle + broadcast) |
 | `GET` | `/carrito/validar` | Validación stock en carrito (sin WS) |
 
-**Tests:** `php artisan test --filter=Broadcasting` · `RealtimeHealthTest` · `MetricsCoalesceTest` · `MarkReadyBroadcastTest` · `CartValidationTest`.
+**Tests:** `php artisan test --filter=Broadcasting` · `php artisan test --filter=Realtime` (incluye `CourierLocationBroadcastTest`, `OrderTrackingRealtimeTest`, `OperationsMapRealtimeTest`, `TrackingGuestAuthorizationTest`, `CourierPresenceTest`) · `RealtimeHealthTest` · `MetricsCoalesceTest`.
+
+**Arranque local (4 procesos):** Laragon/nginx **8080**, `php artisan reverb:start` **8081**, `php artisan queue:work --queue=default,notifications,notifications-email`, y `npm run build` tras cambiar `VITE_REVERB_*`. Sin Reverb/cola → modo respaldo honesto (polling).
 
 **Nequi sandbox:** solo `3991111111` (aprobado) y `3992222222` (rechazado); cualquier otro número devuelve `ERROR`.
 
@@ -368,9 +393,9 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
 - **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` y `/pago/pendiente/{uuid}` con **websocket** (`payment.status.updated` en canal privado `payments.{uuid}`) + **polling JSON de respaldo** (`GET /pago/estado/{uuid}`, `resources/js/paymentProcess.js`). El webhook sigue siendo la fuente de verdad; el WS acelera la UI. Al aprobar vacía la sesión `carrito` y actualiza el badge. Logs: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
-- **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Línea de tiempo con pasos **completados** y **pendientes** del flujo de entrega (`OrderTrackingTimelineBuilder`: Pendiente → … → Entregado). Polling cada 12 s (`resources/js/orderTracking.js`, feed JSON). Fechas en zona **`America/Bogota`**. Componente `x-store.tracking-timeline`.
+- **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Timeline en vivo vía `order.tracking.updated` (canal público `tracking.{token}` para invitados) + polling 12 s de respaldo (`orderTracking.js`). Fechas en **`America/Bogota`**. Ver [`docs/REALTIME.md`](docs/REALTIME.md) Fase 2.
 - **Notificaciones (núcleo):** `App\Services\Notifications\` — `NotificationService`, `NotificationPreferenceService`, canales (`internal`, `email` activos; `push`/WhatsApp/SMS stubs). **UI:** campana solo no leídas; modal `<x-notifications.center-dialog />` (historial + preferencias + sonido); página `/notificaciones` como respaldo. JS: `notificationBell.js`, `notificationCenter.js`, `notificationSound.js`. Tests: `NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`. Detalle: [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md), [`docs/REALTIME.md`](docs/REALTIME.md).
-- **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → … Servicios en `App\Services\Orders\`. UI: `/admin/pedidos` actualiza **tarjetas en vivo** (`order.updated`, sin recargar página; fragmento `GET /admin/pedidos/{order}/fragmento-tarjeta` para pedidos nuevos); **polling 15 s de respaldo** (`operationsPolling.js`). Mapa, ticket y domiciliario sin cambios realtime (Fase 2). Tests: `tests/Feature/Orders/OrderOperationsFlowTest.php`, `CustomerOrderHistoryTest.php`, `OrderTrackingTimelineTest.php`.
+- **Operaciones y despacho:** estados `pending` → `preparing` → `ready_for_delivery` → … UI: grid en vivo (`order.updated`) + polling 15 s (`operationsPolling.js`). **Mapa operativo** (`/admin/pedidos/mapa`): markers en vivo (`operations.map.updated`, GPS throttled) + polling 15–30 s (`operationsMap.js`). GPS domiciliario: `POST /courier/location` → `CourierLocationBroadcastService`. Tests ops + realtime Fase 2 en `tests/Feature/Realtime/`.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
 - Tras cambios en el catálogo comercial o en `order_items`, en local: `php artisan migrate:fresh --seed` y `npm run build`.

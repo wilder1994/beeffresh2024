@@ -19,7 +19,7 @@
         <a href="{{ route('admin.pedidos.index') }}" class="bf-btn-ghost">← Pedidos</a>
     </div>
     <div id="ops-map-canvas" class="bf-ops-map-canvas rounded-xl border border-stone-200 overflow-hidden min-h-[420px] bg-stone-100"></div>
-    <p class="text-xs text-stone-500">Actualización automática cada 15 s.</p>
+    <p class="text-xs text-stone-500">Tiempo real cuando Reverb está activo; respaldo automático cada 15–30 s.</p>
 </div>
 @endsection
 

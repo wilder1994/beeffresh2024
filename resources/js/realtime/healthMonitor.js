@@ -49,6 +49,13 @@ export function bfStartRealtimeHealthMonitor() {
 /**
  * Resync ops grid tras reconexión (una sola vez por ciclo).
  */
+/**
+ * Resync tracking y mapa visible tras reconexión (sin F5).
+ */
+export async function bfResyncTrackingAndMapAfterReconnect() {
+    window.dispatchEvent(new CustomEvent('bf:realtime-resync', { bubbles: true }));
+}
+
 export async function bfResyncOperationsAfterReconnect() {
     if (resyncInFlight) {
         return;

@@ -2,7 +2,77 @@
 
 **Última actualización:** 2026-05-24
 
-## Fase 1.5 — Estabilización operacional (activa)
+## Fase 2 — Tracking + mapa + GPS courier (activa)
+
+| Módulo | WebSocket | Polling fallback |
+|--------|-----------|------------------|
+| Seguimiento cliente/staff | `order.tracking.updated` + `courier.location.updated` | 12s → 24s si live |
+| Mapa operativo | `operations.map.updated`, `courier.location.updated`, `courier.presence.updated` | 15s → 30s si live |
+| GPS domiciliario | POST `/courier/location` → broadcast throttled (3s / 25m) | 45s POST (`courierOps.js`) |
+
+### Servicios broadcast Fase 2
+
+- `TrackingBroadcastService` — timeline + ETA + courier en canal `tracking.{token}` (público) y `orders.{id}`
+- `CourierLocationBroadcastService` — GPS coalesced + mapa + tracking del pedido activo
+- `OperationsMapBroadcastService` — parches mapa (`BroadcastOperationsMapJob`, unique ~1s)
+- `CourierPresenceBroadcastService` — disponible/ocupado en `operations.couriers`
+
+### Eventos Fase 2
+
+| Evento | Alias | Canales |
+|--------|-------|---------|
+| `OrderTrackingUpdated` | `order.tracking.updated` | `orders.{id}`, `tracking.{token}` (público) |
+| `CourierLocationUpdated` | `courier.location.updated` | `operations.map`, `couriers.{id}`, `orders.{id}` |
+| `OperationsMapUpdated` | `operations.map.updated` | `operations.map`, `operations.orders` |
+| `CourierPresenceUpdated` | `courier.presence.updated` | `operations.couriers`, `operations.map` |
+
+### Frontend Fase 2
+
+- Canales: `channels/tracking.js`, `channels/maps.js`, `channels/couriers.js`
+- Handlers: `trackingHandler`, `courierLocationHandler`, `operationsMapHandler`, `courierPresenceHandler`
+- Utils: `trackingUi.js`, `mapUi.js` (`bfPatchOrderMarker`, `bfPatchCourierMarker`)
+- Reconnect: `bf:realtime-resync` → poll tracking + mapa sin F5
+- Meta: `bf-tracking-token` (invitado), `bf-staff-operations-map`, `bf-courier-id`
+
+**Invitado:** suscripción Echo `channel('tracking.{token}')` sin sesión; no expone canales privados de ops.
+
+### Throttling GPS (backend)
+
+- `CourierLocationRateLimiter`: mínimo **3 s** entre broadcasts y **25 m** de desplazamiento (cache por courier).
+- `BroadcastCourierLocationJob`: `ShouldBeUnique` 3 s por `courier_id`.
+- `TrackingBroadcastService`: coalesce 2 s por `order_id`.
+- `OperationsMapBroadcastService`: coalesce ~1 s global (`BroadcastOperationsMapJob` unique por order/courier).
+
+### Validación manual (checklist)
+
+| # | Escenario | Resultado esperado |
+|---|-----------|-------------------|
+| T1 | 2 pestañas mismo `/seguimiento/{token}` | Timeline sincronizado sin F5 |
+| T2 | Courier en movimiento | Marker mapa se mueve sin reload |
+| T3 | Reverb OFF | Polling 12s/15s mantiene tracking/mapa |
+| T4 | Cola OFF | Indicador degraded/fallback visible |
+| T5 | Cambio estado pedido | Tracking cliente &lt;3s con WS+cola |
+| T6 | 5 couriers simultáneos | Mapa estable (sin tormenta de eventos) |
+| T7 | Reconnect red | `bf:realtime-resync` sin F5 |
+
+### Archivos clave Fase 2
+
+```
+app/Events/Tracking/OrderTrackingUpdated.php
+app/Events/Couriers/CourierLocationUpdated.php
+app/Events/Couriers/CourierPresenceUpdated.php
+app/Events/Operations/OperationsMapUpdated.php
+app/Services/Realtime/TrackingBroadcastService.php
+app/Services/Realtime/CourierLocationBroadcastService.php
+app/Services/Realtime/OperationsMapBroadcastService.php
+app/Services/Realtime/CourierPresenceBroadcastService.php
+app/Support/Couriers/CourierLocationRateLimiter.php
+resources/js/realtime/channels/{tracking,maps,couriers}.js
+resources/js/realtime/handlers/{tracking,courierLocation,operationsMap,courierPresence}Handler.js
+resources/js/realtime/utils/{trackingUi,mapUi,courierUi}.js
+```
+
+## Fase 1.5 — Estabilización operacional
 
 | Módulo | WebSocket | Polling fallback |
 |--------|-----------|------------------|
@@ -48,7 +118,7 @@ Usan `DB::afterCommit` cuando hay transacción abierta (equivalente a *after com
 | Dashboard | `[data-dashboard-low-stock-*]`, template `#bf-low-stock-row-tpl`, `stockUi.js` |
 | Carrito | `GET /carrito/validar`, `cartValidate.js` (deshabilita checkout si agotado) |
 | Campana | `localStorage` key `bf:notifications:unread` + evento `storage` entre pestañas |
-| Ruido | Canales map/tracking huérfanos en noop; sin `bf:dashboard-order-updated` duplicado |
+| Ruido | Sin `bf:dashboard-order-updated` duplicado |
 
 **Respuesta health (staff):** `websocket_connected` (false en servidor; el cliente usa estado Echo), `queue_healthy`, `pending_jobs`, `oldest_pending_seconds`, `mode`, `fallback_mode`.
 
@@ -243,9 +313,11 @@ Metadatos Blade (`layouts/partials/realtime-meta.blade.php`):
 
 - `bf-user-id` — usuario autenticado
 - `bf-staff-operations` — staff operaciones
-- `bf-order-id` — tracking autenticado
+- `bf-order-id` — tracking autenticado / admin pedido
+- `bf-tracking-token` — seguimiento invitado (canal público)
 - `bf-payment-uuid` — pantallas de pago
 - `bf-staff-operations-map` — mapa operativo
+- `bf-courier-id` — panel domiciliario
 
 Eventos DOM para Fase 1: `bf:notification-created`, `bf:order-updated`, `bf:payment-status-updated`, etc.
 
@@ -261,7 +333,7 @@ Debug: `VITE_BF_REALTIME_DEBUG=true` o entorno `dev`.
 4. `BROADCAST_CONNECTION=reverb` (no `log`).
 5. Worker de colas activo (eventos `ShouldBroadcast` van a cola).
 6. Auth canal: `POST /broadcasting/auth` (419 = CSRF; requiere sesión).
-7. Invitado tracking: **sin Echo** (canal privado); sigue polling.
+7. Invitado tracking: canal público `tracking.{token}` + polling 12s de respaldo.
 
 ---
 
@@ -269,10 +341,12 @@ Debug: `VITE_BF_REALTIME_DEBUG=true` o entorno `dev`.
 
 ```bash
 php artisan test --filter=Broadcasting
+php artisan test --filter=Realtime
 ```
 
 - `BroadcastingAuthorizationTest` — auth de canales
-- `RealtimeEventsTest` — eventos y canales broadcast
+- `RealtimeEventsTest` — eventos Fase 1
+- `CourierLocationBroadcastTest`, `OrderTrackingRealtimeTest`, `OperationsMapRealtimeTest`, `TrackingGuestAuthorizationTest`, `CourierPresenceTest` — Fase 2
 
 ---
 
@@ -286,10 +360,9 @@ php artisan test --filter=Broadcasting
 
 ---
 
-## Fase 2+ (pendiente)
+## Fase 3+ (pendiente)
 
-1. Mapa operativo live (`operationsMap.js`)
-2. Tracking guest websocket
-3. Dashboard métricas `operations.dashboard`
-4. Courier GPS live
-5. Redis scaling / Horizon
+1. Dashboard métricas live adicionales
+2. ETA calculada en tracking
+3. Redis scaling / Horizon
+4. Presence avanzada (chat, typing)

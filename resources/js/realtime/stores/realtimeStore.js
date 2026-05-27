@@ -1,6 +1,6 @@
 /**
  * Store central BF-Realtime (Fase 1.5).
- * @typedef {'notification'|'order'|'payment'|'metrics'|'stock'|'availability'|'connection'} RealtimeEventKind
+ * @typedef {'notification'|'order'|'payment'|'metrics'|'stock'|'availability'|'tracking'|'map'|'connection'} RealtimeEventKind
  */
 
 /** @type {boolean} */
@@ -17,6 +17,14 @@ let serverMode = 'live';
 let lastError = null;
 /** @type {string|null} */
 let lastBusinessEventAt = null;
+/** @type {string|null} */
+let lastCourierLocationAt = null;
+/** @type {string|null} */
+let lastTrackingEventAt = null;
+/** @type {boolean} */
+let trackingConnected = false;
+/** @type {Record<string, Record<string, unknown>>} */
+const courierPresence = {};
 /** @type {Record<string, string|null>} */
 const lastEventAt = {
     notification: null,
@@ -25,6 +33,8 @@ const lastEventAt = {
     metrics: null,
     stock: null,
     availability: null,
+    tracking: null,
+    map: null,
     connection: null,
 };
 /** @type {Record<string, number>} */
@@ -35,6 +45,8 @@ const listenerMetrics = {
     metrics: 0,
     stock: 0,
     availability: 0,
+    tracking: 0,
+    map: 0,
 };
 
 function stamp(kind) {
@@ -102,6 +114,22 @@ export const bfRealtimeStore = {
 
     getLastBusinessEventAt() {
         return lastBusinessEventAt;
+    },
+
+    getLastCourierLocationAt() {
+        return lastCourierLocationAt;
+    },
+
+    getLastTrackingEventAt() {
+        return lastTrackingEventAt;
+    },
+
+    isTrackingConnected() {
+        return trackingConnected;
+    },
+
+    getCourierPresence() {
+        return { ...courierPresence };
     },
 
     /** @param {RealtimeEventKind} kind */
@@ -183,6 +211,31 @@ export const bfRealtimeStore = {
         this.recordEvent(kind);
     },
 
+    recordTrackingEvent() {
+        lastTrackingEventAt = new Date().toISOString();
+        trackingConnected = this.isLiveMode() || this.getMode() === 'degraded';
+        this.recordEvent('tracking');
+    },
+
+    recordCourierLocationEvent() {
+        lastCourierLocationAt = new Date().toISOString();
+        this.recordEvent('map');
+    },
+
+    recordMapEvent() {
+        this.recordEvent('map');
+    },
+
+    /** @param {Record<string, unknown>} presence */
+    recordCourierPresence(presence) {
+        const id = String(presence.courier_id ?? '');
+        if (id) {
+            courierPresence[id] = { ...presence };
+        }
+
+        this.recordEvent('tracking');
+    },
+
     getStatus() {
         return {
             connected,
@@ -194,6 +247,10 @@ export const bfRealtimeStore = {
             fallbackMode: this.isFallbackMode(),
             lastError,
             lastBusinessEventAt,
+            lastCourierLocationAt,
+            lastTrackingEventAt,
+            trackingConnected,
+            courierPresence: { ...courierPresence },
             lastEventAt: { ...lastEventAt },
             listeners: { ...listenerMetrics },
         };
