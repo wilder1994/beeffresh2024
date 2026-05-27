@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-28
+**Última actualización de esta documentación:** 2026-05-29
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -35,7 +35,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 
 **Página «Nosotros»:** ruta pública `GET /nosotros` (`company_profiles`, registro id 1). Iconos: `x-store.social-icons`.
 
-**Configuración de empresa (solo administrador):** `GET /admin/configuracion/empresa` con pestañas **General** (logo, razón social, NIT, contacto), **Ubicación** (dirección Colombia + mapa Google; coordenadas `store_latitude` / `store_longitude` para mapa operativo y asignación) y **Nosotros** (textos y redes de `/nosotros`). Tras elegir dirección en el mapa, confirmar con **Usar esta ubicación** antes de **Guardar ubicación**. Servicio `App\Services\Admin\CompanySettingsService`. Sidebar **Empresa y marca** (solo rol `admin`; `module.settings` ya no abre esta pantalla). Legacy `/admin/empresa` → redirección a pestaña Nosotros. Semilla `CompanyProfileSeeder` en `DatabaseSeeder`. Colores de marca: fijos en `app.css` (`--bf-*`).
+**Configuración de empresa (solo administrador):** `GET /admin/configuracion/empresa` con pestañas **General** (logo, razón social, NIT, contacto), **Ubicación** (dirección Colombia + mapa Google; coordenadas `store_latitude` / `store_longitude` para mapa operativo y asignación) y **Nosotros** (textos y redes de `/nosotros`). Tras elegir dirección en el mapa, confirmar con **Usar esta ubicación** antes de **Guardar ubicación**. Servicio `App\Services\Admin\CompanySettingsService`. Sidebar **Empresa y marca** (solo rol `admin`; `module.settings` ya no abre esta pantalla). Legacy `/admin/empresa` → redirección a pestaña Nosotros. Semillas `CompanyProfileSeeder` (tienda Cali, Jardín Plaza) y `DemoUsersSeeder` (perfiles demo en Cali/Valle). Colores de marca: fijos en `app.css` (`--bf-*`).
 
 **Tras login:** clientes → **`/`**; proveedores → `/portal-proveedor`; **domiciliarios** (`module.courier`) → `/domiciliario/pedidos`; **despachadores** y empleados con `module.orders` → `/admin/pedidos`; resto del personal → `/dashboard` (`App\Support\PostLoginRedirect`, `DashboardController`).
 
@@ -78,7 +78,7 @@ php artisan storage:link
 php artisan migrate:fresh --seed
 ```
 
-Usuarios demo (`DemoUsersSeeder`): contraseña **`password`** (ver tabla en consola al sembrar). Catálogo: `CatalogSeeder`, `OfferSeeder`.
+Usuarios demo (`DemoUsersSeeder`): contraseña **`password`** (ver tabla en consola al sembrar). Sede (`CompanyProfileSeeder`, Jardín Plaza) y perfiles con dirección y coordenadas en **Cali, Valle del Cauca** (mapa operativo, domicilios y clientes). Catálogo: `CatalogSeeder`, `OfferSeeder`.
 
 4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`, `notificationBell.js`):
 
@@ -435,13 +435,13 @@ Cobertura relevante: flujo operacional de pedidos (`OrderOperationsFlowTest`, `C
 
 Orden de migraciones coherente con FKs: `users` y tablas Spatie de permisos, `positions`, perfiles, catálogo (`products`, `offers`, `offer_items`), `orders` / `order_items`, operaciones (`order_status_logs`, `order_assignments`, `courier_locations`, `delivery_proofs`; columnas extra en `orders` y coordenadas de tienda en `company_profiles` — migración `2026_05_19_100000_order_operations`), **notificaciones** (`notifications`, `notification_deliveries`, `notification_templates`, `notification_preferences` — `2026_05_25_120000_create_notification_system`), cola **`jobs`** (`2026_05_25_120001_create_jobs_table`), etc.
 
-Semilla opcional de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`. Contraseña: valor de `ADMIN_PASSWORD` en `.env` (por defecto `password`). Cuentas útiles para operaciones:
+Por defecto `DatabaseSeeder` carga `CompanyProfileSeeder` (tienda en Cali con `store_latitude` / `store_longitude`) y `DemoUsersSeeder`. Semilla solo de cuentas demo (no producción): `php artisan db:seed --class=DemoUsersSeeder`. Contraseña: valor de `ADMIN_PASSWORD` en `.env` (por defecto `password`). Cuentas útiles para operaciones:
 
 | Rol / cargo | Correo demo |
 |-------------|-------------|
 | Despachador | `despachador1@demo.beeffresh.test` |
 | Domiciliario | `empleado2@demo.beeffresh.test` |
-| Cliente (con coords) | `cliente2@demo.beeffresh.test` |
+| Cliente (Cali, con coords) | `cliente1@demo.beeffresh.test`, `cliente2@demo.beeffresh.test` |
 
 ### Comando destructivo (solo si lo necesitas a sabiendas)
 
