@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-30
+**Última actualización de esta documentación:** 2026-05-31
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -95,7 +95,7 @@ node node_modules/vite/bin/vite.js build
 
 Desarrollo con recarga de assets: `npm run dev`.
 
-5. **Tiempo real y notificaciones:** ver sección [Arranque en desarrollo: ngrok + tiempo real + notificaciones](#arranque-en-desarrollo-ngrok--tiempo-real--notificaciones) (ngrok `8080`, `reverb:start`, `queue:work` con `default,notifications,notifications-email`). Plantillas: `php artisan db:seed --class=NotificationTemplateSeeder`. En local sin SMTP: `MAIL_MAILER=log`.
+5. **Tiempo real y notificaciones:** ver sección [Arranque en desarrollo: ngrok + tiempo real + notificaciones](#arranque-en-desarrollo-ngrok--tiempo-real--notificaciones). Atajo Windows: `.\scripts\start-dev.ps1` (ngrok + Reverb + colas + `APP_URL`). Plantillas: `php artisan db:seed --class=NotificationTemplateSeeder`. En local sin SMTP: `MAIL_MAILER=log`.
 
 **Laragon (Windows):** si en PowerShell o Cursor no se reconocen `php`, `composer` o `npm`:
 
@@ -122,7 +122,7 @@ En la configuración de Apache de Laragon en la máquina de desarrollo, **Beeffr
 
 Para probar checkout y webhooks desde internet (p. ej. Wompi sandbox). **Beeffresh en Laragon escucha en el puerto 8080** (no uses `ngrok http 80`, salvo que expongas otro proyecto en ese puerto).
 
-**Levantar el túnel (Windows):**
+**Levantar el túnel (Windows):** preferible **`.\scripts\start-dev.ps1`** (ver [Arranque automático](#arranque-automático-windows-recomendado)). Manualmente:
 
 1. En Laragon: **Start All** (Apache debe estar activo; comprueba `http://127.0.0.1:8080` o `http://beeffresh2024.test`).
 2. En una terminal, desde la carpeta de ngrok (p. ej. `C:\Users\wandy\Downloads\ngrok-v3-stable-windows-amd64`):
@@ -175,7 +175,37 @@ En local necesitas **Laragon (Apache)** y, para modo *live*, **tres procesos en 
 | Laravel Reverb (WebSocket) | **8081** | Echo: pedidos, campana, pagos, stock, métricas |
 | ngrok (túnel HTTPS) | → 8080 | Exponer la app a internet (Wompi, pruebas móvil) |
 
-#### Checklist rápido
+#### Arranque automático (Windows, recomendado)
+
+Script **`scripts/start-dev.ps1`**: comprueba Apache en **8080**, levanta **ngrok**, actualiza **`APP_URL`** en `.env`, ejecuta `config:clear`, y abre ventanas para **Reverb** y **`queue:work`**.
+
+**Requisitos previos:** Laragon → **Start All**; ngrok instalado y autenticado (`ngrok config add-authtoken …`).
+
+```powershell
+cd C:\laragon\www\beeffresh2024
+.\scripts\start-dev.ps1
+```
+
+Si ngrok no está en el PATH, indica la ruta una vez por sesión:
+
+```powershell
+$env:NGROK_EXE = "C:\Users\TU_USUARIO\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe"
+.\scripts\start-dev.ps1
+```
+
+Opcionalmente **`$env:PHP_EXE`** si `php` no está en el PATH (p. ej. `C:\laragon\bin\php\php-8.2.29-Win32-vs16-x64\php.exe`).
+
+| Parámetro | Efecto |
+|-----------|--------|
+| `-SkipNgrok` | No inicia ngrok ni toca `APP_URL` |
+| `-SkipReverb` | No abre ventana de Reverb |
+| `-SkipQueue` | No abre ventana de colas |
+
+Al terminar, el script imprime la **URL HTTPS de ngrok** y el **webhook Wompi** (`…/webhooks/wompi`). Copia la URL en el panel Wompi → Developers. Panel de inspección ngrok: `http://127.0.0.1:4040`.
+
+**Detener procesos:** cierra las ventanas «Beeffresh Reverb» y «Beeffresh Queue»; detén ngrok desde el administrador de tareas o cerrando su ventana/minimizado.
+
+#### Checklist manual (alternativa)
 
 1. Laragon → **Start All** (comprueba `http://127.0.0.1:8080` o `http://beeffresh2024.test`).
 2. **Terminal A — ngrok** (pagos / webhooks / acceso externo a la web):
