@@ -10,7 +10,6 @@ use App\Http\Requests\Payments\InitiatePaymentRequest;
 use App\Models\Payment;
 use App\Services\Catalog\CartStorage;
 use App\Services\Payments\PaymentService;
-use App\Support\Payments\PaymentDevelopmentUrls;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class PaymentCheckoutController extends Controller
         $this->payments->guardPaymentAccessible($payment);
 
         if ($payment->status === PaymentStatus::Approved && $payment->order_id) {
-            return PaymentDevelopmentUrls::redirectToLocalRoute('payments.success', $payment);
+            return redirect()->route('payments.success', $payment->uuid);
         }
 
         try {
@@ -79,9 +78,9 @@ class PaymentCheckoutController extends Controller
         $this->payments->clearCartSessionIfApproved($payment);
 
         return match ($payment->status) {
-            PaymentStatus::Approved => PaymentDevelopmentUrls::redirectToLocalRoute('payments.success', $payment),
-            PaymentStatus::Processing, PaymentStatus::PendingPayment => PaymentDevelopmentUrls::redirectToLocalRoute('payments.pending', $payment),
-            default => PaymentDevelopmentUrls::redirectToLocalRoute('payments.failed', $payment),
+            PaymentStatus::Approved => redirect()->route('payments.success', $payment->uuid),
+            PaymentStatus::Processing, PaymentStatus::PendingPayment => redirect()->route('payments.pending', $payment->uuid),
+            default => redirect()->route('payments.failed', $payment->uuid),
         };
     }
 
@@ -100,11 +99,11 @@ class PaymentCheckoutController extends Controller
         $this->payments->clearCartSessionIfApproved($payment);
 
         if ($payment->status === PaymentStatus::Approved) {
-            return PaymentDevelopmentUrls::redirectToLocalRoute('payments.success', $payment);
+            return redirect()->route('payments.success', $payment->uuid);
         }
 
         if (in_array($payment->status, [PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired], true)) {
-            return PaymentDevelopmentUrls::redirectToLocalRoute('payments.failed', $payment);
+            return redirect()->route('payments.failed', $payment->uuid);
         }
 
         return view('payments.status', ['payment' => $payment->load('order')]);
@@ -128,7 +127,7 @@ class PaymentCheckoutController extends Controller
         $this->payments->clearCartSessionIfApproved($payment);
 
         if ($payment->status !== PaymentStatus::Approved) {
-            return PaymentDevelopmentUrls::redirectToLocalRoute('payments.status', $payment);
+            return redirect()->route('payments.status', $payment->uuid);
         }
 
         return view('payments.success', ['payment' => $payment->load('order')]);

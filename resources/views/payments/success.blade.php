@@ -13,10 +13,10 @@
         <p class="text-sm text-[var(--bf-muted)] mb-4">Tu pedido fue confirmado y ya está en operaciones.</p>
         @if($payment->order)
             <p class="text-lg font-semibold text-[var(--bf-brand)] mb-6">Pedido #{{ $payment->order->id }}</p>
-            <a href="{{ PaymentDevelopmentUrls::localRoute('orders.tracking.show', $payment->order) }}" class="bf-btn-primary w-full justify-center mb-3">Ver seguimiento</a>
-            <a href="{{ PaymentDevelopmentUrls::localRoute('customer.orders.index') }}" class="text-sm text-[var(--bf-muted)] hover:underline block mb-3">Ver todos mis pedidos</a>
+            <a href="{{ PaymentDevelopmentUrls::localHandoffUrl('orders.tracking.show', $payment->order) }}" class="bf-btn-primary w-full justify-center mb-3">Ver seguimiento</a>
+            <a href="{{ PaymentDevelopmentUrls::localHandoffUrl('customer.orders.index') }}" class="text-sm text-[var(--bf-muted)] hover:underline block mb-3">Ver todos mis pedidos</a>
         @endif
-        <a href="{{ PaymentDevelopmentUrls::localRoute('home') }}" class="text-sm text-[var(--bf-muted)] hover:underline">Volver a la tienda</a>
+        <a href="{{ PaymentDevelopmentUrls::localHandoffUrl('home') }}" class="text-sm text-[var(--bf-muted)] hover:underline">Volver a la tienda</a>
     </div>
 </div>
 @endsection

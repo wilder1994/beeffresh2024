@@ -43,6 +43,8 @@ export function bfNormalizePaymentRealtimePayload(payment) {
         reference: payment.reference,
         order_id: payment.order_id,
         redirect_url: payment.redirect_url,
+        tracking_url: payment.tracking_url,
+        catalog_url: payment.catalog_url,
         message: payment.message,
         cart_count: payment.cart_count ?? (payment.status === 'approved' ? 0 : undefined),
     };

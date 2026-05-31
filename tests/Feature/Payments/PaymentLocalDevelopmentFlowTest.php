@@ -62,7 +62,7 @@ class PaymentLocalDevelopmentFlowTest extends TestCase
         $this->assertAuthenticatedAs($customer);
     }
 
-    public function test_payment_success_on_tunnel_redirects_to_signed_local_url(): void
+    public function test_payment_success_on_tunnel_stays_on_tunnel(): void
     {
         $customer = User::query()->where('email', 'cliente1@demo.beeffresh.test')->firstOrFail();
         $payment = Payment::query()->create([
@@ -75,13 +75,43 @@ class PaymentLocalDevelopmentFlowTest extends TestCase
             'status' => PaymentStatus::Approved,
         ]);
 
-        $response = $this->actingAs($customer)
-            ->get('https://tunnel.example.ngrok-free.app/pago/exito/'.$payment->uuid);
+        $this->actingAs($customer)
+            ->get('https://tunnel.example.ngrok-free.app/pago/exito/'.$payment->uuid)
+            ->assertOk()
+            ->assertSee('Pago aprobado');
+    }
 
-        $response->assertRedirect();
-        $location = (string) $response->headers->get('Location');
-        $this->assertStringStartsWith('http://localhost:8080/pago/exito/'.$payment->uuid, $location);
-        $this->assertStringContainsString('signature=', $location);
+    public function test_payment_poll_json_on_tunnel_is_not_redirected_to_localhost(): void
+    {
+        $customer = User::query()->where('email', 'cliente1@demo.beeffresh.test')->firstOrFail();
+        $payment = Payment::query()->create([
+            'user_id' => $customer->id,
+            'gateway' => PaymentGateway::Wompi,
+            'reference' => 'BF-LOCAL-POLL',
+            'amount' => '10000.00',
+            'amount_in_cents' => 1000000,
+            'currency' => 'COP',
+            'status' => PaymentStatus::Approved,
+        ]);
+
+        $this->actingAs($customer)
+            ->getJson('https://tunnel.example.ngrok-free.app/pago/estado/'.$payment->uuid)
+            ->assertOk()
+            ->assertJsonPath('status', 'approved')
+            ->assertJsonPath('redirect_url', null)
+            ->assertJsonPath('catalog_url', fn ($url) => str_starts_with((string) $url, 'http://localhost:8080'));
+    }
+
+    public function test_local_handoff_logs_user_in_on_localhost(): void
+    {
+        $customer = User::query()->where('email', 'cliente1@demo.beeffresh.test')->firstOrFail();
+        $token = 'local-handoff-test';
+        Cache::put('payment_local_handoff.'.hash('sha256', $token), $customer->id, now()->addMinutes(10));
+
+        $this->get('http://localhost:8080/?bf_local_handoff='.$token)
+            ->assertRedirect('http://localhost:8080');
+
+        $this->assertAuthenticatedAs($customer);
     }
 
     public function test_signed_local_success_logs_in_and_renders(): void

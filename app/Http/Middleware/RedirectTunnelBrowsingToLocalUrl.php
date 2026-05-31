@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Models\Payment;
 use App\Support\Payments\PaymentDevelopmentUrls;
 use Closure;
 use Illuminate\Http\Request;
@@ -23,15 +22,6 @@ final class RedirectTunnelBrowsingToLocalUrl
 
         if (PaymentDevelopmentUrls::isPaymentTunnelPath($request)) {
             return $next($request);
-        }
-
-        if (PaymentDevelopmentUrls::isPostPaymentResultPath($request) && ! $request->expectsJson()) {
-            $payment = $request->route('payment');
-            $routeName = PaymentDevelopmentUrls::routeNameForPostPaymentPath($request->path());
-
-            if ($payment instanceof Payment && $routeName !== null) {
-                return redirect()->away(PaymentDevelopmentUrls::signedLocalUrl($routeName, $payment));
-            }
         }
 
         $localBase = PaymentDevelopmentUrls::localBase();

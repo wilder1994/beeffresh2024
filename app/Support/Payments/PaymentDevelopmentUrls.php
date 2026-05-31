@@ -7,7 +7,9 @@ namespace App\Support\Payments;
 use App\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 /**
  * En local: APP_URL = túnel HTTPS (Wompi); APP_LOCAL_URL = navegación habitual (localhost:8080).
@@ -86,6 +88,16 @@ final class PaymentDevelopmentUrls
             return true;
         }
 
+        if (str_starts_with($path, 'pago/estado/')) {
+            return true;
+        }
+
+        if (str_starts_with($path, 'pago/exito/')
+            || str_starts_with($path, 'pago/pendiente/')
+            || str_starts_with($path, 'pago/fallido/')) {
+            return true;
+        }
+
         if (str_starts_with($path, 'webhooks/')) {
             return true;
         }
@@ -157,6 +169,24 @@ final class PaymentDevelopmentUrls
             URL::forceRootUrl($previousRoot);
             URL::forceScheme($previousRoot !== '' && str_starts_with($previousRoot, 'https') ? 'https' : null);
         }
+    }
+
+    public static function localHandoffUrl(string $routeName, mixed $parameters = []): string
+    {
+        $url = self::localRoute($routeName, $parameters);
+
+        if (! self::isEnabled() || ! auth()->check()) {
+            return $url;
+        }
+
+        $token = Str::random(40);
+        Cache::put(
+            'payment_local_handoff.'.hash('sha256', $token),
+            auth()->id(),
+            now()->addMinutes(10),
+        );
+
+        return $url.(str_contains($url, '?') ? '&' : '?').'bf_local_handoff='.$token;
     }
 
     public static function urlForPaymentRoute(string $routeName, Payment $payment): string

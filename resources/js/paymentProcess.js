@@ -5,7 +5,6 @@ import { bfInitPaymentRealtimeHandler } from './realtime/handlers/paymentHandler
 const TERMINAL_STATUSES = new Set(['approved', 'declined', 'failed', 'expired']);
 const POLL_INTERVAL_MS = 2500;
 const POLL_TIMEOUT_MS = 120000;
-const REDIRECT_DELAY_MS = 1200;
 const WOMPI_READY_TIMEOUT_MS = 15000;
 const AUTO_OPEN_DELAY_MS = 300;
 const OPEN_HINT_DELAY_MS = 5000;
@@ -46,18 +45,22 @@ function applyPayload(root, data) {
         if (orderEl && data.order_id) {
             orderEl.textContent = `#${data.order_id}`;
         }
+
+        const trackingLink = root.querySelector('[data-bf-payment-tracking-link]');
+        if (trackingLink && data.tracking_url) {
+            trackingLink.href = data.tracking_url;
+            trackingLink.classList.remove('hidden');
+        }
+
+        const catalogLink = root.querySelector('[data-bf-payment-catalog-link]');
+        if (catalogLink && data.catalog_url) {
+            catalogLink.href = data.catalog_url;
+        }
     } else if (data.status === 'declined' || data.status === 'failed' || data.status === 'expired') {
         setPhase(root, 'failed');
     } else {
         setPhase(root, 'syncing');
     }
-}
-
-function redirectTo(root, url) {
-    if (!url) return;
-    window.setTimeout(() => {
-        window.location.href = url;
-    }, REDIRECT_DELAY_MS);
 }
 
 function handleTerminal(root, data) {
@@ -66,9 +69,6 @@ function handleTerminal(root, data) {
     }
 
     root.dataset.polling = '0';
-    if (data.redirect_url) {
-        redirectTo(root, data.redirect_url);
-    }
 
     return true;
 }

@@ -13,6 +13,7 @@ class Kernel extends HttpKernel
      */
     protected $middlewarePriority = [
         \App\Http\Middleware\AuthenticateDevelopmentTunnelHandoff::class,
+        \App\Http\Middleware\AuthenticateDevelopmentLocalHandoff::class,
         \App\Http\Middleware\AuthenticatePaymentHandoff::class,
         \Illuminate\Auth\Middleware\Authenticate::class,
     ];
@@ -48,6 +49,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\AuthenticateDevelopmentTunnelHandoff::class,
+            \App\Http\Middleware\AuthenticateDevelopmentLocalHandoff::class,
             \App\Http\Middleware\RedirectTunnelBrowsingToLocalUrl::class,
         ],
 

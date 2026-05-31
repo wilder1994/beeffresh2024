@@ -46,8 +46,10 @@
         <div data-bf-payment-phase="approved" class="hidden space-y-4">
             <div class="bf-payment-result__icon text-emerald-600 mx-auto">✓</div>
             <h2 class="text-lg font-semibold text-[var(--bf-ink)]">¡Pago aprobado!</h2>
-            <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>Pago aprobado. Redirigiendo…</p>
+            <p class="text-sm text-[var(--bf-muted)]" data-bf-payment-message>Tu pedido fue confirmado.</p>
             <p class="text-base font-semibold text-[var(--bf-brand)]">Pedido <span data-bf-payment-order></span></p>
+            <a href="#" data-bf-payment-tracking-link class="bf-btn-primary w-full justify-center hidden">Ver seguimiento</a>
+            <a href="#" data-bf-payment-catalog-link class="text-sm text-[var(--bf-muted)] hover:underline block">Volver al catálogo</a>
         </div>
 
         {{-- Rechazado / fallido --}}

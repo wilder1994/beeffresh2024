@@ -192,6 +192,7 @@ final class PaymentService
      *     order_id: int|null,
      *     redirect_url: string|null,
      *     tracking_url: string|null,
+     *     catalog_url: string|null,
      *     message: string|null
      * }
      */
@@ -218,10 +219,11 @@ final class PaymentService
             'terminal' => $payment->status->isTerminal(),
             'reference' => $payment->reference,
             'order_id' => $payment->order_id,
-            'redirect_url' => $this->redirectUrlForStatus($payment),
+            'redirect_url' => null,
             'tracking_url' => $payment->order !== null
-                ? PaymentDevelopmentUrls::localRoute('orders.tracking.show', $payment->order)
+                ? PaymentDevelopmentUrls::localHandoffUrl('orders.tracking.show', $payment->order)
                 : null,
+            'catalog_url' => PaymentDevelopmentUrls::localHandoffUrl('home'),
             'message' => $this->pollMessage($payment),
             'cart_count' => $payment->status === PaymentStatus::Approved ? 0 : null,
             'paid_at' => $payment->paid_at?->toIso8601String(),
@@ -242,9 +244,9 @@ final class PaymentService
     private function redirectUrlForStatus(Payment $payment): ?string
     {
         return match ($payment->status) {
-            PaymentStatus::Approved => PaymentDevelopmentUrls::urlForPaymentRoute('payments.success', $payment),
-            PaymentStatus::Processing, PaymentStatus::PendingPayment => PaymentDevelopmentUrls::urlForPaymentRoute('payments.pending', $payment),
-            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired => PaymentDevelopmentUrls::urlForPaymentRoute('payments.failed', $payment),
+            PaymentStatus::Approved => route('payments.success', $payment->uuid),
+            PaymentStatus::Processing, PaymentStatus::PendingPayment => route('payments.pending', $payment->uuid),
+            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired => route('payments.failed', $payment->uuid),
             default => null,
         };
     }
