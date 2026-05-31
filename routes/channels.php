@@ -52,6 +52,10 @@ Broadcast::channel('operations.inventory', function (User $user): bool {
         || $user->isDispatcher();
 });
 
+Broadcast::channel('couriers.pool', function (User $user): bool {
+    return $user->canAccessCourierModule();
+});
+
 Broadcast::channel('couriers.{courierId}', function (User $user, int $courierId): bool {
     if ((int) $user->id === $courierId && $user->canAccessCourierModule()) {
         return true;

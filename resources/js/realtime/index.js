@@ -16,6 +16,7 @@ import { bfInitTrackingRealtimeHandler } from './handlers/trackingHandler.js';
 import { bfInitCourierLocationHandler } from './handlers/courierLocationHandler.js';
 import { bfInitOperationsMapHandler } from './handlers/operationsMapHandler.js';
 import { bfInitCourierPresenceHandler } from './handlers/courierPresenceHandler.js';
+import { bfBootCourierPoolPage } from './handlers/courierPoolPage.js';
 import { initBfEcho } from './echo.js';
 import { bfStartRealtimeHealthMonitor } from './healthMonitor.js';
 import { bfRealtimeLog } from './utils/logger.js';
@@ -49,6 +50,7 @@ export function bootstrapBfRealtime() {
     bfInitCourierLocationHandler();
     bfInitOperationsMapHandler();
     bfInitCourierPresenceHandler();
+    bfBootCourierPoolPage();
     bfStartRealtimeHealthMonitor();
 
     return echo;

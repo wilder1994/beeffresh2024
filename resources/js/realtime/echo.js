@@ -1,6 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import { bfResyncOperationsAfterReconnect, bfResyncTrackingAndMapAfterReconnect } from './healthMonitor.js';
+import { bfResyncCourierPoolAfterReconnect, bfResyncOperationsAfterReconnect, bfResyncTrackingAndMapAfterReconnect } from './healthMonitor.js';
 import { bfRealtimeStore } from './stores/realtimeStore.js';
 import { bfRealtimeLog } from './utils/logger.js';
 
@@ -48,6 +48,7 @@ export function createBfEcho() {
 
             if (hasConnectedOnce) {
                 bfResyncOperationsAfterReconnect();
+                bfResyncCourierPoolAfterReconnect();
                 bfResyncTrackingAndMapAfterReconnect();
             }
 

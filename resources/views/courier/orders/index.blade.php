@@ -34,47 +34,28 @@
         <p class="text-sm text-stone-600">Acepta pedidos listos en tienda o continúa tus entregas en curso.</p>
     </div>
 
-    <section class="space-y-3">
+    <section
+        class="space-y-3"
+        data-courier-pool
+        data-feed-url="{{ route('courier.orders.pool-feed') }}"
+        data-card-fragment-url="{{ route('courier.orders.pool-card', ['order' => '__ORDER__']) }}"
+        data-accept-url-template="{{ route('courier.orders.accept', ['order' => '__ORDER__']) }}"
+        data-can-accept="{{ $canAccept ? '1' : '0' }}"
+    >
         <div class="flex items-center justify-between gap-3">
             <h2 class="text-sm font-semibold uppercase tracking-wide text-stone-600">Disponibles para tomar</h2>
-            <span class="text-xs text-stone-500">{{ $poolOrders->count() }} en cola</span>
+            <span id="courier-pool-count" class="text-xs text-stone-500">{{ $poolOrders->count() }} en cola</span>
         </div>
 
-        @if($poolOrders->isEmpty())
-            <div class="bf-ops-empty text-sm">No hay pedidos listos sin asignar.</div>
-        @else
-            <div class="space-y-3">
+        <div id="courier-pool-list" class="space-y-3">
+            @if($poolOrders->isEmpty())
+                <div class="bf-courier-pool-empty text-sm">No hay pedidos listos sin asignar.</div>
+            @else
                 @foreach($poolOrders as $order)
-                    <article class="bf-ops-order-card">
-                        <div class="bf-ops-order-card__head">
-                            <div>
-                                <p class="bf-ops-order-card__id">#{{ $order->id }}</p>
-                                <p class="bf-ops-order-card__customer">{{ $order->shipping_recipient_name }}</p>
-                            </div>
-                            <x-order.status-badge :status="$order->status" />
-                        </div>
-                        <p class="text-sm text-stone-600 mt-2">
-                            {{ $order->shipping_address_line2 ?? $order->shipping_city }}
-                            · {{ $order->shipping_phone }}
-                        </p>
-                        <p class="text-xs text-stone-500 mt-1">
-                            Listo {{ $order->ready_at?->diffForHumans() ?? 'recientemente' }}
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <a href="{{ route('courier.orders.show', $order) }}" class="bf-btn-ghost text-sm">Ver detalle</a>
-                            @if($canAccept)
-                                <form method="POST" action="{{ route('courier.orders.accept', $order) }}">
-                                    @csrf
-                                    <button type="submit" class="bf-btn-primary text-sm">Aceptar pedido</button>
-                                </form>
-                            @else
-                                <p class="text-xs text-amber-700 self-center">Finaliza tu entrega actual para aceptar otro.</p>
-                            @endif
-                        </div>
-                    </article>
+                    <x-courier.pool-order-card :order="$order" :canAccept="$canAccept" />
                 @endforeach
-            </div>
-        @endif
+            @endif
+        </div>
     </section>
 
     <section class="space-y-3">

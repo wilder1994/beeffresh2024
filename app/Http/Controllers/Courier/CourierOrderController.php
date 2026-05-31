@@ -18,6 +18,7 @@ use App\Services\Orders\CourierAssignmentService;
 use App\Services\Orders\CourierLocationService;
 use App\Services\Orders\OrderOperationsQueryService;
 use App\Services\Orders\OrderWorkflowService;
+use App\Support\Realtime\OrderBroadcastPayload;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -37,12 +38,45 @@ class CourierOrderController extends Controller
     public function index(): View
     {
         $courier = auth()->user();
+        $canAccept = $this->courierCanAcceptOrders($courier);
 
         return view('courier.orders.index', [
             'poolOrders' => $this->queries->courierPoolOrders(),
             'myOrders' => $this->queries->courierActiveOrders($courier),
-            'canAccept' => (bool) $courier->employeeProfile?->available
-                && ! $this->courierAssignment->courierHasActiveDelivery($courier),
+            'canAccept' => $canAccept,
+        ]);
+    }
+
+    public function poolFeed(): JsonResponse
+    {
+        $courier = auth()->user();
+
+        return response()->json([
+            'generated_at' => now()->toIso8601String(),
+            'can_accept' => $this->courierCanAcceptOrders($courier),
+            'orders' => $this->queries->courierPoolOrders()
+                ->map(fn (Order $order): array => OrderBroadcastPayload::fromOrder($order))
+                ->values(),
+        ]);
+    }
+
+    public function poolCardFragment(Order $order): JsonResponse
+    {
+        $this->authorize('view', $order);
+
+        if ($order->status !== OrderStatus::ReadyForDelivery || $order->courier_id !== null) {
+            abort(404);
+        }
+
+        $courier = auth()->user();
+        $canAccept = $this->courierCanAcceptOrders($courier);
+
+        return response()->json([
+            'html' => view('components.courier.pool-order-card', [
+                'order' => $order,
+                'canAccept' => $canAccept,
+            ])->render(),
+            'order' => OrderBroadcastPayload::fromOrder($order),
         ]);
     }
 
@@ -226,5 +260,11 @@ class CourierOrderController extends Controller
         }
 
         return $decoded;
+    }
+
+    private function courierCanAcceptOrders(\App\Models\User $courier): bool
+    {
+        return (bool) $courier->employeeProfile?->available
+            && ! $this->courierAssignment->courierHasActiveDelivery($courier);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Realtime;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 
 /** Payload unificado para OrderUpdated, feed operacional y parches DOM (Fase 1). */
@@ -32,6 +33,10 @@ final class OrderBroadcastPayload
             'updated_at' => $order->updated_at?->toIso8601String(),
             'updated_human' => $order->updated_at?->diffForHumans(short: true),
             'show_url' => route('admin.pedidos.show', $order),
+            'courier_show_url' => route('courier.orders.show', $order),
+            'shipping_phone' => $order->shipping_phone,
+            'ready_human' => $order->ready_at?->diffForHumans() ?? 'recientemente',
+            'in_pool' => $order->status === OrderStatus::ReadyForDelivery && $order->courier_id === null,
         ];
     }
 }

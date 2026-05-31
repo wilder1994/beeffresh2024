@@ -16,4 +16,9 @@ export function registerCourierChannels(echo) {
         bfRealtimeStore.recordEvent('tracking', event);
         bfDispatchRealtimeEvent('bf:courier-location-updated', { location: event.location ?? event });
     });
+
+    echo.private('couriers.pool').listen('.order.updated', (event) => {
+        bfRealtimeStore.recordEvent('courier-pool', event);
+        bfDispatchRealtimeEvent('bf:courier-pool-order-updated', { order: event.order ?? event });
+    });
 }

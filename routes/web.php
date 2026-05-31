@@ -138,6 +138,8 @@ Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('adm
 
 Route::middleware(['auth', 'role:employee', 'courier'])->prefix('domiciliario')->name('courier.')->group(function () {
     Route::get('/pedidos', [CourierOrderController::class, 'index'])->name('orders.index');
+    Route::get('/pedidos/disponibles', [CourierOrderController::class, 'poolFeed'])->name('orders.pool-feed');
+    Route::get('/pedidos/{order}/tarjeta-pool', [CourierOrderController::class, 'poolCardFragment'])->name('orders.pool-card');
     Route::post('/pedidos/{order}/aceptar', [CourierOrderController::class, 'accept'])->name('orders.accept');
     Route::post('/ubicacion', [CourierOrderController::class, 'updateLocation'])->name('location.update');
     Route::get('/pedidos/{order}', [CourierOrderController::class, 'show'])->name('orders.show');

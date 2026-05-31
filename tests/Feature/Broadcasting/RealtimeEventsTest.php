@@ -67,6 +67,7 @@ class RealtimeEventsTest extends TestCase
             return $event->order->id === $order->id
                 && in_array('private-operations.orders', $channelNames, true)
                 && in_array('private-operations.dashboard', $channelNames, true)
+                && in_array('private-couriers.pool', $channelNames, true)
                 && in_array('private-orders.'.$order->id, $channelNames, true)
                 && $event->broadcastAs() === 'order.updated';
         });

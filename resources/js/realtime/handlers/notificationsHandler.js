@@ -9,6 +9,7 @@ import {
     bfNormalizeNotificationId,
     bfPlayNotificationSound,
 } from '../utils/notificationSound.js';
+import { bfMaybeRefreshCourierPoolFromNotification } from './courierPoolPage.js';
 
 /** @type {Set<number|string>} */
 const seenNotificationIds = new Set();
@@ -90,6 +91,8 @@ export function bfHandleNotificationCreated(payload) {
     if (!payload?.suppressToast) {
         bfShowNotificationToast(notification.title ?? 'Nueva notificación', notification.body ?? '');
     }
+
+    bfMaybeRefreshCourierPoolFromNotification(notification);
 }
 
 /**

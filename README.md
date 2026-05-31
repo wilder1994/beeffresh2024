@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-31
+**Última actualización de esta documentación:** 2026-05-30
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -80,11 +80,17 @@ php artisan migrate:fresh --seed
 
 Usuarios demo (`DemoUsersSeeder`): contraseña **`password`** (ver tabla en consola al sembrar). Sede (`CompanyProfileSeeder`, Jardín Plaza) y perfiles con dirección y coordenadas en **Cali, Valle del Cauca** (mapa operativo, domicilios y clientes). Catálogo: `CatalogSeeder`, `OfferSeeder`.
 
-4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`, `notificationBell.js`):
+4. Assets (Vite incluye entradas de operaciones: `operationsPolling.js`, `operationsMap.js`, `courierOps.js`, `orderTracking.js`, `notificationBell.js`). **Tras cambiar JS/CSS del panel domiciliario o realtime, recompila** — `public/build` está en `.gitignore` y el navegador no verá el pool en vivo ni otros parches DOM si el bundle local está desactualizado:
 
 ```bash
 npm install
 npm run build
+```
+
+Si `npm` no está en el PATH (PowerShell/Cursor), desde la raíz del proyecto:
+
+```powershell
+node node_modules/vite/bin/vite.js build
 ```
 
 Desarrollo con recarga de assets: `npm run dev`.
@@ -243,6 +249,7 @@ Tras cada URL nueva de ngrok, actualiza `APP_URL` (deja `APP_LOCAL_URL` fijo en 
 | **Seguimiento pedido** | Polling 12 s | WS `order.tracking.updated` + invitado en canal público `tracking.{token}` + polling 12–24 s |
 | **Mapa operativo** (`/admin/pedidos/mapa`) | Polling 15–30 s | WS `operations.map.updated`, `courier.location.updated`, `courier.presence.updated` + polling |
 | **GPS domiciliario** | `watchPosition` ~12 s en ruta / ~45 s en espera | `POST /domiciliario/ubicacion` → `courier.location.updated`; pin animado en mapa (`mapUi.js`) |
+| **Cola domiciliario** (`/domiciliario/pedidos`) | Lista «Disponibles» estática hasta F5 | WS `couriers.pool` + `order.updated` inserta/elimina tarjetas; polling 15 s; al recibir notificación `order_ready_for_delivery` también refresca el feed |
 
 - **Mapa operativo (UI):** banner `cabecera`, indicador realtime, mapa a alto `calc(100dvh − offset)` (`staff_map_page`, sin footer). Centro del mapa = coords de tienda en `company_profiles`.
 - **GPS:** requiere panel domiciliario abierto, permiso de ubicación y **Reverb + cola** para ver movimiento casi en vivo; con *Modo respaldo (polling)* el pin se actualiza cada 15–30 s.
@@ -295,9 +302,9 @@ Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIF
 
 **Eventos Fase 2 (alias WS):** `order.tracking.updated`, `courier.location.updated`, `operations.map.updated`, `courier.presence.updated`.
 
-**Canales:** privados `operations.map`, `operations.couriers`, `orders.{id}`, `couriers.{id}`; público `tracking.{token}` (invitado, token no enumerable). Metas Blade: `bf-tracking-token`, `bf-order-id`, `bf-staff-operations-map`, `bf-courier-id`.
+**Canales:** privados `operations.map`, `operations.couriers`, `couriers.pool` (domiciliarios con `module.courier`), `orders.{id}`, `couriers.{id}`; público `tracking.{token}` (invitado, token no enumerable). Metas Blade: `bf-tracking-token`, `bf-order-id`, `bf-staff-operations-map`, `bf-courier-id`.
 
-**Frontend Fase 2:** `channels/tracking.js`, `maps.js`, `couriers.js`; handlers `trackingHandler`, `operationsMapHandler`, `courierLocationHandler`, `courierPresenceHandler`; utils `trackingUi.js`, `mapUi.js` (`bfPatchOrderMarker`, `bfPatchCourierMarker`). Entradas Vite: `orderTracking.js`, `operationsMap.js`, `courierOps.js` (polling fallback intacto). Reconnect: evento `bf:realtime-resync`.
+**Frontend Fase 2:** `channels/tracking.js`, `maps.js`, `couriers.js`; handlers `trackingHandler`, `operationsMapHandler`, `courierLocationHandler`, `courierPresenceHandler`, **`courierPoolPage.js` / `courierPoolHandler.js`** (cola «Disponibles para tomar» en panel domiciliario, bootstrap en `app.js`); utils `trackingUi.js`, `mapUi.js` (`bfPatchOrderMarker`, `bfPatchCourierMarker`). Entradas Vite: `orderTracking.js`, `operationsMap.js`, `courierOps.js` (GPS + firma). Reconnect: resync ops + pool + tracking (`bf:realtime-resync`).
 
 | Método | Ruta | Uso |
 |--------|------|-----|
@@ -307,11 +314,13 @@ Documentación detallada: [`docs/REALTIME.md`](docs/REALTIME.md) · [`docs/NOTIF
 | `GET` | `/admin/pedidos/{order}/fragmento-tarjeta` | HTML tarjeta para insert realtime |
 | `GET` | `/seguimiento/{tracking_token}/feed` | Feed tracking invitado (polling) |
 | `POST` | `/domiciliario/ubicacion` | GPS domiciliario (throttle + broadcast) |
+| `GET` | `/domiciliario/pedidos/disponibles` | Feed JSON cola sin asignar + `can_accept` (polling domiciliario) |
+| `GET` | `/domiciliario/pedidos/{order}/tarjeta-pool` | HTML tarjeta para insert realtime en «Disponibles» |
 | `POST` | `/domiciliario/pedidos/{order}/aceptar` | Domiciliario reclama pedido listo (primer click) |
 | `POST` | `/admin/pedidos/{order}/asignar-domiciliario` | Asignación manual desde operaciones |
 | `GET` | `/carrito/validar` | Validación stock en carrito (sin WS) |
 
-**Tests:** `php artisan test --filter=Broadcasting` · `php artisan test --filter=Realtime` (incluye `CourierLocationBroadcastTest`, `OrderTrackingRealtimeTest`, `OperationsMapRealtimeTest`, `TrackingGuestAuthorizationTest`, `CourierPresenceTest`) · `RealtimeHealthTest` · `MetricsCoalesceTest`.
+**Tests:** `php artisan test --filter=Broadcasting` · `php artisan test --filter=Realtime` (incluye `CourierLocationBroadcastTest`, `OrderTrackingRealtimeTest`, `OperationsMapRealtimeTest`, `TrackingGuestAuthorizationTest`, `CourierPresenceTest`, **`CourierPoolRealtimeTest`**) · `RealtimeHealthTest` · `MetricsCoalesceTest`.
 
 **Arranque local (4 procesos):** Laragon/nginx **8080**, `php artisan reverb:start` **8081**, `php artisan queue:work --queue=default,notifications,notifications-email`, y `npm run build` tras cambiar `VITE_REVERB_*`. Sin Reverb/cola → modo respaldo honesto (polling).
 
@@ -392,7 +401,7 @@ Listado de usuarios: `App\Repositories\UserRepository` + `App\Contracts\UserRepo
 | Dashboard | `/dashboard` (admin/empleado con KPIs; **clientes** usan inicio `/` tras login) |
 | Panel admin (atajo) | `GET /admin` redirige a `/dashboard` (evita 404) |
 | Pedidos (operaciones) | `/admin/pedidos` (centro de despacho), `/admin/pedidos/mapa`, ticket `/admin/pedidos/{order}/ticket` — permiso `module.orders`; cargo **Despachador** (`positions.slug = despachador`) |
-| Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`) |
+| Domiciliario | `/domiciliario/pedidos` — permiso `module.courier`; cargo domiciliario (`domiciliario`); cola en vivo vía `couriers.pool` + feed `/domiciliario/pedidos/disponibles` |
 | Seguimiento cliente | `/mis-pedidos` (historial, auth cliente), `/mis-pedidos/{order}/seguimiento` (auth) o `/seguimiento/{tracking_token}` (invitado) |
 | Notificaciones | `/notificaciones` (página respaldo), modal centro (`notification-center`), `/notificaciones/feed?scope=unread` (campana), `/notificaciones/historial` (JSON paginado), `PATCH /notificaciones/marcar-todas`, preferencias por usuario |
 | Pagos (admin) | `/admin/pagos` — transacciones, webhooks, intentos |
@@ -418,7 +427,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
 - **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Layout dos columnas (timeline + mapa). Mapa en vivo solo entre **recogido** y **entregado** (`CustomerTrackingMapPhase`, `trackingMap.js`); fases *waiting* / *closed* con mensaje. Timeline vía `order.tracking.updated` (canal público `tracking.{token}` para invitados) + polling 12 s (`orderTracking.js`). Fechas en **`America/Bogota`**. Ver [`docs/REALTIME.md`](docs/REALTIME.md) Fase 2.
 - **Notificaciones (núcleo):** `App\Services\Notifications\` — `NotificationService`, `NotificationPreferenceService`, canales (`internal`, `email` activos; `push`/WhatsApp/SMS stubs). **UI:** campana solo no leídas; modal `<x-notifications.center-dialog />` (historial + preferencias + sonido); página `/notificaciones` como respaldo. JS: `notificationBell.js`, `notificationCenter.js`, `notificationSound.js`. Tests: `NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`. Detalle: [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md), [`docs/REALTIME.md`](docs/REALTIME.md).
-- **Operaciones y despacho:** al **Marcar listo para recoger** el pedido queda sin domiciliario; se notifica a **todos los domiciliarios disponibles** (`available_couriers`). En `/domiciliario/pedidos` ven la cola **Disponibles** y **Aceptar** (`POST /domiciliario/pedidos/{order}/aceptar`, `CourierAssignmentService::claimByCourier` con bloqueo). Operaciones puede **asignar manualmente** en `/admin/pedidos/{order}` (`POST …/asignar-domiciliario`). Timeout configurable: `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` / `config/orders.php`; si nadie acepta, `php artisan orders:notify-unclaimed-ready` alerta a operaciones (scheduler cada 15 min). Grid en vivo (`order.updated`) + **mapa operativo** + GPS domiciliario como antes.
+- **Operaciones y despacho:** al **Marcar listo para recoger** el pedido queda sin domiciliario; se notifica a **todos los domiciliarios disponibles** (`available_couriers`). En `/domiciliario/pedidos` ven la cola **Disponibles para tomar** actualizada **en vivo** (`OrderUpdated` → canal privado `couriers.pool`; tarjeta vía `GET /domiciliario/pedidos/{order}/tarjeta-pool`; polling 15 s; respaldo al recibir notificación `order_ready_for_delivery`). Botón **Aceptar** (`POST /domiciliario/pedidos/{order}/aceptar`, `CourierAssignmentService::claimByCourier` con bloqueo). Operaciones puede **asignar manualmente** en `/admin/pedidos/{order}` (`POST …/asignar-domiciliario`). Timeout configurable: `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` / `config/orders.php`; si nadie acepta, `php artisan orders:notify-unclaimed-ready` alerta a operaciones (scheduler cada 15 min). Grid en vivo (`order.updated`) + **mapa operativo** + GPS domiciliario como antes. Requiere **Reverb + cola** y **`npm run build`** tras cambios JS.
 - Panel admin dashboard: KPIs, pedidos recientes, stock bajo (`App\Services\AdminDashboardService`).
 - **Alerta de agotado (campana):** al quedar un producto en `stock ≤ 0` (tras pago aprobado en `OrderFulfillmentService` o al guardar `/catalogo/inventario`), `App\Services\Catalog\StockAlertService` notifica a **operaciones** por la **campana** (tipo `NotificationType::InventoryOutOfStock`, solo canal `internal`), indicando el producto y los **combos/packs afectados**. Acción → `/catalogo/inventario`.
 - **Eliminar producto** (web o API): si el producto tiene líneas en pedidos (`order_items`), el borrado se rechaza con mensaje / HTTP 409 en API (integridad referencial).
@@ -443,7 +452,7 @@ php artisan test
 php artisan test --filter=OrderOperationsFlowTest
 ```
 
-Cobertura relevante: flujo operacional de pedidos (`OrderOperationsFlowTest`, `CourierOrderClaimTest`, `MarkReadyBroadcastTest`), configuración empresa (`CompanySettingsTest`), historial y seguimiento cliente (`CustomerOrderHistoryTest`, `OrderTrackingTimelineTest`, `CustomerTrackingMapTest`), **notificaciones** (`NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`, `tests/Feature/Realtime/`, incl. `CourierLocationBroadcastTest`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
+Cobertura relevante: flujo operacional de pedidos (`OrderOperationsFlowTest`, `CourierOrderClaimTest`, `MarkReadyBroadcastTest`, **`CourierPoolRealtimeTest`**), configuración empresa (`CompanySettingsTest`), historial y seguimiento cliente (`CustomerOrderHistoryTest`, `OrderTrackingTimelineTest`, `CustomerTrackingMapTest`), **notificaciones** (`NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`), **broadcasting / Reverb** (`tests/Feature/Broadcasting/`, `tests/Feature/Realtime/`, incl. `CourierLocationBroadcastTest`), pagos Wompi (`tests/Feature/Payments/`), carrito, catálogo público compacto y escalas por volumen (`tests/Feature/Store/`, incl. `PublicCatalogViewsTest`), catálogo admin de ofertas (`tests/Feature/Catalog/`).
 
 **Importante:** no ejecutar la suite de tests contra la base de datos de desarrollo sin ese aislamiento; `RefreshDatabase` ejecuta migraciones desde cero sobre la BD configurada para `APP_ENV=testing`.
 

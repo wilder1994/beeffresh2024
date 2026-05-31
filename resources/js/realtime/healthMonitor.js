@@ -56,6 +56,41 @@ export async function bfResyncTrackingAndMapAfterReconnect() {
     window.dispatchEvent(new CustomEvent('bf:realtime-resync', { bubbles: true }));
 }
 
+export async function bfResyncCourierPoolAfterReconnect() {
+    if (resyncInFlight) {
+        return;
+    }
+
+    const root = document.querySelector('[data-courier-pool]');
+    const feedUrl = root?.dataset.feedUrl;
+    if (!feedUrl) {
+        return;
+    }
+
+    resyncInFlight = true;
+
+    try {
+        const response = await fetch(feedUrl, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const payload = await response.json();
+        const { bfSyncCourierPoolFromFeed } = await import('./handlers/courierPoolHandler.js');
+        await bfSyncCourierPoolFromFeed(payload.orders ?? [], Boolean(payload.can_accept));
+    } catch {
+        // polling fallback
+    } finally {
+        window.setTimeout(() => {
+            resyncInFlight = false;
+        }, 5000);
+    }
+}
+
 export async function bfResyncOperationsAfterReconnect() {
     if (resyncInFlight) {
         return;
