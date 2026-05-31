@@ -12,16 +12,20 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('courier_id')->nullable()->after('user_id')->constrained('users')->nullOnDelete();
+            $table->foreignId('handled_by_user_id')->nullable()->after('courier_id')->constrained('users')->nullOnDelete();
             $table->decimal('shipping_latitude', 10, 7)->nullable()->after('shipping_notes');
             $table->decimal('shipping_longitude', 10, 7)->nullable()->after('shipping_latitude');
             $table->string('payment_method', 32)->default('online_simulated')->after('status');
             $table->unsignedTinyInteger('delivery_attempt')->default(1)->after('payment_method');
             $table->decimal('redelivery_fee', 12, 2)->default(0)->after('delivery_attempt');
             $table->timestamp('assigned_at')->nullable()->after('redelivery_fee');
-            $table->timestamp('ready_at')->nullable()->after('assigned_at');
+            $table->timestamp('handled_at')->nullable()->after('assigned_at');
+            $table->timestamp('ready_at')->nullable()->after('handled_at');
             $table->timestamp('picked_up_at')->nullable()->after('ready_at');
             $table->timestamp('delivered_at')->nullable()->after('picked_up_at');
             $table->string('tracking_token', 64)->nullable()->unique()->after('delivered_at');
+
+            $table->index(['handled_by_user_id', 'status']);
         });
 
         Schema::create('order_status_logs', function (Blueprint $table) {
@@ -93,14 +97,17 @@ return new class extends Migration
 
         Schema::table('orders', function (Blueprint $table) {
             $table->dropForeign(['courier_id']);
+            $table->dropForeign(['handled_by_user_id']);
             $table->dropColumn([
                 'courier_id',
+                'handled_by_user_id',
                 'shipping_latitude',
                 'shipping_longitude',
                 'payment_method',
                 'delivery_attempt',
                 'redelivery_fee',
                 'assigned_at',
+                'handled_at',
                 'ready_at',
                 'picked_up_at',
                 'delivered_at',

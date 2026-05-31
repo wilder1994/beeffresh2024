@@ -12,8 +12,8 @@
      data-card-fragment-url="{{ str_replace('/0/', '/__ORDER__/', route('admin.pedidos.card-fragment', ['order' => 0])) }}">
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-stone-900">Pedidos en línea</h1>
-            <p class="text-sm text-stone-600 mt-0.5">Despacho, asignación y seguimiento en tiempo real.</p>
+            <h1 class="text-xl font-bold text-stone-900">{{ ($scopedToDispatcher ?? false) ? 'Mis pedidos' : 'Pedidos en línea' }}</h1>
+            <p class="text-sm text-stone-600 mt-0.5">{{ ($scopedToDispatcher ?? false) ? 'Cola personal y pedidos nuevos sin tomar.' : 'Despacho, asignación y seguimiento en tiempo real.' }}</p>
             <x-realtime.status-indicator class="mt-2" />
         </div>
         <div class="flex flex-wrap gap-2">
@@ -66,7 +66,9 @@
     <p class="text-xs text-stone-500" data-ops-couriers-line>
         Domiciliarios: <strong class="text-emerald-700"><span data-ops-available-couriers>{{ $metrics['available_couriers'] }}</span> libres</strong>
         · <strong class="text-amber-700"><span data-ops-active-couriers>{{ $metrics['busy_couriers'] }}</span> ocupados</strong>
-        · Ingresos hoy: <strong><span data-ops-revenue-today>${{ number_format($metrics['revenue_today'], 0, ',', '.') }}</span></strong>
+        @unless($scopedToDispatcher ?? false)
+        · Ingresos hoy: <strong><span data-ops-revenue-today>${{ number_format($metrics['revenue_today'] ?? 0, 0, ',', '.') }}</span></strong>
+        @endunless
     </p>
 
     <div class="bf-ops-empty @if(!$pedidos->isEmpty()) hidden @endif" data-ops-empty-state>

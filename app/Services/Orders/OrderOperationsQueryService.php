@@ -7,6 +7,7 @@ namespace App\Services\Orders;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\Orders\OrderOperationsScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -24,32 +25,79 @@ final class OrderOperationsQueryService
      */
     public function metrics(?Carbon $reference = null): array
     {
+        return $this->metricsForQuery(Order::query(), $reference);
+    }
+
+    /**
+     * Métricas operacionales scoped al despachador (sin ingresos).
+     *
+     * @return array{
+     *   totals: array{active: int, pending: int, pending_pool: int, preparing: int, ready: int, in_delivery: int, delivered_today: int, failed: int},
+     *   available_couriers: int,
+     *   busy_couriers: int
+     * }
+     */
+    public function metricsForUser(User $user, ?Carbon $reference = null): array
+    {
+        $query = Order::query();
+        OrderOperationsScope::applyToQuery($query, $user);
+
+        $metrics = $this->metricsForQuery($query, $reference, includeRevenue: false);
+
+        $pendingPool = (int) Order::query()
+            ->where('status', OrderStatus::Pending)
+            ->whereNull('handled_by_user_id')
+            ->count();
+
+        $metrics['totals']['pending_pool'] = $pendingPool;
+        unset($metrics['revenue_today'], $metrics['revenue_month']);
+
+        return $metrics;
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Order>  $baseQuery
+     * @return array{
+     *   totals: array{active: int, pending: int, preparing: int, ready: int, in_delivery: int, delivered_today: int, failed: int},
+     *   revenue_today: float,
+     *   revenue_month: float,
+     *   available_couriers: int,
+     *   busy_couriers: int
+     * }
+     */
+    private function metricsForQuery($baseQuery, ?Carbon $reference = null, bool $includeRevenue = true): array
+    {
         $now = $reference ?? Carbon::now();
 
-        $activeCount = Order::query()->activeForOperations()->count();
-        $pendingCount = Order::query()->where('status', OrderStatus::Pending)->count();
-        $preparingCount = Order::query()->where('status', OrderStatus::Preparing)->count();
-        $readyCount = Order::query()->where('status', OrderStatus::ReadyForDelivery)->count();
-        $inDeliveryCount = Order::query()->whereIn('status', [
+        $activeCount = (clone $baseQuery)->activeForOperations()->count();
+        $pendingCount = (clone $baseQuery)->where('status', OrderStatus::Pending)->count();
+        $preparingCount = (clone $baseQuery)->where('status', OrderStatus::Preparing)->count();
+        $readyCount = (clone $baseQuery)->where('status', OrderStatus::ReadyForDelivery)->count();
+        $inDeliveryCount = (clone $baseQuery)->whereIn('status', [
             OrderStatus::PickedUp->value,
             OrderStatus::InTransit->value,
         ])->count();
-        $deliveredTodayCount = Order::query()
+        $deliveredTodayCount = (clone $baseQuery)
             ->where('status', OrderStatus::Delivered)
             ->whereDate('delivered_at', $now->toDateString())
             ->count();
-        $failedCount = Order::query()->where('status', OrderStatus::DeliveryFailed)->count();
+        $failedCount = (clone $baseQuery)->where('status', OrderStatus::DeliveryFailed)->count();
 
-        $revenueToday = (float) Order::query()
-            ->where('status', OrderStatus::Delivered)
-            ->whereDate('delivered_at', $now->toDateString())
-            ->sum('total');
+        $revenueToday = 0.0;
+        $revenueMonth = 0.0;
 
-        $revenueMonth = (float) Order::query()
-            ->where('status', OrderStatus::Delivered)
-            ->whereYear('delivered_at', $now->year)
-            ->whereMonth('delivered_at', $now->month)
-            ->sum('total');
+        if ($includeRevenue) {
+            $revenueToday = (float) Order::query()
+                ->where('status', OrderStatus::Delivered)
+                ->whereDate('delivered_at', $now->toDateString())
+                ->sum('total');
+
+            $revenueMonth = (float) Order::query()
+                ->where('status', OrderStatus::Delivered)
+                ->whereYear('delivered_at', $now->year)
+                ->whereMonth('delivered_at', $now->month)
+                ->sum('total');
+        }
 
         $availableCouriers = User::query()
             ->whereHas('employeeProfile', fn ($q) => $q->where('available', true)
@@ -85,14 +133,19 @@ final class OrderOperationsQueryService
      *   search?: string|null,
      *   from?: string|null,
      *   to?: string|null,
-     *   active_only?: bool|null
+     *   active_only?: bool|null,
+     *   scope_user?: User|null
      * }  $filters
      */
     public function paginate(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = Order::query()
-            ->with(['user:id,first_name,last_name,email,phone', 'courier:id,first_name,last_name'])
+            ->with(['user:id,first_name,last_name,email,phone', 'courier:id,first_name,last_name', 'handledBy:id,first_name,last_name'])
             ->latest();
+
+        if (! empty($filters['scope_user']) && $filters['scope_user'] instanceof User) {
+            OrderOperationsScope::applyToQuery($query, $filters['scope_user']);
+        }
 
         if (! empty($filters['status'])) {
             $query->withStatus($filters['status']);

@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
+use App\Policies\DashboardPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\PaymentPolicy;
@@ -35,5 +36,10 @@ class AuthServiceProvider extends ServiceProvider
 
             return null;
         });
+
+        $dashboardPolicy = new DashboardPolicy;
+
+        Gate::define('viewExecutiveDashboard', fn (User $user): bool => $dashboardPolicy->viewExecutiveDashboard($user));
+        Gate::define('viewDispatcherDashboard', fn (User $user): bool => $dashboardPolicy->viewDispatcherDashboard($user));
     }
 }

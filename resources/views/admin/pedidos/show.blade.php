@@ -44,7 +44,11 @@
                 </ul>
                 <div class="mt-4 pt-4 border-t flex justify-between font-bold">
                     <span>Total</span>
-                    <span class="text-[var(--bf-brand)] tabular-nums">${{ number_format((float) $order->total, 0, ',', '.') }}</span>
+                    @if(auth()->user()->isAdmin())
+                        <span class="text-[var(--bf-brand)] tabular-nums">${{ number_format((float) $order->total, 0, ',', '.') }}</span>
+                    @else
+                        <span class="text-stone-400 text-sm font-normal">—</span>
+                    @endif
                 </div>
                 @if((float) $order->redelivery_fee > 0)
                     <p class="text-xs text-amber-700 mt-2">Reenvío: +${{ number_format((float) $order->redelivery_fee, 0, ',', '.') }}</p>
@@ -81,6 +85,27 @@
                     @endif
                     <div><dt class="text-stone-500 text-xs uppercase">Pago</dt><dd>{{ $order->payment_method?->label() ?? '—' }}</dd></div>
                 </dl>
+            </section>
+
+            <section class="bf-ops-panel">
+                <h2 class="bf-ops-panel__title">Despachador</h2>
+                @if($order->handledBy)
+                    <p class="font-medium">{{ $order->handledBy->name }}</p>
+                    <p class="text-xs text-stone-500 mt-1">Tomado {{ $order->handled_at?->diffForHumans() ?? '—' }}</p>
+                @else
+                    <p class="text-sm text-stone-500">Sin asignar</p>
+                @endif
+                @if(auth()->user()->isAdmin() && $dispatchers->isNotEmpty())
+                    <form method="POST" action="{{ route('admin.pedidos.reassign-dispatcher', $order) }}" class="mt-3 space-y-2">@csrf
+                        <label class="bf-label-muted">Reasignar despachador</label>
+                        <select name="dispatcher_id" class="bf-input" required>
+                            @foreach($dispatchers as $dispatcher)
+                                <option value="{{ $dispatcher->id }}" @selected($order->handled_by_user_id === $dispatcher->id)>{{ $dispatcher->name }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="bf-btn-ghost w-full justify-center text-sm">Reasignar</button>
+                    </form>
+                @endif
             </section>
 
             <section class="bf-ops-panel">

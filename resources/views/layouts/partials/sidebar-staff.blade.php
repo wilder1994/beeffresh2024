@@ -13,13 +13,15 @@
     $canCatalog = auth()->user()->can(PermissionKey::MODULE_CATALOG);
     $canUsers = auth()->user()->can(PermissionKey::MODULE_USERS);
     $canSettings = auth()->user()->can(PermissionKey::MODULE_SETTINGS);
-
+    $isDispatcher = auth()->user()->isDispatcher();
+    $homeRoute = $isAdmin ? route('admin.dashboard') : ($isDispatcher && $canOrders ? route('dispatch.dashboard') : route('dashboard'));
+    $operacionesHijoActivo = ($canOrders && request()->routeIs('admin.pedidos.*'))
+        || ($canOrders && $isDispatcher && request()->routeIs('dispatch.dashboard*'))
+        || ($canCatalog && request()->routeIs('catalog.*'))
+        || ($canCourier && request()->routeIs('courier.*'));
     $navActive = 'flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition border-l-4';
     $navIdle = 'border-transparent text-white/90 hover:bg-white/10';
     $navOn = 'border-[var(--bf-gold)] bg-white/15 text-white';
-    $operacionesHijoActivo = ($canOrders && request()->routeIs('admin.pedidos.*'))
-        || ($canCatalog && request()->routeIs('catalog.*'))
-        || ($canCourier && request()->routeIs('courier.*'));
     $usuariosNavUser = request()->route('user');
     $usuariosNavUser = $usuariosNavUser instanceof User ? $usuariosNavUser : null;
     $audienceQuery = request()->query('audience');
@@ -58,7 +60,7 @@
                     <x-bf.image-crop-dialog />
                 @endif
             </div>
-            <a href="{{ route('dashboard') }}" class="leading-tight flex-1 min-w-0 group pt-0.5">
+            <a href="{{ $homeRoute }}" class="leading-tight flex-1 min-w-0 group pt-0.5">
                 <span class="block font-brand tracking-tight text-sm sm:text-base text-white group-hover:text-[var(--bf-sun)]/95 transition">BEEF FRESH</span>
                 <span class="text-[10px] sm:text-[11px] uppercase tracking-widest text-white/60">Panel interno</span>
             </a>
@@ -72,7 +74,7 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto min-h-0 py-3 sm:py-4 px-1.5 sm:px-2 space-y-0.5" x-on:click.capture="if ($event.target.closest('a')) closeMobileMenu()">
-        <a href="{{ route('dashboard') }}" @class([$navActive, request()->routeIs('dashboard') ? $navOn : $navIdle])>
+        <a href="{{ $homeRoute }}" @class([$navActive, request()->routeIs('dashboard', 'admin.dashboard', 'dispatch.dashboard') ? $navOn : $navIdle])>
             <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             Inicio
         </a>
@@ -103,9 +105,15 @@
                 </button>
                 <div x-show="operacionesOpen" x-transition class="ml-1 sm:ml-2 pl-2 sm:pl-3 border-l border-white/15 space-y-0.5 pb-0.5">
                     @if($canOrders)
+                    @if($isDispatcher && ! $isAdmin)
+                    <a href="{{ route('dispatch.dashboard') }}" @class([$navActive, request()->routeIs('dispatch.dashboard*') ? $navOn : $navIdle])>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        Mi panel
+                    </a>
+                    @endif
                     <a href="{{ route('admin.pedidos.index') }}" @class([$navActive, request()->routeIs('admin.pedidos.index', 'admin.pedidos.show', 'admin.pedidos.ticket.*') ? $navOn : $navIdle])>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-                        Pedidos
+                        Pedidos{{ ($isDispatcher && ! $isAdmin) ? ' (míos)' : '' }}
                     </a>
                     <a href="{{ route('admin.pedidos.map') }}" @class([$navActive, request()->routeIs('admin.pedidos.map') ? $navOn : $navIdle])>
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>

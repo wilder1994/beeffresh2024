@@ -43,6 +43,7 @@ class OrderOperationsFlowTest extends TestCase
 
         $order->refresh();
         $this->assertSame(OrderStatus::Preparing, $order->status);
+        $this->assertSame($dispatcher->id, $order->handled_by_user_id);
 
         $this->actingAs($dispatcher)
             ->post(route('admin.pedidos.mark-ready', $order))
@@ -125,6 +126,7 @@ class OrderOperationsFlowTest extends TestCase
 
         $order->refresh();
         $this->assertSame(OrderStatus::Preparing, $order->status);
+        $this->assertSame($dispatcher->id, $order->handled_by_user_id);
         $this->assertSame(2, $order->delivery_attempt);
         $this->assertSame('5000.00', $order->redelivery_fee);
     }

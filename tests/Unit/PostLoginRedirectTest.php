@@ -20,11 +20,11 @@ class PostLoginRedirectTest extends TestCase
         $this->assertSame(route('home', [], false), PostLoginRedirect::path($user));
     }
 
-    public function test_staff_redirects_to_dashboard(): void
+    public function test_admin_redirects_to_executive_dashboard(): void
     {
         $user = User::factory()->admin()->create();
 
-        $this->assertSame(route('dashboard', [], false), PostLoginRedirect::path($user));
+        $this->assertSame(route('admin.dashboard', [], false), PostLoginRedirect::path($user));
     }
 
     public function test_supplier_redirects_to_portal(): void

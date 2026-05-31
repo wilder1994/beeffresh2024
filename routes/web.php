@@ -4,6 +4,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\CompanyProfileController;
 use App\Http\Controllers\Admin\CompanySettingsController;
 use App\Http\Controllers\Admin\LogoController;
+use App\Http\Controllers\Admin\ExecutiveDashboardController;
 use App\Http\Controllers\Admin\OrderOperationsController;
 use App\Http\Controllers\Admin\RealtimeHealthController;
 use App\Http\Controllers\Admin\OrderTicketController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\Admin\PaymentAdminController;
 use App\Http\Controllers\Store\PaymentCheckoutController;
 use App\Http\Controllers\Webhooks\WompiWebhookController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dispatch\DispatcherDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Publico\OfferPublicController;
 use App\Http\Controllers\Publico\ProductPublicController;
@@ -110,6 +112,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:admin'])->name('admin.')->prefix('admin')->group(function () {
+    Route::get('/dashboard', [ExecutiveDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/feed', [ExecutiveDashboardController::class, 'feed'])->name('dashboard.feed');
+
     Route::prefix('pagos')->name('payments.')->group(function () {
         Route::get('/', [PaymentAdminController::class, 'index'])->name('index');
         Route::get('/{payment}', [PaymentAdminController::class, 'show'])->name('show');
@@ -128,12 +133,18 @@ Route::middleware(['auth', 'role_or_permission:admin|module.orders'])->name('adm
         Route::get('/{order}/ticket', [OrderTicketController::class, 'show'])->name('ticket.show');
         Route::post('/{order}/ticket/impreso', [OrderTicketController::class, 'markPrinted'])->name('ticket.mark-printed');
         Route::post('/{order}/preparar', [OrderOperationsController::class, 'startPreparing'])->name('start-preparing');
+        Route::post('/{order}/reasignar-despachador', [OrderOperationsController::class, 'reassignDispatcher'])->name('reassign-dispatcher');
         Route::post('/{order}/listo', [OrderOperationsController::class, 'markReady'])->name('mark-ready');
         Route::post('/{order}/asignar-domiciliario', [OrderOperationsController::class, 'assignCourier'])->name('assign-courier');
         Route::post('/{order}/cancelar', [OrderOperationsController::class, 'cancel'])->name('cancel');
         Route::post('/{order}/reprogramar', [OrderOperationsController::class, 'redispatch'])->name('redispatch');
         Route::get('/{order}', [OrderOperationsController::class, 'show'])->name('show');
     });
+});
+
+Route::middleware(['auth', 'role:employee'])->prefix('despacho')->name('dispatch.')->group(function () {
+    Route::get('/dashboard', [DispatcherDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/feed', [DispatcherDashboardController::class, 'feed'])->name('dashboard.feed');
 });
 
 Route::middleware(['auth', 'role:employee', 'courier'])->prefix('domiciliario')->name('courier.')->group(function () {

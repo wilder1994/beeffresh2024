@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\Orders\OrderOperationsScope;
 
 class OrderPolicy
 {
@@ -19,27 +19,21 @@ class OrderPolicy
 
     public function view(User $user, Order $order): bool
     {
-        if ($user->canAccessOrderOperations() || $user->isDispatcher()) {
-            return true;
-        }
-
         if ($user->isCourier()) {
-            if ($order->courier_id === $user->id) {
-                return true;
-            }
-
-            return $order->status === OrderStatus::ReadyForDelivery
-                && $order->courier_id === null
-                && (bool) $user->employeeProfile?->available;
+            return $this->viewAsCourier($user, $order);
         }
 
-        return $user->isCustomer() && $order->user_id === $user->id;
+        if ($user->isCustomer()) {
+            return $order->user_id === $user->id;
+        }
+
+        return OrderOperationsScope::canViewOrder($user, $order);
     }
 
     public function accept(User $user, Order $order): bool
     {
         return $user->isCourier()
-            && $order->status === OrderStatus::ReadyForDelivery
+            && $order->status === \App\Enums\OrderStatus::ReadyForDelivery
             && $order->courier_id === null
             && (bool) $user->employeeProfile?->available
             && ! app(\App\Services\Orders\CourierAssignmentService::class)->courierHasActiveDelivery($user);
@@ -47,20 +41,25 @@ class OrderPolicy
 
     public function transition(User $user, Order $order): bool
     {
-        if ($user->canAccessOrderOperations() || $user->isDispatcher()) {
-            return true;
-        }
-
         if ($user->isCourier() && $order->courier_id === $user->id) {
             return true;
         }
 
-        return false;
+        return OrderOperationsScope::canTransitionOrder($user, $order);
     }
 
     public function assign(User $user, Order $order): bool
     {
-        return $user->canAccessOrderOperations() || $user->isDispatcher();
+        if ($user->isCourier()) {
+            return false;
+        }
+
+        return OrderOperationsScope::canTransitionOrder($user, $order);
+    }
+
+    public function reassignDispatcher(User $user, Order $order): bool
+    {
+        return $user->isAdmin();
     }
 
     public function recordLocation(User $user): bool
@@ -70,15 +69,26 @@ class OrderPolicy
 
     public function addDeliveryProof(User $user, Order $order): bool
     {
-        if ($user->canAccessOrderOperations() || $user->isDispatcher()) {
+        if ($user->isAdmin() || ($user->canAccessOrderOperations() && ! $user->isDispatcher())) {
             return true;
         }
 
         return $user->isCourier()
             && $order->courier_id === $user->id
             && in_array($order->status, [
-                OrderStatus::InTransit,
-                OrderStatus::DeliveryFailed,
+                \App\Enums\OrderStatus::InTransit,
+                \App\Enums\OrderStatus::DeliveryFailed,
             ], true);
+    }
+
+    private function viewAsCourier(User $user, Order $order): bool
+    {
+        if ($order->courier_id === $user->id) {
+            return true;
+        }
+
+        return $order->status === \App\Enums\OrderStatus::ReadyForDelivery
+            && $order->courier_id === null
+            && (bool) $user->employeeProfile?->available;
     }
 }

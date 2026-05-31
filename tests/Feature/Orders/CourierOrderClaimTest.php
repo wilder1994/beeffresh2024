@@ -83,8 +83,9 @@ class CourierOrderClaimTest extends TestCase
         $this->assertSame($courier->id, $order->fresh()->courier_id);
     }
 
-    private function createPreparingOrder(User $customer): Order
+    private function createPreparingOrder(User $customer, ?User $dispatcher = null): Order
     {
+        $dispatcher ??= User::query()->where('email', 'despachador1@demo.beeffresh.test')->firstOrFail();
         $shipping = $customer->snapshotShippingFromProfile();
 
         return Order::query()->create([
@@ -93,6 +94,8 @@ class CourierOrderClaimTest extends TestCase
             'status' => OrderStatus::Preparing,
             'payment_method' => PaymentMethod::OnlineSimulated,
             'tracking_token' => Order::generateTrackingToken(),
+            'handled_by_user_id' => $dispatcher->id,
+            'handled_at' => now(),
             ...$shipping,
             'shipping_latitude' => $shipping['shipping_latitude'] ?? 6.2442,
             'shipping_longitude' => $shipping['shipping_longitude'] ?? -75.5812,

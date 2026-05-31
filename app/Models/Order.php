@@ -18,6 +18,7 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'courier_id',
+        'handled_by_user_id',
         'total',
         'status',
         'payment_method',
@@ -36,6 +37,7 @@ class Order extends Model
         'shipping_latitude',
         'shipping_longitude',
         'assigned_at',
+        'handled_at',
         'ready_at',
         'picked_up_at',
         'delivered_at',
@@ -51,6 +53,7 @@ class Order extends Model
         'shipping_latitude' => 'decimal:7',
         'shipping_longitude' => 'decimal:7',
         'assigned_at' => 'datetime',
+        'handled_at' => 'datetime',
         'ready_at' => 'datetime',
         'picked_up_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -64,6 +67,11 @@ class Order extends Model
     public function courier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'courier_id');
+    }
+
+    public function handledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handled_by_user_id');
     }
 
     public function items(): HasMany
@@ -132,6 +140,14 @@ class Order extends Model
             : [$status->value];
 
         return $query->whereIn('status', $values);
+    }
+
+    /** @param Builder<Order> $query */
+    public function scopeForHandledBy(Builder $query, User|int $dispatcher): Builder
+    {
+        $id = $dispatcher instanceof User ? $dispatcher->id : $dispatcher;
+
+        return $query->where('handled_by_user_id', $id);
     }
 
     /** @param Builder<Order> $query */

@@ -10,13 +10,16 @@ use App\Http\Requests\Orders\AssignCourierOrderRequest;
 use App\Http\Requests\Orders\CancelOrderRequest;
 use App\Http\Requests\Orders\MarkReadyOrderRequest;
 use App\Http\Requests\Orders\OrderOperationsIndexRequest;
+use App\Http\Requests\Orders\ReassignDispatcherOrderRequest;
 use App\Http\Requests\Orders\RedispatchOrderRequest;
 use App\Http\Requests\Orders\StartPreparingOrderRequest;
 use App\Models\CompanyProfile;
 use App\Models\Order;
+use App\Support\Orders\OrderOperationsScope;
 use App\Support\Realtime\OrderBroadcastPayload;
 use App\Models\User;
 use App\Services\Orders\CourierAssignmentService;
+use App\Services\Orders\OrderDispatcherAssignmentService;
 use App\Services\Orders\OrderOperationsQueryService;
 use App\Services\Orders\OrderWorkflowService;
 use App\Services\Realtime\OrderBroadcastService;
@@ -33,19 +36,28 @@ class OrderOperationsController extends Controller
         private readonly OrderOperationsQueryService $queries,
         private readonly OrderWorkflowService $workflow,
         private readonly CourierAssignmentService $courierAssignment,
+        private readonly OrderDispatcherAssignmentService $dispatcherAssignment,
         private readonly OrderBroadcastService $orderBroadcast,
     ) {}
 
     public function index(OrderOperationsIndexRequest $request): View
     {
+        $user = $request->user();
         $tab = $request->tab();
         $search = $request->search();
+        $filters = array_merge(
+            $this->filtersFromTab($tab, $search),
+            ['scope_user' => $user],
+        );
 
         return view('admin.pedidos.index', [
-            'metrics' => $this->queries->metrics(),
-            'pedidos' => $this->queries->paginate($this->filtersFromTab($tab, $search)),
+            'metrics' => $user->isDispatcher()
+                ? $this->queries->metricsForUser($user)
+                : $this->queries->metrics(),
+            'pedidos' => $this->queries->paginate($filters),
             'tab' => $tab,
             'search' => $search,
+            'scopedToDispatcher' => $user->isDispatcher() && ! $user->isAdmin(),
         ]);
     }
 
@@ -60,13 +72,25 @@ class OrderOperationsController extends Controller
             'availableCouriers' => $order->status === OrderStatus::ReadyForDelivery && $order->courier_id === null
                 ? $this->courierAssignment->listAvailableCouriers()
                 : collect(),
+            'dispatchers' => auth()->user()?->isAdmin()
+                ? User::query()
+                    ->whereHas('employeeProfile.position', fn ($q) => $q->where('slug', \App\Models\Position::SLUG_DISPATCH))
+                    ->orderBy('first_name')
+                    ->get(['id', 'first_name', 'last_name'])
+                : collect(),
         ]);
     }
 
     public function startPreparing(StartPreparingOrderRequest $request, Order $order): RedirectResponse
     {
+        try {
+            $this->dispatcherAssignment->claimForPreparing($order, $request->user());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['order' => $exception->getMessage()]);
+        }
+
         $this->workflow->transition(
-            $order,
+            $order->fresh(),
             OrderStatus::Preparing,
             $request->user(),
             $request->validated('note'),
@@ -75,6 +99,23 @@ class OrderOperationsController extends Controller
         return redirect()
             ->route('admin.pedidos.show', $order)
             ->with('status', 'Pedido en preparación.');
+    }
+
+    public function reassignDispatcher(ReassignDispatcherOrderRequest $request, Order $order): RedirectResponse
+    {
+        try {
+            $this->dispatcherAssignment->reassign(
+                $order,
+                $request->dispatcher(),
+                $request->user(),
+            );
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['dispatcher_id' => $exception->getMessage()]);
+        }
+
+        return redirect()
+            ->route('admin.pedidos.show', $order)
+            ->with('status', 'Despachador reasignado.');
     }
 
     public function markReady(MarkReadyOrderRequest $request, Order $order): RedirectResponse
@@ -135,8 +176,14 @@ class OrderOperationsController extends Controller
         $order->delivery_attempt = ($order->delivery_attempt ?? 1) + 1;
         $order->save();
 
+        try {
+            $this->dispatcherAssignment->claimIfAvailable($order, $request->user());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['order' => $exception->getMessage()]);
+        }
+
         $this->workflow->transition(
-            $order,
+            $order->fresh(),
             OrderStatus::Preparing,
             $request->user(),
             $request->validated('note') ?? 'Reprogramado desde devolución a tienda.',
@@ -159,10 +206,13 @@ class OrderOperationsController extends Controller
         $this->authorize('viewAny', Order::class);
 
         $since = $request->query('since');
+        $user = $request->user();
 
         $query = Order::query()
             ->with(['user:id,first_name,last_name', 'courier:id,first_name,last_name'])
             ->latest('updated_at');
+
+        OrderOperationsScope::applyToQuery($query, $user);
 
         if (is_string($since) && $since !== '') {
             $query->where('updated_at', '>=', $since);
@@ -195,13 +245,17 @@ class OrderOperationsController extends Controller
         $this->authorize('viewAny', Order::class);
 
         $store = CompanyProfile::singleton();
+        $user = auth()->user();
 
-        $orders = Order::query()
+        $ordersQuery = Order::query()
             ->activeForOperations()
             ->whereNotNull('shipping_latitude')
             ->whereNotNull('shipping_longitude')
-            ->with(['courier:id,first_name,last_name'])
-            ->get();
+            ->with(['courier:id,first_name,last_name']);
+
+        OrderOperationsScope::applyToQuery($ordersQuery, $user);
+
+        $orders = $ordersQuery->get();
 
         $couriers = User::query()
             ->whereHas('employeeProfile', fn ($q) => $q->whereHas(
@@ -269,6 +323,7 @@ class OrderOperationsController extends Controller
         return $order->load([
             'user',
             'courier.employeeProfile',
+            'handledBy.employeeProfile',
             'items.product',
             'items.offer',
             'statusLogs.user',

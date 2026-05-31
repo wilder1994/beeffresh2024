@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Domain\Users\PermissionKey;
 use App\Models\User;
 
 final class PostLoginRedirect
@@ -38,7 +39,23 @@ final class PostLoginRedirect
             return 'supplier.home';
         }
 
+        if ($user->isAdmin()) {
+            return 'admin.dashboard';
+        }
+
         if ($user->isStaff()) {
+            if ($user->canAccessCourierModule()) {
+                return 'courier.orders.index';
+            }
+
+            if ($user->isDispatcher() && $user->can(PermissionKey::MODULE_ORDERS)) {
+                return 'dispatch.dashboard';
+            }
+
+            if ($user->can(PermissionKey::MODULE_ORDERS)) {
+                return 'admin.pedidos.index';
+            }
+
             return 'dashboard';
         }
 

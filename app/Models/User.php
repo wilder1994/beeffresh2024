@@ -88,6 +88,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'courier_id');
     }
 
+    public function handledOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'handled_by_user_id');
+    }
+
     public function courierLocations(): HasMany
     {
         return $this->hasMany(CourierLocation::class)->latest('recorded_at');
