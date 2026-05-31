@@ -86,8 +86,8 @@ function bfEnsureDashboardLowStockRow(stock) {
 
     if (valueCell && typeof stock.stock === 'number') {
         valueCell.textContent = stock.stock.toLocaleString('es-CO', {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
         });
         valueCell.classList.toggle('text-red-600', Boolean(stock.is_low_stock));
         valueCell.classList.toggle('text-amber-700', !stock.is_low_stock);
@@ -129,8 +129,8 @@ export function bfPatchDashboardLowStockRow(stock) {
     const cell = row.querySelector('[data-dashboard-low-stock-value]');
     if (cell && typeof stock.stock === 'number') {
         cell.textContent = stock.stock.toLocaleString('es-CO', {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
         });
         cell.classList.toggle('text-red-600', Boolean(stock.is_low_stock));
         cell.classList.toggle('text-amber-700', !stock.is_low_stock);
@@ -146,6 +146,38 @@ function bfUpdateLowStockCount() {
 
     const count = tbody.querySelectorAll('[data-dashboard-low-stock-product-id]').length;
     counter.textContent = String(count);
+}
+
+/**
+ * Actualiza la fila del catálogo admin (Catálogo › Productos) en tiempo real.
+ * @param {object} stock
+ */
+export function bfPatchCatalogStockRow(stock) {
+    const productId = stock?.product_id;
+    if (!productId) {
+        return;
+    }
+
+    const row = document.querySelector(`[data-catalog-product-id="${productId}"]`);
+    if (!row) {
+        return;
+    }
+
+    const cell = row.querySelector('[data-catalog-stock-cell]');
+    const valueEl = row.querySelector('[data-catalog-stock-value]');
+
+    if (valueEl && typeof stock.stock === 'number') {
+        valueEl.textContent = stock.stock.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    cell?.classList.toggle('text-red-700', Boolean(stock.is_low_stock) || Boolean(stock.is_out_of_stock));
+    cell?.classList.toggle('font-semibold', Boolean(stock.is_low_stock) || Boolean(stock.is_out_of_stock));
+
+    const outLabel = row.querySelector('[data-catalog-out-label]');
+    outLabel?.classList.toggle('hidden', !stock.is_out_of_stock);
 }
 
 /**

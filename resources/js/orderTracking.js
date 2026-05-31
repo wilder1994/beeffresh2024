@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lng: order.shipping_longitude,
             },
             courier_location: payload.courier_location ?? null,
+            maps_api_key: payload.maps_api_key ?? null,
         };
 
         root.dataset.orderStatus = order.status ?? '';

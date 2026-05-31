@@ -31,7 +31,7 @@
     @if($products->isEmpty())
         <p class="text-gray-600 bg-white rounded-xl border border-amber-100 p-6 text-center">No hay productos. Crea el primero con «Nuevo producto».</p>
     @else
-        <div class="bf-table-panel">
+        <div class="bf-table-panel" data-catalog-stock-feed="{{ route('catalog.products.stock-feed') }}">
             <table class="bf-table">
                 <thead>
                     <tr>
@@ -46,7 +46,7 @@
                 </thead>
                 <tbody>
                     @foreach($products as $product)
-                        <tr>
+                        <tr data-catalog-product-id="{{ $product->id }}">
                             <td>
                                 <div class="flex items-center gap-3">
                                     @if($product->imageUrl())
@@ -68,10 +68,17 @@
                                     ${{ number_format((float) $product->price_per_kg, 0, ',', '.') }}
                                 @endif
                             </td>
-                            <td class="tabular-nums @if($product->isLowStock()) text-red-700 font-semibold @endif">
-                                {{ number_format((float) $product->stock, 1, ',', '.') }} {{ $product->stock_unit->value }}
+                            <td
+                                class="tabular-nums @if($product->isLowStock()) text-red-700 font-semibold @endif"
+                                data-catalog-stock-cell
+                            >
+                                <span data-catalog-stock-value>{{ rtrim(rtrim(number_format((float) $product->stock, 2, ',', '.'), '0'), ',') }}</span>
+                                {{ $product->stock_unit->value }}
                             </td>
-                            <td><span class="text-xs">{{ $product->status->label() }}</span></td>
+                            <td>
+                                <span class="text-xs" data-catalog-status-label>{{ $product->status->label() }}</span>
+                                <span class="text-xs text-red-700 font-semibold @if($product->isPurchasable()) hidden @endif" data-catalog-out-label>· Agotado</span>
+                            </td>
                             <td class="text-right whitespace-nowrap">
                                 <a href="{{ route('catalog.products.edit', $product) }}" class="text-sm text-[var(--bf-brand)] hover:underline mr-2">Editar</a>
                                 <x-bf.delete-action
@@ -90,3 +97,7 @@
         <div class="mt-4">{{ $products->links() }}</div>
     @endif
 @endsection
+
+@push('scripts')
+    @vite('resources/js/catalogStockPolling.js')
+@endpush

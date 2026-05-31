@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/operationsPolling.js',
+                'resources/js/catalogStockPolling.js',
                 'resources/js/operationsMap.js',
                 'resources/js/courierOps.js',
                 'resources/js/orderTracking.js',

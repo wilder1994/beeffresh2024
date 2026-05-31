@@ -171,6 +171,7 @@ Route::middleware(['auth', 'role_or_permission:admin|module.catalog'])->group(fu
 
     Route::prefix('catalogo')->name('catalog.')->group(function () {
         Route::get('/', [CatalogController::class, 'index'])->name('index');
+        Route::get('productos/stock.json', [CatalogProductController::class, 'stockFeed'])->name('products.stock-feed');
         Route::resource('productos', CatalogProductController::class)
             ->except(['show'])
             ->parameters(['productos' => 'product'])

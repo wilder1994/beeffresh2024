@@ -1,15 +1,20 @@
 @props(['product', 'canAdd' => true])
 
 @php
+    use App\Domain\Catalog\StockUnit;
+    use App\Services\Catalog\CartSessionService;
     use App\Services\Store\VolumeScaleService;
 
     $volumeScale = app(VolumeScaleService::class);
+    $cartSession = app(CartSessionService::class);
     $volumeConfig = $volumeScale->purchaseConfig($product);
     $onPromo = $product->isOnPromotion();
     $catalogKg = (float) $product->price_per_kg;
     $catalogLb = (float) $product->price_per_lb;
     $standardKg = $product->effectivePriceKg();
     $standardLb = $product->effectivePriceLb();
+    $maxKg = $cartSession->maxPurchasableUnits($product, StockUnit::Kg);
+    $maxLb = $cartSession->maxPurchasableUnits($product, StockUnit::Lb);
 
     $purchaseInitial = [
         'defaultUnit' => 'kg',
@@ -20,6 +25,8 @@
         'standardKg' => $standardKg,
         'standardLb' => $standardLb,
         'onPromo' => $onPromo,
+        'maxKg' => $maxKg,
+        'maxLb' => $maxLb,
     ];
 @endphp
 
@@ -59,13 +66,21 @@
                 type="number"
                 min="1"
                 step="1"
+                :max="maxUnits"
                 x-model.number="qty"
+                @change="clampQty()"
+                @blur="clampQty()"
                 class="bf-store-qty-input"
                 data-cart-qty-input
             >
             <span class="text-xs text-[var(--bf-muted)] shrink-0 w-5" x-text="unitLabel"></span>
         </div>
     </div>
+
+    <p class="text-xs text-[var(--bf-muted)]" x-show="maxUnits > 0">
+        Disponibles: <span class="font-medium" x-text="maxUnits + ' ' + unitLabel"></span>
+    </p>
+    <p class="text-xs font-medium text-amber-800 leading-snug" x-show="maxUnits === 0" x-cloak x-text="unavailableMessage"></p>
 
     <div class="rounded-lg border border-[var(--bf-border-brand-subtle)] bg-white/70 px-3 py-2.5 space-y-1.5">
         <p
@@ -97,8 +112,9 @@
     @if($canAdd)
         <button
             type="button"
-            class="agregar-carrito w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium"
+            class="agregar-carrito w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-600"
             data-id="{{ $product->id }}"
+            :disabled="maxUnits === 0"
         >
             Agregar al carrito
         </button>

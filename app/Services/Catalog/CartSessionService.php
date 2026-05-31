@@ -74,7 +74,27 @@ final class CartSessionService
     {
         $qty = is_numeric($value) ? (float) $value : 1.0;
 
-        return max(1.0, round($qty, 2));
+        return (float) max(1, (int) round($qty));
+    }
+
+    /**
+     * Máximo de unidades (enteras) comprables según el stock disponible y la unidad de venta.
+     */
+    public function maxPurchasableUnits(Product $product, StockUnit $saleUnit): int
+    {
+        $stock = (float) $product->stock;
+
+        if ($stock <= 0) {
+            return 0;
+        }
+
+        $stockPerUnit = $this->stockRequired($product, 1.0, $saleUnit);
+
+        if ($stockPerUnit <= 0) {
+            return 0;
+        }
+
+        return (int) floor(($stock / $stockPerUnit) + 1e-6);
     }
 
     public function unitPrice(Product $product, StockUnit $saleUnit, float $quantity = 1.0): float

@@ -110,9 +110,46 @@ export function registerProductPurchaseAlpine(Alpine) {
         standardKg: Number(initial.standardKg),
         standardLb: Number(initial.standardLb),
         onPromo: Boolean(initial.onPromo),
+        maxKg: Number.isFinite(Number(initial.maxKg)) ? Number(initial.maxKg) : 0,
+        maxLb: Number.isFinite(Number(initial.maxLb)) ? Number(initial.maxLb) : 0,
+
+        init() {
+            this.$watch('unit', () => this.clampQty());
+            this.clampQty();
+        },
 
         get unitLabel() {
             return this.unit === 'kg' ? 'kg' : 'lb';
+        },
+
+        get maxUnits() {
+            return this.unit === 'kg' ? this.maxKg : this.maxLb;
+        },
+
+        get unavailableMessage() {
+            if (this.maxUnits > 0) {
+                return '';
+            }
+            const altMax = this.unit === 'kg' ? this.maxLb : this.maxKg;
+            const altLabel = this.unit === 'kg' ? 'lb' : 'kg';
+            if (altMax > 0) {
+                return `Sin stock para ${this.unitLabel}. Disponible: ${altMax} ${altLabel}.`;
+            }
+            return 'Producto agotado.';
+        },
+
+        clampQty() {
+            let value = Math.floor(Number(this.qty) || 1);
+
+            if (value < 1) {
+                value = 1;
+            }
+
+            if (this.maxUnits > 0 && value > this.maxUnits) {
+                value = this.maxUnits;
+            }
+
+            this.qty = value;
         },
 
         get quote() {

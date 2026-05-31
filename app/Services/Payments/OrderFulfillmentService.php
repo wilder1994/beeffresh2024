@@ -15,6 +15,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\StockAlertService;
 use App\Services\Orders\OrderWorkflowService;
 use App\Services\Realtime\OrderBroadcastService;
 use App\Services\Realtime\StockBroadcastService;
@@ -30,6 +31,7 @@ final class OrderFulfillmentService
         private readonly OrderWorkflowService $orderWorkflow,
         private readonly StockBroadcastService $stockBroadcast,
         private readonly OrderBroadcastService $orderBroadcast,
+        private readonly StockAlertService $stockAlerts,
     ) {}
 
     public function fulfillFromPayment(Payment $payment, User $user, CheckoutSessionData $session): Order
@@ -43,8 +45,10 @@ final class OrderFulfillmentService
 
         /** @var array<int, int> $affectedProductIds */
         $affectedProductIds = [];
+        /** @var array<int, int> $depletedProductIds */
+        $depletedProductIds = [];
 
-        $order = DB::transaction(function () use ($payment, $user, $session, &$affectedProductIds): Order {
+        $order = DB::transaction(function () use ($payment, $user, $session, &$affectedProductIds, &$depletedProductIds): Order {
             $productIds = $this->cartSession->productIds($session->cartSnapshot);
             $offerIds = $this->cartSession->offerIds($session->cartSnapshot);
 
@@ -124,9 +128,14 @@ final class OrderFulfillmentService
                         if ($locked === null) {
                             continue;
                         }
-                        $locked->stock = (float) $locked->stock - (float) $requirement['stock_delta'];
+                        $beforeStock = (float) $locked->stock;
+                        $locked->stock = $beforeStock - (float) $requirement['stock_delta'];
                         $locked->save();
                         $affectedProductIds[$locked->id] = $locked->id;
+
+                        if ($beforeStock > 0 && (float) $locked->stock <= 0) {
+                            $depletedProductIds[$locked->id] = $locked->id;
+                        }
                     }
 
                     continue;
@@ -147,9 +156,14 @@ final class OrderFulfillmentService
                     'subtotal' => number_format($line->subtotal, 2, '.', ''),
                 ]);
 
-                $product->stock = (float) $product->stock - (float) ($line->meta['stock_delta'] ?? 0);
+                $beforeStock = (float) $product->stock;
+                $product->stock = $beforeStock - (float) ($line->meta['stock_delta'] ?? 0);
                 $product->save();
                 $affectedProductIds[$product->id] = $product->id;
+
+                if ($beforeStock > 0 && (float) $product->stock <= 0) {
+                    $depletedProductIds[$product->id] = $product->id;
+                }
             }
 
             $payment->order_id = $order->id;
@@ -160,6 +174,7 @@ final class OrderFulfillmentService
 
         $this->stockBroadcast->dispatchMany(array_values($affectedProductIds));
         $this->orderBroadcast->dispatch($order, dispatchMetrics: false);
+        $this->stockAlerts->notifyDepleted(array_values($depletedProductIds));
 
         return $order;
     }

@@ -66,6 +66,8 @@ final class NotificationContentBuilder
             '{amount}' => (string) ($payload['amount'] ?? ($order instanceof Order ? number_format((float) $order->total, 0, ',', '.') : '')),
             '{reference}' => (string) ($payload['reference'] ?? ($payment instanceof Payment ? $payment->reference : '')),
             '{error}' => (string) ($payload['error'] ?? ''),
+            '{product_name}' => (string) ($payload['product_name'] ?? ''),
+            '{affected_offers}' => (string) ($payload['affected_offers'] ?? ''),
         ];
     }
 
@@ -125,6 +127,10 @@ final class NotificationContentBuilder
 
         if ($type === NotificationType::WebhookFailed) {
             return NotificationActionUrl::route('admin.payments.index');
+        }
+
+        if ($type === NotificationType::InventoryOutOfStock) {
+            return NotificationActionUrl::route('catalog.inventory.index');
         }
 
         return NotificationActionUrl::normalize($payload['action_url'] ?? null);

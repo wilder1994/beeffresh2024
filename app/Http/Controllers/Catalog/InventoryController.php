@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\Catalog\StockAlertService;
 use App\Services\Realtime\StockBroadcastService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class InventoryController extends Controller
 {
     public function __construct(
         private readonly StockBroadcastService $stockBroadcast,
+        private readonly StockAlertService $stockAlerts,
     ) {}
 
     public function index(Request $request): View
@@ -42,20 +44,31 @@ class InventoryController extends Controller
         ]);
 
         $productIds = [];
+        $depletedIds = [];
 
         foreach ($validated['stock'] as $row) {
             $id = (int) $row['id'];
             $productIds[] = $id;
 
-            Product::query()
-                ->whereKey($id)
-                ->update([
-                    'stock' => $row['stock'],
-                    'min_stock' => $row['min_stock'],
-                ]);
+            $product = Product::query()->find($id);
+
+            if ($product === null) {
+                continue;
+            }
+
+            $wasInStock = (float) $product->stock > 0;
+
+            $product->stock = (float) $row['stock'];
+            $product->min_stock = (float) $row['min_stock'];
+            $product->save();
+
+            if ($wasInStock && (float) $product->stock <= 0) {
+                $depletedIds[] = $id;
+            }
         }
 
         $this->stockBroadcast->dispatchMany($productIds);
+        $this->stockAlerts->notifyDepleted($depletedIds);
 
         return redirect()
             ->route('catalog.inventory.index', $request->only('low_only'))

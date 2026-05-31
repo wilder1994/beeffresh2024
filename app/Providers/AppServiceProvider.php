@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\UserRepositoryContract;
 use App\Repositories\UserRepository;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,9 +23,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $appUrl = (string) config('app.url');
+        if ($this->app->runningInConsole()) {
+            return;
+        }
 
-        if (str_starts_with($appUrl, 'https://')) {
+        /** @var Request $request */
+        $request = $this->app->make('request');
+
+        $isHttps = $request->isSecure()
+            || strtolower((string) $request->header('X-Forwarded-Proto')) === 'https';
+
+        if ($isHttps) {
             URL::forceScheme('https');
             config(['session.secure' => true]);
         }

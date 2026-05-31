@@ -118,6 +118,7 @@ class OrderTrackingController extends Controller
                 'lng' => $order->shipping_longitude !== null ? (float) $order->shipping_longitude : null,
             ],
             'courier_location' => $this->courierLocationFor($order),
+            'maps_api_key' => config('services.google.maps_api_key'),
         ];
     }
 

@@ -1,5 +1,5 @@
 import { bfRealtimeStore } from '../stores/realtimeStore.js';
-import { bfPatchDashboardLowStockRow, bfPatchInventoryRow } from '../utils/stockUi.js';
+import { bfPatchCatalogStockRow, bfPatchDashboardLowStockRow, bfPatchInventoryRow } from '../utils/stockUi.js';
 
 /** @type {(() => void)|null} */
 let boundHandler = null;
@@ -14,6 +14,7 @@ export function bfHandleProductStockUpdated(payload) {
 
     bfPatchInventoryRow(payload);
     bfPatchDashboardLowStockRow(payload);
+    bfPatchCatalogStockRow(payload);
 }
 
 export function bfInitStockRealtimeHandler() {

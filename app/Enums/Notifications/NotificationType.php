@@ -22,6 +22,7 @@ enum NotificationType: string
     case PaymentDeclined = 'payment_declined';
     case WebhookFailed = 'webhook_failed';
     case DeliveryFailedCourier = 'delivery_failed_courier';
+    case InventoryOutOfStock = 'inventory_out_of_stock';
 
     public function label(): string
     {
@@ -42,6 +43,7 @@ enum NotificationType: string
             self::PaymentDeclined => 'Pago rechazado',
             self::WebhookFailed => 'Webhook fallido',
             self::DeliveryFailedCourier => 'Entrega fallida (domiciliario)',
+            self::InventoryOutOfStock => 'Producto agotado',
         };
     }
 }

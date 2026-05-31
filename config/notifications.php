@@ -89,6 +89,10 @@ return [
             'channels' => [NotificationChannel::Internal, NotificationChannel::Email],
             'audiences' => ['courier', 'operations'],
         ],
+        NotificationType::InventoryOutOfStock->value => [
+            'channels' => [NotificationChannel::Internal],
+            'audiences' => ['operations'],
+        ],
     ],
 
     /*
@@ -177,6 +181,11 @@ return [
             'title' => 'Entrega fallida · Pedido #{order_id}',
             'body' => 'Registraste una entrega fallida para el pedido #{order_id}.',
             'action_label' => 'Ver pedidos',
+        ],
+        NotificationType::InventoryOutOfStock->value => [
+            'title' => 'Producto agotado: {product_name}',
+            'body' => 'El producto {product_name} se quedó sin stock. Combos/packs afectados: {affected_offers}.',
+            'action_label' => 'Ir a inventario',
         ],
     ],
 

@@ -18,6 +18,33 @@ const routePoints = [];
 const MAX_ROUTE_POINTS = 120;
 
 /**
+ * Clave de Google Maps resuelta. Permite recuperar el mapa sin recargar cuando
+ * el atributo `data-maps-api-key` llegó vacío en el render inicial (config en caché).
+ * @type {string}
+ */
+let resolvedApiKey = '';
+
+/**
+ * @param {Record<string, unknown>} [tracking]
+ * @returns {string}
+ */
+function resolveApiKey(tracking) {
+    const root = document.querySelector('[data-order-tracking]');
+    const fromDataset = root?.dataset.mapsApiKey ?? '';
+    const fromFeed = typeof tracking?.maps_api_key === 'string' ? tracking.maps_api_key : '';
+    const key = fromDataset || fromFeed || resolvedApiKey;
+
+    if (key && key !== resolvedApiKey) {
+        resolvedApiKey = key;
+        if (root && !fromDataset) {
+            root.dataset.mapsApiKey = key;
+        }
+    }
+
+    return key;
+}
+
+/**
  * @param {string} apiKey
  */
 function loadGoogleMaps(apiKey) {
@@ -180,7 +207,7 @@ function updateCourierOnMap(position) {
 export function bfUpdateCustomerTrackingMap(tracking) {
     const status = String(tracking.status ?? '');
     const phase = resolvePhase(String(tracking.map_phase ?? 'waiting'), status);
-    const apiKey = document.querySelector('[data-order-tracking]')?.dataset.mapsApiKey ?? '';
+    const apiKey = resolveApiKey(tracking);
     const destination = tracking.destination ?? {};
 
     showMapPanel(phase);

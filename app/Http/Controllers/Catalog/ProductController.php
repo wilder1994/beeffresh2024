@@ -11,6 +11,7 @@ use App\Models\MeatCut;
 use App\Models\MeatType;
 use App\Models\Product;
 use App\Services\Catalog\ProductSkuGenerator;
+use App\Support\Realtime\ProductStockPayload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -133,6 +134,25 @@ class ProductController extends Controller
         return redirect()
             ->route('catalog.products.index')
             ->with('success', 'Producto eliminado correctamente.');
+    }
+
+    public function stockFeed(): JsonResponse
+    {
+        $products = Product::query()
+            ->get(['id', 'name', 'stock', 'stock_unit', 'min_stock', 'status'])
+            ->map(static fn (Product $product): array => [
+                'product_id' => $product->id,
+                'stock' => (float) $product->stock,
+                'availability_label' => ProductStockPayload::availabilityLabel($product),
+                'is_low_stock' => $product->isLowStock(),
+                'is_out_of_stock' => ProductStockPayload::isOutOfStock($product),
+            ])
+            ->all();
+
+        return response()->json([
+            'products' => $products,
+            'generated_at' => now()->toIso8601String(),
+        ]);
     }
 
     public function cutsByType(MeatType $meatType): JsonResponse

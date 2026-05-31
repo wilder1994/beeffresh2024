@@ -42,7 +42,7 @@ class CarritoController extends Controller
         $totalStockNeeded = $this->cartSession->stockRequired($product, $newQty, $saleUnit);
 
         if ((float) $product->stock < $totalStockNeeded) {
-            return $this->cartErrorResponse($request, $carrito, 'Stock insuficiente para esta cantidad.');
+            return $this->cartErrorResponse($request, $carrito, $this->stockLimitMessage($product, $saleUnit));
         }
 
         $unitPrice = $this->cartSession->unitPrice($product, $saleUnit, $newQty);
@@ -240,7 +240,7 @@ class CarritoController extends Controller
         $stockNeeded = $this->cartSession->stockRequired($product, $cantidad, $saleUnit);
 
         if ((float) $product->stock < $stockNeeded) {
-            return redirect()->route('carrito.ver')->with('error', 'Stock insuficiente para esta cantidad.');
+            return redirect()->route('carrito.ver')->with('error', $this->stockLimitMessage($product, $saleUnit));
         }
 
         $quote = $this->cartSession->priceQuote($product, $saleUnit, $cantidad);
@@ -284,6 +284,17 @@ class CarritoController extends Controller
         session()->put('carrito', $carrito);
 
         return redirect()->route('carrito.ver')->with('success', 'Cantidad actualizada.');
+    }
+
+    private function stockLimitMessage(Product $product, StockUnit $saleUnit): string
+    {
+        $maxUnits = $this->cartSession->maxPurchasableUnits($product, $saleUnit);
+
+        if ($maxUnits <= 0) {
+            return "{$product->name} está agotado.";
+        }
+
+        return "Solo quedan {$maxUnits} {$saleUnit->value} disponibles de {$product->name}.";
     }
 
     /**
