@@ -13,6 +13,8 @@ use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\User;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\CartStorage;
+use App\Support\Payments\PaymentDevelopmentUrls;
 use App\Services\Payments\Gateways\WompiGateway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +28,7 @@ final class PaymentService
         private readonly CheckoutQuoteService $quotes,
         private readonly PaymentWebhookProcessor $webhookProcessor,
         private readonly CartSessionService $cartSession,
+        private readonly CartStorage $cartStorage,
     ) {}
 
     /**
@@ -217,7 +220,7 @@ final class PaymentService
             'order_id' => $payment->order_id,
             'redirect_url' => $this->redirectUrlForStatus($payment),
             'tracking_url' => $payment->order !== null
-                ? route('orders.tracking.show', $payment->order)
+                ? PaymentDevelopmentUrls::localRoute('orders.tracking.show', $payment->order)
                 : null,
             'message' => $this->pollMessage($payment),
             'cart_count' => $payment->status === PaymentStatus::Approved ? 0 : null,
@@ -230,18 +233,18 @@ final class PaymentService
     public function clearCartSessionIfApproved(Payment $payment): int
     {
         if ($payment->status === PaymentStatus::Approved) {
-            session()->forget('carrito');
+            $this->cartStorage->forget();
         }
 
-        return (int) round($this->cartSession->totalItemCount(session()->get('carrito', [])));
+        return (int) round($this->cartSession->totalItemCount($this->cartStorage->get()));
     }
 
     private function redirectUrlForStatus(Payment $payment): ?string
     {
         return match ($payment->status) {
-            PaymentStatus::Approved => route('payments.success', $payment->uuid),
-            PaymentStatus::Processing, PaymentStatus::PendingPayment => route('payments.pending', $payment->uuid),
-            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired => route('payments.failed', $payment->uuid),
+            PaymentStatus::Approved => PaymentDevelopmentUrls::urlForPaymentRoute('payments.success', $payment),
+            PaymentStatus::Processing, PaymentStatus::PendingPayment => PaymentDevelopmentUrls::urlForPaymentRoute('payments.pending', $payment),
+            PaymentStatus::Declined, PaymentStatus::Failed, PaymentStatus::Expired => PaymentDevelopmentUrls::urlForPaymentRoute('payments.failed', $payment),
             default => null,
         };
     }

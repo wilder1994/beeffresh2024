@@ -32,14 +32,22 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $e): Response
     {
-        if ($e instanceof TokenMismatchException && $request->is('logout')) {
-            if ($request->user() !== null) {
-                return redirect('/logout');
+        if ($e instanceof TokenMismatchException) {
+            if ($request->is('checkout/pagar', 'checkout')) {
+                return redirect()
+                    ->route('carrito.ver')
+                    ->with('error', 'Tu sesión expiró o la página llevaba mucho tiempo abierta. Vuelve al carrito, confirma de nuevo y paga.');
             }
 
-            return redirect()
-                ->guest(route('login'))
-                ->with('status', 'Tu sesión expiró. Vuelve a iniciar sesión.');
+            if ($request->is('logout')) {
+                if ($request->user() !== null) {
+                    return redirect('/logout');
+                }
+
+                return redirect()
+                    ->guest(route('login'))
+                    ->with('status', 'Tu sesión expiró. Vuelve a iniciar sesión.');
+            }
         }
 
         return parent::render($request, $e);

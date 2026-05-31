@@ -13,7 +13,7 @@ Plataforma web para digitalizar la gestión de una carnicería: **tienda públic
 | Auth web | [Laravel Breeze](https://laravel.com/docs/breeze), **Livewire 3**, **Spatie Laravel Permission** |
 | Auth API | Laravel Sanctum |
 
-**Última actualización de esta documentación:** 2026-05-30
+**Última actualización de esta documentación:** 2026-05-31
 
 **Identidad visual:** variables CSS `--bf-*` en `resources/css/app.css` (crema, marrón del logo, carmesí, sol/dorado); **Figtree** (UI) y **Libre Baskerville** (marca, clase `font-brand` / `fontFamily.brand` en Tailwind); hojas de estilo de fuentes en `resources/views/layouts/partials/fonts.blade.php`. Fondo de página y superficies con degradado crema (`--bf-surface-gradient`, clase `bf-panel-bg` / `bf-surface`); bordes café finos (`--bf-border-brand`, `--bf-border-brand-subtle`). **Proporción unificada 4:3** en catálogo, home, cinta y tarjetas de producto/oferta/corte (avatares y logo: 1:1).
 
@@ -65,7 +65,7 @@ copy .env.example .env
 php artisan key:generate
 ```
 
-1. Configura en `.env`: `DB_*`, `APP_URL`, `ADMIN_*` (administrador inicial vía semillas), `GOOGLE_MAPS_API_KEY` (mapas y dirección), `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` (opcional, default 45) y, para GPS en vivo del domiciliario, `BF_COURIER_GPS_ACTIVE_MS` / `BF_COURIER_GPS_IDLE_MS` / `BF_COURIER_GPS_MIN_METERS` (ver `.env.example` y `config/realtime.php`).
+1. Configura en `.env`: `DB_*`, `APP_URL`, `APP_LOCAL_URL` (en local con ngrok: túnel HTTPS en `APP_URL`, navegación en `APP_LOCAL_URL`, p. ej. `http://localhost:8080`), `ADMIN_*` (administrador inicial vía semillas), `GOOGLE_MAPS_API_KEY` (mapas y dirección), `ORDER_COURIER_CLAIM_TIMEOUT_MINUTES` (opcional, default 45) y, para GPS en vivo del domiciliario, `BF_COURIER_GPS_ACTIVE_MS` / `BF_COURIER_GPS_IDLE_MS` / `BF_COURIER_GPS_MIN_METERS` (ver `.env.example` y `config/realtime.php`).
 2. Enlaza almacenamiento público para imágenes de productos, promociones, **cinta**, avatares, etc.:
 
 ```bash
@@ -130,7 +130,9 @@ Para probar checkout y webhooks desde internet (p. ej. Wompi sandbox). **Beeffre
 
 **Configurar el proyecto tras cada nueva URL de ngrok:**
 
-1. En `.env`: `APP_URL=https://<tu-subdominio>.ngrok-free.app` (sin barra final).
+1. En `.env`:
+   - `APP_URL=https://<tu-subdominio>.ngrok-free.app` (sin barra final) — túnel HTTPS para Wompi y webhooks.
+   - `APP_LOCAL_URL=http://localhost:8080` — donde trabajas el resto del día (tienda, panel, mapa, Reverb).
 2. Limpia configuración en caché:
 
 ```bash
@@ -147,7 +149,13 @@ https://<tu-subdominio>.ngrok-free.app/webhooks/wompi
 
 **Notas:**
 
-- En local (`APP_ENV=local`), `TrustProxies` confía el proxy para que Vite/assets y URLs de pago usen el host HTTPS correcto. `AppServiceProvider` fuerza **HTTPS** y cookies de sesión seguras cuando `APP_URL` empieza por `https://` (evita 419 en POST/PATCH vía túnel).
+- En local (`APP_ENV=local`), `TrustProxies` solo confía **127.0.0.1 / ::1** (ngrok → localhost). `AppServiceProvider` fuerza **HTTPS** y cookie segura solo si la petición es HTTPS real (`isSecure()` o `X-Forwarded-Proto` de ngrok).
+- **Flujo recomendado (local + ngrok):** trabaja en **`APP_LOCAL_URL`** (p. ej. `http://localhost:8080`). Ngrok solo entra en juego al pagar:
+  1. **Checkout** en localhost → `payment.app_url` te envía al túnel (`APP_URL`) con un *handoff* de sesión (`bf_tunnel_handoff`, un solo uso).
+  2. En el túnel: widget Wompi y retorno (`/pago/procesar`, `/pago/retorno`); Wompi exige `redirect-url` HTTPS (no acepta `http://localhost`).
+  3. **Al terminar el pago** → redirección automática a **`APP_LOCAL_URL`** con URL firmada (`payment.handoff` inicia sesión en localhost).
+  4. Si abres el túnel por error en catálogo o seguimiento → `RedirectTunnelBrowsingToLocalUrl` te devuelve a localhost (salvo rutas de pago anteriores).
+- El **carrito autenticado** se replica en caché (`CartStorage`) entre localhost y ngrok. Inicia sesión en **localhost** antes de comprar. `SESSION_SECURE_COOKIE=false` en `.env` para localhost; si ves **419**, borra cookies o usa ventana privada.
 - **Cerrar sesión:** usar el botón del menú (POST con CSRF). Si el token expiró, `GET /logout` muestra una pantalla intermedia con token fresco (`auth/logout.blade.php`) antes de destruir la sesión.
 - Si ngrok responde pero la app no carga, revisa que Laragon/Apache esté encendido y que el túnel apunte a **8080** (VirtualHost en `beeffresh2024-ip.conf`).
 
@@ -218,11 +226,11 @@ NOTIFICATION_QUEUE=notifications
 NOTIFICATION_EMAIL_QUEUE=notifications-email
 ```
 
-**WebSocket vs. ngrok (importante):** si abres el panel por la URL **HTTPS** de ngrok con `REVERB_SCHEME=http`, el navegador **bloquea el WS inseguro** `ws://localhost:8081` (mixed content) y solo funciona el polling de respaldo (notificaciones, mapa, pagos, catálogo se actualizan con retraso). Para **realtime instantáneo en local**, abre el panel por **`http://localhost:8080`** (ahí el WS sí conecta); deja ngrok corriendo solo para los webhooks de Wompi (server-to-server). Si necesitas WS a través de ngrok, expón Reverb por un túnel `wss` (`ngrok http 8081`) y alinea `REVERB_HOST` / `VITE_REVERB_HOST` + `REVERB_SCHEME=https`, luego recompila.
+**WebSocket vs. ngrok:** con el flujo anterior no necesitas navegar en ngrok salvo el minuto del pago. Mantén panel, seguimiento y mapa en **`APP_LOCAL_URL`** para que Reverb (`ws://localhost:8081`) conecte sin mixed content. Ngrok sigue activo para webhooks Wompi (server-to-server). Si aun así abres la app por HTTPS ngrok, el WS a `localhost:8081` falla y solo queda polling; alternativa avanzada: túnel `ngrok http 8081` + `REVERB_SCHEME=https`.
 
 **Esquema según la petición:** `AppServiceProvider` fuerza `https` (y cookie `session.secure`) **solo cuando la petición real es segura** (`$request->isSecure()` o `X-Forwarded-Proto: https` de ngrok), no según `APP_URL`. Así el mismo entorno sirve estilos/sesión por `http://localhost:8080` y por la URL HTTPS de ngrok sin reconfigurar.
 
-Tras cada URL nueva de ngrok, actualiza `APP_URL`, `php artisan config:clear`, webhook Wompi y vuelve a compilar assets (`npm run build`).
+Tras cada URL nueva de ngrok, actualiza `APP_URL` (deja `APP_LOCAL_URL` fijo en `http://localhost:8080`), `php artisan config:clear`, webhook Wompi y vuelve a compilar assets (`npm run build`).
 
 #### Qué hace cada capa
 
@@ -406,7 +414,7 @@ La **navbar marrón** del layout interno (`layouts.app`) agrupa acceso a la vist
 - **Feedback de compra en la tienda:** el botón «Agregar al carrito» se deshabilita cuando `maxUnits === 0` en la unidad elegida y muestra mensaje contextual («Sin stock para kg. Disponible: N lb.» o «Producto agotado.», `volumeScalePricing.js`). Los avisos JS (`bf-toast`) ya se renderizan en la tienda: `layouts/store.blade.php` incluye `layouts.partials.flash-alerts`.
 - Solo **cuentas cliente** pueden cerrar compra en línea; **checkout** (`/checkout`, auth) exige perfil de entrega completo (teléfono, dirección, ciudad, provincia).
 - Confirmación: tablas **`orders`** (snapshot `shipping_*`, `tracking_token`, estados operacionales) y **`order_items`**; el **stock se descuenta solo cuando el pago es aprobado** (webhook Wompi), no al iniciar checkout.
-- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. Post-pago: `/pago/procesar/{uuid}` y `/pago/pendiente/{uuid}` con **websocket** (`payment.status.updated` en canal privado `payments.{uuid}`) + **polling JSON de respaldo** (`GET /pago/estado/{uuid}`, `resources/js/paymentProcess.js`). El webhook sigue siendo la fuente de verdad; el WS acelera la UI. Al aprobar vacía la sesión `carrito` y actualiza el badge. Logs: `storage/logs/payments.log`. Variables `.env`: `WOMPI_*`, `PAYMENT_DEFAULT_GATEWAY`. Tests: `tests/Feature/Payments/PaymentWebhookFlowTest.php`, `PaymentPollTest.php`.
+- **Pagos en línea:** arquitectura multi-pasarela (`PaymentGatewayInterface`, `PaymentGatewayManager`; drivers Wompi activo, PayPal/Mercado Pago/Stripe/ePayco placeholder). Tablas `payments`, `payment_attempts`, `payment_webhooks`. Flujo: checkout → intención de pago → widget Wompi → webhook → pedido + operaciones. En local: `APP_URL` = túnel (widget + webhook); `APP_LOCAL_URL` = navegación habitual. `RedirectLocalPaymentFlowToAppUrl` envía checkout a ngrok con handoff de sesión; al terminar, `PaymentDevelopmentUrls` devuelve éxito/pendiente/fallo a localhost (URL firmada + `AuthenticatePaymentHandoff`). `RedirectTunnelBrowsingToLocalUrl` evita quedarse en ngrok fuera del pago. Post-pago en localhost: WS + polling (`paymentProcess.js`). Variables: `WOMPI_*`, `APP_LOCAL_URL`. Tests: `PaymentLocalDevelopmentFlowTest`, `RedirectLocalPaymentFlowTest`, `PaymentPollTest`, `PaymentWebhookFlowTest`.
 - **Mis pedidos (cliente):** listado paginado en `/mis-pedidos` (`CustomerOrderController`, vista `store/orders/index.blade.php`, tarjeta `x-store.order-card`). Enlace en menú avatar y menú móvil tienda; desde pago exitoso (“Ver todos mis pedidos”). Clic en un pedido → seguimiento en vivo.
 - **Seguimiento cliente:** `/mis-pedidos/{order}/seguimiento` o `/seguimiento/{tracking_token}`. Layout dos columnas (timeline + mapa). Mapa en vivo solo entre **recogido** y **entregado** (`CustomerTrackingMapPhase`, `trackingMap.js`); fases *waiting* / *closed* con mensaje. Timeline vía `order.tracking.updated` (canal público `tracking.{token}` para invitados) + polling 12 s (`orderTracking.js`). Fechas en **`America/Bogota`**. Ver [`docs/REALTIME.md`](docs/REALTIME.md) Fase 2.
 - **Notificaciones (núcleo):** `App\Services\Notifications\` — `NotificationService`, `NotificationPreferenceService`, canales (`internal`, `email` activos; `push`/WhatsApp/SMS stubs). **UI:** campana solo no leídas; modal `<x-notifications.center-dialog />` (historial + preferencias + sonido); página `/notificaciones` como respaldo. JS: `notificationBell.js`, `notificationCenter.js`, `notificationSound.js`. Tests: `NotificationSystemTest`, `NotificationFeedScopeTest`, `SupplierNotificationCenterTest`. Detalle: [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md), [`docs/REALTIME.md`](docs/REALTIME.md).

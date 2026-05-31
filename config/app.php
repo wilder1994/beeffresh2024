@@ -57,6 +57,17 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Local browsing URL (development)
+    |--------------------------------------------------------------------------
+    |
+    | En local con túnel HTTPS (APP_URL = ngrok), la tienda y el panel usan esta URL.
+    | El túnel solo atiende checkout, widget Wompi y retorno; luego se vuelve aquí.
+    |
+    */
+    'local_url' => env('APP_LOCAL_URL', 'http://localhost:8080'),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

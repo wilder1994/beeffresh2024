@@ -68,16 +68,18 @@ Route::post('/webhooks/wompi', WompiWebhookController::class)->name('webhooks.wo
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
-    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
-    Route::post('/checkout/pagar', [PaymentCheckoutController::class, 'initiate'])->name('payments.initiate');
+    Route::middleware(['payment.app_url'])->group(function () {
+        Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
+        Route::post('/checkout/pagar', [PaymentCheckoutController::class, 'initiate'])->name('payments.initiate');
 
-    Route::prefix('pago')->name('payments.')->group(function () {
-        Route::get('/procesar/{payment}', [PaymentCheckoutController::class, 'process'])->name('process');
-        Route::get('/retorno/{payment}', [PaymentCheckoutController::class, 'return'])->name('return');
-        Route::get('/estado/{payment}', [PaymentCheckoutController::class, 'status'])->name('status');
-        Route::get('/exito/{payment}', [PaymentCheckoutController::class, 'success'])->name('success');
-        Route::get('/pendiente/{payment}', [PaymentCheckoutController::class, 'pending'])->name('pending');
-        Route::get('/fallido/{payment}', [PaymentCheckoutController::class, 'failed'])->name('failed');
+        Route::prefix('pago')->name('payments.')->middleware(['payment.handoff'])->group(function () {
+            Route::get('/procesar/{payment}', [PaymentCheckoutController::class, 'process'])->name('process');
+            Route::get('/retorno/{payment}', [PaymentCheckoutController::class, 'return'])->name('return');
+            Route::get('/estado/{payment}', [PaymentCheckoutController::class, 'status'])->name('status');
+            Route::get('/exito/{payment}', [PaymentCheckoutController::class, 'success'])->name('success');
+            Route::get('/pendiente/{payment}', [PaymentCheckoutController::class, 'pending'])->name('pending');
+            Route::get('/fallido/{payment}', [PaymentCheckoutController::class, 'failed'])->name('failed');
+        });
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

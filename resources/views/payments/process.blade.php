@@ -29,6 +29,7 @@
         <div data-bf-payment-phase="opening" class="space-y-4">
             <div class="bf-payment-loader mx-auto" aria-hidden="true"></div>
             <p class="text-sm text-[var(--bf-muted)]">Abriendo pasarela segura…</p>
+            <p class="text-xs text-amber-800 hidden" data-bf-payment-opening-hint></p>
             <button type="button" data-bf-wompi-open class="bf-btn-primary w-full justify-center">Pagar ahora</button>
             <p class="text-xs text-[var(--bf-muted)]">Si no se abre automáticamente, pulsa «Pagar ahora».</p>
         </div>
@@ -71,6 +72,6 @@
 @endsection
 
 @push('scripts')
-<script src="{{ $widget->widgetScriptUrl }}"></script>
+<script id="bf-wompi-widget-script" src="{{ $widget->widgetScriptUrl }}" async></script>
 @vite('resources/js/paymentProcess.js')
 @endpush

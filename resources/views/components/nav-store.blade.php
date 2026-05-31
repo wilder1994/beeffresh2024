@@ -1,11 +1,12 @@
 @php
     use App\Models\Logo;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\CartStorage;
     $logoPrincipal = Logo::where('tipo', 'principal')->first();
     $logoPrincipalSrc = ($logoPrincipal && $logoPrincipal->imagen)
         ? asset('storage/logos/'.$logoPrincipal->imagen)
         : asset('logos/logo.jpeg');
-    $cartCount = (int) round(app(CartSessionService::class)->totalItemCount(session()->get('carrito', [])));
+    $cartCount = (int) round(app(CartSessionService::class)->totalItemCount(app(CartStorage::class)->get()));
 @endphp
 
 {{-- Tienda: logo empresa (izq.) · cliente/proveedor con avatar perfil (der.) --}}

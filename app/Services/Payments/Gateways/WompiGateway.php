@@ -45,7 +45,7 @@ final class WompiGateway implements PaymentGatewayInterface
                 'reference' => $payment->reference,
                 'publicKey' => (string) $this->config('public_key'),
                 'signature' => ['integrity' => $integrity],
-                'redirectUrl' => route('payments.return', $payment->uuid),
+                'redirectUrl' => $this->paymentReturnUrl($payment),
                 'customerData' => [
                     'email' => $payment->user?->email ?? Arr::get($session->shipping, 'shipping_recipient_name'),
                 ],
@@ -201,6 +201,14 @@ final class WompiGateway implements PaymentGatewayInterface
             transaction: $transaction,
             eventType: $eventType,
         );
+    }
+
+    /** URL de retorno canónica (APP_URL): Wompi rechaza http://localhost en el widget. */
+    private function paymentReturnUrl(Payment $payment): string
+    {
+        $base = rtrim((string) config('app.url'), '/');
+
+        return $base.route('payments.return', $payment->uuid, absolute: false);
     }
 
     public function integritySignature(string $reference, int $amountInCents, string $currency): string

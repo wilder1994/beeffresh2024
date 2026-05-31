@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Offer;
 use App\Models\Product;
-use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\CartStorage;
 use App\Services\Payments\CheckoutQuoteService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 class CheckoutController extends Controller
 {
     public function __construct(
-        private readonly CartSessionService $cartSession,
+        private readonly CartStorage $cartStorage,
         private readonly CheckoutQuoteService $quotes,
     ) {}
 
@@ -34,7 +34,7 @@ class CheckoutController extends Controller
                 ->with('open_profile_modal', true);
         }
 
-        $carritoSession = session()->get('carrito', []);
+        $carritoSession = $this->cartStorage->get();
 
         if ($carritoSession === []) {
             return redirect()

@@ -36,6 +36,8 @@ class AppServiceProvider extends ServiceProvider
         if ($isHttps) {
             URL::forceScheme('https');
             config(['session.secure' => true]);
+        } elseif (app()->environment('local')) {
+            config(['session.secure' => false]);
         }
     }
 }

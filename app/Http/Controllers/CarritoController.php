@@ -9,6 +9,7 @@ use App\Domain\Store\OfferType;
 use App\Models\Offer;
 use App\Models\Product;
 use App\Services\Catalog\CartSessionService;
+use App\Services\Catalog\CartStorage;
 use App\Services\Catalog\CartViewService;
 use App\Services\Store\OfferAvailabilityService;
 use App\Support\Realtime\ProductStockPayload;
@@ -21,6 +22,7 @@ class CarritoController extends Controller
 {
     public function __construct(
         private readonly CartSessionService $cartSession,
+        private readonly CartStorage $cartStorage,
         private readonly CartViewService $cartView,
         private readonly OfferAvailabilityService $offerAvailability,
     ) {}
@@ -32,7 +34,7 @@ class CarritoController extends Controller
         $cantidad = $this->cartSession->normalizeQuantity($request->input('cantidad', 1));
         $product = Product::query()->findOrFail($id);
 
-        $carrito = session()->get('carrito', []);
+        $carrito = $this->cartStorage->get();
         $lineKey = $this->cartSession->productLineKey($id, $saleUnit);
 
         $existingQty = isset($carrito[$lineKey]['cantidad'])
@@ -60,7 +62,7 @@ class CarritoController extends Controller
             'pricing_label' => $quote->pricingLabel(),
         ];
 
-        session()->put('carrito', $carrito);
+        $this->cartStorage->put($carrito);
 
         $unitLabel = $saleUnit->value;
 
@@ -81,10 +83,10 @@ class CarritoController extends Controller
         $offer = Offer::query()->with(['items.product'])->findOrFail($offerId);
 
         if ($offer->type !== OfferType::Bundle) {
-            return $this->cartErrorResponse($request, session()->get('carrito', []), 'Esta oferta no se puede agregar como pack.');
+            return $this->cartErrorResponse($request, $this->cartStorage->get(), 'Esta oferta no se puede agregar como pack.');
         }
 
-        $carrito = session()->get('carrito', []);
+        $carrito = $this->cartStorage->get();
         $lineKey = $this->cartSession->offerLineKey($offerId);
 
         $existingQty = isset($carrito[$lineKey]['cantidad'])
@@ -106,7 +108,7 @@ class CarritoController extends Controller
             'sale_unit' => StockUnit::Pack->value,
         ];
 
-        session()->put('carrito', $carrito);
+        $this->cartStorage->put($carrito);
 
         if ($request->isJson()) {
             return response()->json([
@@ -120,7 +122,7 @@ class CarritoController extends Controller
 
     public function ver(): View
     {
-        $summary = $this->cartView->summarize(session()->get('carrito', []));
+        $summary = $this->cartView->summarize($this->cartStorage->get());
 
         return view('carrito.ver', [
             'lineas' => $summary['lineas'],
@@ -131,7 +133,7 @@ class CarritoController extends Controller
 
     public function validar(): JsonResponse
     {
-        $summary = $this->cartView->summarize(session()->get('carrito', []));
+        $summary = $this->cartView->summarize($this->cartStorage->get());
         $lines = [];
 
         foreach ($summary['lineas'] as $linea) {
@@ -186,7 +188,7 @@ class CarritoController extends Controller
     public function actualizarLinea(Request $request): RedirectResponse
     {
         $lineKey = (string) $request->input('line_key', '');
-        $carrito = session()->get('carrito', []);
+        $carrito = $this->cartStorage->get();
 
         if ($lineKey === '' || ! isset($carrito[$lineKey])) {
             return redirect()->route('carrito.ver')->with('error', 'La línea del carrito ya no existe.');
@@ -202,14 +204,14 @@ class CarritoController extends Controller
     public function eliminarLinea(Request $request): RedirectResponse
     {
         $lineKey = (string) $request->input('line_key', '');
-        $carrito = session()->get('carrito', []);
+        $carrito = $this->cartStorage->get();
 
         if ($lineKey === '' || ! isset($carrito[$lineKey])) {
             return redirect()->route('carrito.ver')->with('error', 'La línea del carrito ya no existe.');
         }
 
         unset($carrito[$lineKey]);
-        session()->put('carrito', $carrito);
+        $this->cartStorage->put($carrito);
 
         return redirect()->route('carrito.ver')->with('success', 'Producto eliminado del carrito.');
     }
@@ -231,7 +233,7 @@ class CarritoController extends Controller
 
         if ($product === null) {
             unset($carrito[$lineKey]);
-            session()->put('carrito', $carrito);
+            $this->cartStorage->put($carrito);
 
             return redirect()->route('carrito.ver')->with('error', 'El producto ya no está disponible.');
         }
@@ -251,7 +253,7 @@ class CarritoController extends Controller
         $carrito[$lineKey]['pricing_label'] = $quote->pricingLabel();
         $carrito[$lineKey]['nombre'] = $product->name;
 
-        session()->put('carrito', $carrito);
+        $this->cartStorage->put($carrito);
 
         return redirect()->route('carrito.ver')->with('success', 'Cantidad actualizada.');
     }
@@ -266,7 +268,7 @@ class CarritoController extends Controller
 
         if ($offer === null || ! $offer->isBundle()) {
             unset($carrito[$lineKey]);
-            session()->put('carrito', $carrito);
+            $this->cartStorage->put($carrito);
 
             return redirect()->route('carrito.ver')->with('error', 'El pack ya no está disponible.');
         }
@@ -281,7 +283,7 @@ class CarritoController extends Controller
         $carrito[$lineKey]['precio'] = (float) $offer->offer_price;
         $carrito[$lineKey]['nombre'] = $offer->name;
 
-        session()->put('carrito', $carrito);
+        $this->cartStorage->put($carrito);
 
         return redirect()->route('carrito.ver')->with('success', 'Cantidad actualizada.');
     }
