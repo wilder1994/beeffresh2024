@@ -16,6 +16,7 @@ use App\Services\Payments\Gateways\WompiGateway;
 use App\Services\Payments\PaymentWebhookProcessor;
 use Database\Seeders\DemoUsersSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Tests\TestCase;
 
@@ -76,6 +77,8 @@ class PaymentWebhookFlowTest extends TestCase
 
         $product->refresh();
         $this->assertEquals(19.0, (float) $product->stock);
+
+        $this->assertSame([], Cache::get('cart.user.'.$customer->id));
     }
 
     public function test_duplicate_webhook_is_idempotent(): void

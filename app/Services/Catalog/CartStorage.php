@@ -26,21 +26,22 @@ final class CartStorage
         }
 
         $key = $this->cacheKey($user->id);
-        $cached = Cache::get($key);
 
-        if (is_array($cached) && $cached !== []) {
-            session()->put('carrito', $cached);
+        if (Cache::has($key)) {
+            $cached = Cache::get($key);
 
-            return $cached;
+            if (is_array($cached)) {
+                if ($cached === []) {
+                    session()->forget('carrito');
+                } else {
+                    session()->put('carrito', $cached);
+                }
+
+                return $cached;
+            }
         }
 
-        $sessionCart = session()->get('carrito', []);
-
-        if ($sessionCart !== []) {
-            Cache::put($key, $sessionCart, now()->addMinutes(self::TTL_MINUTES));
-        }
-
-        return $sessionCart;
+        return session()->get('carrito', []);
     }
 
     /** @param array<string|int, array<string, mixed>> $cart */
@@ -57,12 +58,21 @@ final class CartStorage
 
     public function forget(): void
     {
-        session()->forget('carrito');
-
         $user = auth()->user();
 
         if ($user instanceof User) {
-            Cache::forget($this->cacheKey($user->id));
+            $this->forgetForUser($user->id);
+        } else {
+            session()->forget('carrito');
+        }
+    }
+
+    public function forgetForUser(int $userId): void
+    {
+        Cache::put($this->cacheKey($userId), [], now()->addMinutes(self::TTL_MINUTES));
+
+        if (auth()->id() === $userId) {
+            session()->forget('carrito');
         }
     }
 

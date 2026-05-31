@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Services\Catalog\CartStorage;
 use App\Support\Payments\PaymentDevelopmentUrls;
 use Closure;
 use Illuminate\Http\Request;
@@ -18,6 +19,10 @@ final class AuthenticateDevelopmentLocalHandoff
     private const QUERY_PARAM = 'bf_local_handoff';
 
     private const CACHE_PREFIX = 'payment_local_handoff.';
+
+    public function __construct(
+        private readonly CartStorage $cartStorage,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -35,6 +40,7 @@ final class AuthenticateDevelopmentLocalHandoff
 
         if (is_int($userId) || (is_string($userId) && $userId !== '')) {
             auth()->loginUsingId((int) $userId);
+            $this->cartStorage->get();
         }
 
         return redirect()->to($request->url());

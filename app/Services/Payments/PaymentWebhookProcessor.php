@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhook;
 use App\Models\User;
+use App\Services\Catalog\CartStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,6 +28,7 @@ final class PaymentWebhookProcessor
     public function __construct(
         private readonly PaymentGatewayManager $gateways,
         private readonly OrderFulfillmentService $fulfillment,
+        private readonly CartStorage $cartStorage,
     ) {}
 
     /**
@@ -186,6 +188,10 @@ final class PaymentWebhookProcessor
         });
 
         $this->dispatchPaymentNotifications($payment, $notificationContext);
+
+        if ($status === PaymentStatus::Approved) {
+            $this->cartStorage->forgetForUser($payment->user_id);
+        }
 
         event(new PaymentStatusUpdated($payment));
 

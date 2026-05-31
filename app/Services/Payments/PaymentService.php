@@ -235,7 +235,7 @@ final class PaymentService
     public function clearCartSessionIfApproved(Payment $payment): int
     {
         if ($payment->status === PaymentStatus::Approved) {
-            $this->cartStorage->forget();
+            $this->cartStorage->forgetForUser($payment->user_id);
         }
 
         return (int) round($this->cartSession->totalItemCount($this->cartStorage->get()));
